@@ -1,32 +1,12 @@
-'use client';
-
-import React, { useState, useEffect } from 'react';
-import { ArrowLeftRight, RotateCcw, Save, Upload, UserPlus, AlertCircle } from 'lucide-react';
-
-const MAX_HISTORY = 20;
-const SKILL_THRESHOLD = 2;
+import React, { useState } from 'react';
+import { ArrowLeftRight } from 'lucide-react';
 
 export default function RosterGenerator() {
+  const [activeTab, setActiveTab] = useState('players');
   const [players, setPlayers] = useState([]);
-  const [teams, setTeams] = useState(null);
-  const [selectedPlayer, setSelectedPlayer] = useState(null);
-  const [history, setHistory] = useState([]);
-  const [historyIndex, setHistoryIndex] = useState(-1);
-  const [savedConfigs, setSavedConfigs] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('rosterConfigs');
-      return saved ? JSON.parse(saved) : [];
-    }
-    return [];
-  });
+  const [teams, setTeams] = useState({ red: { forwards: [], defensemen: [] }, white: { forwards: [], defensemen: [] }});
 
-  useEffect(() => {
-    if (teams && historyIndex === history.length - 1) {
-      setHistory(prev => [...prev.slice(-MAX_HISTORY), teams]);
-      setHistoryIndex(prev => prev + 1);
-    }
-  }, [teams]);
-
+  // Handle CSV upload
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
     if (file) {
@@ -37,14 +17,15 @@ export default function RosterGenerator() {
         const playerData = lines.slice(1).filter(line => line.trim());
         
         const formattedPlayers = playerData.map(line => {
-          const [firstName, lastName, skill, defense, attending] = line.split(',');
+          const [firstName, lastName, skill, defense, attending] = line.split(',').map(item => item.trim());
           return {
-            name: `${firstName} ${lastName}`.trim(),
+            firstName,
+            lastName,
             skill: Number(skill) || 0,
             defense: Number(defense) === 1,
             attending: Number(attending) === 1
           };
-        }).filter(player => player.attending);
+        });
         
         setPlayers(formattedPlayers);
       };
@@ -52,264 +33,237 @@ export default function RosterGenerator() {
     }
   };
 
-  const shuffleArray = (array) => {
-    const newArray = [...array];
-    for (let i = newArray.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
-    }
-    return newArray;
+  // Function to update player data directly in the table
+  const updatePlayer = (index, field, value) => {
+    const updatedPlayers = [...players];
+    updatedPlayers[index] = {
+      ...updatedPlayers[index],
+      [field]: field === 'skill' ? Number(value) : 
+               field === 'defense' || field === 'attending' ? value === 'true' : 
+               value
+    };
+    setPlayers(updatedPlayers);
   };
 
-  const assignPlayersToTeams = (players, redTeam, whiteTeam) => {
-    const sortedPlayers = [...players].sort((a, b) => b.skill - a.skill);
-    let redSkill = 0;
-    let whiteSkill = 0;
-    
-    sortedPlayers.forEach(player => {
-      const targetSize = Math.ceil(sortedPlayers.length / 2);
-      if ((redSkill <= whiteSkill && redTeam.length < targetSize) || whiteTeam.length >= targetSize) {
-        redTeam.push(player);
-        redSkill += player.skill;
+  // Generate balanced teams
+  const generateRosters = () => {
+    const attendingPlayers = players.filter(p => p.attending);
+    const forwards = attendingPlayers.filter(p => !p.defense);
+    const defensemen = attendingPlayers.filter(p => p.defense);
+
+    // Sort by skill level
+    const sortedForwards = [...forwards].sort((a, b) => b.skill - a.skill);
+    const sortedDefensemen = [...defensemen].sort((a, b) => b.skill - a.skill);
+
+    const newTeams = {
+      red: { forwards: [], defensemen: [] },
+      white: { forwards: [], defensemen: [] }
+    };
+
+    // Distribute forwards
+    sortedForwards.forEach((player, index) => {
+      if (index % 2 === 0) {
+        newTeams.red.forwards.push(player);
       } else {
-        whiteTeam.push(player);
-        whiteSkill += player.skill;
+        newTeams.white.forwards.push(player);
       }
     });
-  };
 
-  const generateRosters = () => {
-    const forwards = shuffleArray(players.filter(player => !player.defense));
-    const defensemen = shuffleArray(players.filter(player => player.defense));
-    
-    const redTeam = { forwards: [], defensemen: [] };
-    const whiteTeam = { forwards: [], defensemen: [] };
-    
-    assignPlayersToTeams(forwards, redTeam.forwards, whiteTeam.forwards);
-    assignPlayersToTeams(defensemen, redTeam.defensemen, whiteTeam.defensemen);
-    
-    setTeams({ red: redTeam, white: whiteTeam });
-    setHistory([{ red: redTeam, white: whiteTeam }]);
-    setHistoryIndex(0);
-  };
+    // Distribute defensemen
+    sortedDefensemen.forEach((player, index) => {
+      if (index % 2 === 0) {
+        newTeams.red.defensemen.push(player);
+      } else {
+        newTeams.white.defensemen.push(player);
+      }
+    });
 
-  const calculateTeamStats = (team) => {
-    const allPlayers = [...team.forwards, ...team.defensemen];
-    return {
-      total: allPlayers.length,
-      forwards: team.forwards.length,
-      defense: team.defensemen.length,
-      totalSkill: allPlayers.reduce((sum, p) => sum + p.skill, 0),
-      avgSkill: (allPlayers.reduce((sum, p) => sum + p.skill, 0) / allPlayers.length).toFixed(1)
-    };
-  };
-
-  const swapPlayer = (player, fromTeam, toTeam, newPosition = null) => {
-    const newTeams = JSON.parse(JSON.stringify(teams));
-    const sourceTeam = newTeams[fromTeam];
-    const targetTeam = newTeams[toTeam];
-    
-    const oldPosition = player.defense ? 'defensemen' : 'forwards';
-    sourceTeam[oldPosition] = sourceTeam[oldPosition].filter(p => p.name !== player.name);
-    
-    const newPlayer = { ...player };
-    if (newPosition !== null) {
-      newPlayer.defense = newPosition === 'defensemen';
-    }
-    const targetPosition = newPlayer.defense ? 'defensemen' : 'forwards';
-    targetTeam[targetPosition].push(newPlayer);
-    
     setTeams(newTeams);
-    setSelectedPlayer(null);
+    setActiveTab('roster');
   };
 
-  const undo = () => {
-    if (historyIndex > 0) {
-      setHistoryIndex(prev => prev - 1);
-      setTeams(history[historyIndex - 1]);
-    }
-  };
+  // Players Tab Content
+  const PlayersTab = () => (
+    <div className="mt-4">
+      <div className="mb-4 space-y-4">
+        <input
+          type="file"
+          accept=".csv"
+          onChange={handleFileUpload}
+          className="block w-full text-sm text-gray-500
+            file:mr-4 file:py-2 file:px-4
+            file:rounded-md file:border-0
+            file:text-sm file:font-semibold
+            file:bg-blue-50 file:text-blue-700
+            hover:file:bg-blue-100"
+        />
+      </div>
+      
+      <div className="overflow-x-auto">
+        <table className="min-w-full border-collapse border">
+          <thead>
+            <tr className="bg-gray-100">
+              <th className="border p-2">First Name</th>
+              <th className="border p-2">Last Name</th>
+              <th className="border p-2">Skill (1-10)</th>
+              <th className="border p-2">Defense</th>
+              <th className="border p-2">Attending</th>
+            </tr>
+          </thead>
+          <tbody>
+            {players.map((player, index) => (
+              <tr key={index} className="hover:bg-gray-50">
+                <td className="border p-2">
+                  <input
+                    type="text"
+                    value={player.firstName}
+                    onChange={(e) => updatePlayer(index, 'firstName', e.target.value)}
+                    className="w-full p-1"
+                  />
+                </td>
+                <td className="border p-2">
+                  <input
+                    type="text"
+                    value={player.lastName}
+                    onChange={(e) => updatePlayer(index, 'lastName', e.target.value)}
+                    className="w-full p-1"
+                  />
+                </td>
+                <td className="border p-2">
+                  <input
+                    type="number"
+                    min="1"
+                    max="10"
+                    value={player.skill}
+                    onChange={(e) => updatePlayer(index, 'skill', e.target.value)}
+                    className="w-full p-1"
+                  />
+                </td>
+                <td className="border p-2 text-center">
+                  <input
+                    type="checkbox"
+                    checked={player.defense}
+                    onChange={(e) => updatePlayer(index, 'defense', e.target.checked)}
+                    className="w-4 h-4"
+                  />
+                </td>
+                <td className="border p-2 text-center">
+                  <input
+                    type="checkbox"
+                    checked={player.attending}
+                    onChange={(e) => updatePlayer(index, 'attending', e.target.checked)}
+                    className="w-4 h-4"
+                  />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
-  const redo = () => {
-    if (historyIndex < history.length - 1) {
-      setHistoryIndex(prev => prev + 1);
-      setTeams(history[historyIndex + 1]);
-    }
-  };
+      {players.length > 0 && (
+        <button
+          onClick={generateRosters}
+          className="mt-4 bg-blue-600 text-white py-2 px-4 rounded-md
+            hover:bg-blue-700 transition-colors"
+        >
+          Generate Teams
+        </button>
+      )}
+    </div>
+  );
 
-  const saveConfig = () => {
-    const name = `Config ${savedConfigs.length + 1}`;
-    const newConfig = {
-      name,
-      teams,
-      timestamp: new Date().toISOString()
-    };
-    const updatedConfigs = [...savedConfigs, newConfig];
-    setSavedConfigs(updatedConfigs);
-    localStorage.setItem('rosterConfigs', JSON.stringify(updatedConfigs));
-  };
-
-  const loadConfig = (config) => {
-    setTeams(config.teams);
-    setHistory(prev => [...prev, config.teams]);
-    setHistoryIndex(prev => prev + 1);
-  };
-
-  const checkTeamBalance = () => {
-    if (!teams) return null;
-    const redStats = calculateTeamStats(teams.red);
-    const whiteStats = calculateTeamStats(teams.white);
-    const skillDiff = Math.abs(redStats.avgSkill - whiteStats.avgSkill);
-    return skillDiff > SKILL_THRESHOLD;
-  };
-
-  const TeamRoster = ({ team, name, colorClass, teamKey }) => {
-    const stats = calculateTeamStats(team);
-    const isUnbalanced = checkTeamBalance();
-    
-    return (
-      <div className="w-full border rounded-lg overflow-hidden">
-        <div className={`p-4 ${colorClass}`}>
-          <h2 className="text-xl font-bold">{name}</h2>
-          <div className="text-sm mt-2">
-            <div>Players: {stats.total} (F: {stats.forwards}, D: {stats.defense})</div>
-            <div>Avg Skill: {stats.avgSkill}</div>
-            {isUnbalanced && (
-              <div className="text-yellow-600 flex items-center gap-1 mt-1">
-                <AlertCircle className="w-4 h-4" />
-                Teams may be unbalanced
+  // Roster Tab Content
+  const RosterTab = () => (
+    <div className="grid md:grid-cols-2 gap-6 mt-4">
+      {/* Red Team */}
+      <div className="border rounded-lg overflow-hidden">
+        <div className="bg-red-600 text-white p-4">
+          <h2 className="text-xl font-bold">Red Team</h2>
+        </div>
+        <div className="p-4">
+          <h3 className="font-bold mb-2">Forwards</h3>
+          <div className="space-y-1 mb-4">
+            {teams.red.forwards.map((player, idx) => (
+              <div key={idx} className="flex justify-between p-2 bg-gray-50">
+                <span>{player.firstName} {player.lastName}</span>
+                <span className="text-gray-600">Skill: {player.skill}</span>
               </div>
-            )}
+            ))}
+          </div>
+          <h3 className="font-bold mb-2">Defense</h3>
+          <div className="space-y-1">
+            {teams.red.defensemen.map((player, idx) => (
+              <div key={idx} className="flex justify-between p-2 bg-gray-50">
+                <span>{player.firstName} {player.lastName}</span>
+                <span className="text-gray-600">Skill: {player.skill}</span>
+              </div>
+            ))}
           </div>
         </div>
-        <div className="divide-y">
-          {[...team.forwards, ...team.defensemen].map((player, idx) => (
-            <div 
-              key={player.name}
-              className={`flex items-center p-3 cursor-pointer
-                ${idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'}
-                ${selectedPlayer?.name === player.name ? 'bg-blue-50' : ''}
-                hover:bg-blue-50 transition-colors`}
-              onClick={() => setSelectedPlayer(player === selectedPlayer ? null : {
-                ...player,
-                currentTeam: teamKey
-              })}
-            >
-              <span className="flex-grow">{player.name}</span>
-              <span className="w-12 text-center text-gray-600">{player.defense ? 'D' : 'F'}</span>
-              <span className="w-12 text-center text-gray-600">{player.skill}</span>
-            </div>
-          ))}
+      </div>
+
+      {/* White Team */}
+      <div className="border rounded-lg overflow-hidden">
+        <div className="bg-gray-100 p-4">
+          <h2 className="text-xl font-bold">White Team</h2>
+        </div>
+        <div className="p-4">
+          <h3 className="font-bold mb-2">Forwards</h3>
+          <div className="space-y-1 mb-4">
+            {teams.white.forwards.map((player, idx) => (
+              <div key={idx} className="flex justify-between p-2 bg-gray-50">
+                <span>{player.firstName} {player.lastName}</span>
+                <span className="text-gray-600">Skill: {player.skill}</span>
+              </div>
+            ))}
+          </div>
+          <h3 className="font-bold mb-2">Defense</h3>
+          <div className="space-y-1">
+            {teams.white.defensemen.map((player, idx) => (
+              <div key={idx} className="flex justify-between p-2 bg-gray-50">
+                <span>{player.firstName} {player.lastName}</span>
+                <span className="text-gray-600">Skill: {player.skill}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
-    );
-  };
+    </div>
+  );
 
   return (
-    <div className="max-w-5xl mx-auto p-4 space-y-6">
-      <div className="bg-white rounded-lg shadow p-6 space-y-4">
-        <h1 className="text-2xl font-bold">Hockey Roster Generator</h1>
-        
-        <div>
-          <input
-            type="file"
-            accept=".csv"
-            onChange={handleFileUpload}
-            className="block w-full text-sm text-gray-500
-              file:mr-4 file:py-2 file:px-4
-              file:rounded-md file:border-0
-              file:text-sm file:font-semibold
-              file:bg-blue-50 file:text-blue-700
-              hover:file:bg-blue-100"
-          />
-        </div>
-        
-        {players.length > 0 && (
+    <div className="max-w-6xl mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-6">Hockey Roster Generator</h1>
+      
+      {/* Tab Navigation */}
+      <div className="border-b">
+        <nav className="-mb-px flex">
           <button
-            onClick={generateRosters}
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md
-              hover:bg-blue-700 transition-colors"
+            className={`py-2 px-4 border-b-2 font-medium text-sm ${
+              activeTab === 'players'
+                ? 'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+            onClick={() => setActiveTab('players')}
           >
-            Generate Teams
+            Players
           </button>
-        )}
+          <button
+            className={`ml-8 py-2 px-4 border-b-2 font-medium text-sm ${
+              activeTab === 'roster'
+                ? 'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+            onClick={() => setActiveTab('roster')}
+          >
+            Roster
+          </button>
+        </nav>
       </div>
 
-      {teams && (
-        <>
-          <div className="flex gap-2 justify-center">
-            <button
-              onClick={undo}
-              disabled={historyIndex <= 0}
-              className="bg-gray-100 p-2 rounded hover:bg-gray-200 disabled:opacity-50"
-              title="Undo"
-            >
-              <RotateCcw className="w-5 h-5" />
-            </button>
-            <button
-              onClick={redo}
-              disabled={historyIndex >= history.length - 1}
-              className="bg-gray-100 p-2 rounded hover:bg-gray-200 disabled:opacity-50"
-              title="Redo"
-            >
-              <RotateCcw className="w-5 h-5 transform scale-x-[-1]" />
-            </button>
-            <button
-              onClick={saveConfig}
-              className="bg-gray-100 p-2 rounded hover:bg-gray-200"
-              title="Save Configuration"
-            >
-              <Save className="w-5 h-5" />
-            </button>
-          </div>
-
-          {selectedPlayer && (
-            <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 
-              bg-white shadow-lg rounded-lg p-4 border border-gray-200 z-50 flex gap-2">
-              <button
-                onClick={() => swapPlayer(
-                  selectedPlayer,
-                  selectedPlayer.currentTeam,
-                  selectedPlayer.currentTeam === 'red' ? 'white' : 'red'
-                )}
-                className="flex items-center gap-2 bg-blue-600 text-white py-2 px-4 rounded-md
-                  hover:bg-blue-700 transition-colors"
-              >
-                <ArrowLeftRight className="w-4 h-4" />
-                Swap Teams
-              </button>
-              <button
-                onClick={() => swapPlayer(
-                  selectedPlayer,
-                  selectedPlayer.currentTeam,
-                  selectedPlayer.currentTeam,
-                  selectedPlayer.defense ? 'forwards' : 'defensemen'
-                )}
-                className="flex items-center gap-2 bg-green-600 text-white py-2 px-4 rounded-md
-                  hover:bg-green-700 transition-colors"
-              >
-                <UserPlus className="w-4 h-4" />
-                Change Position
-              </button>
-            </div>
-          )}
-
-          <div className="grid md:grid-cols-2 gap-6">
-            <TeamRoster 
-              team={teams.red}
-              name="Red Team"
-              colorClass="bg-red-600 text-white"
-              teamKey="red"
-            />
-            <TeamRoster 
-              team={teams.white}
-              name="White Team"
-              colorClass="bg-gray-100"
-              teamKey="white"
-            />
-          </div>
-        </>
-      )}
+      {/* Tab Content */}
+      {activeTab === 'players' ? <PlayersTab /> : <RosterTab />}
     </div>
   );
 }
