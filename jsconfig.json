@@ -1,9 +1,8 @@
-// jsconfig.json
 {
   "compilerOptions": {
-    "baseUrl": ".", // This sets the base directory for non-relative module resolution to the current directory
+    "baseUrl": ".",
     "paths": {
-      "@/*": ["./*"] // This makes it so you can import anything from the root with @/
+      "@/*": ["./*"]
     }
   },
   "exclude": ["node_modules"]
