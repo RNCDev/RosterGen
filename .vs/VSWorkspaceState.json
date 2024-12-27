@@ -1,6 +1,9 @@
 {
   "ExpandedNodes": [
-    ""
+    "",
+    "\\app",
+    "\\components"
   ],
+  "SelectedNode": "\\app\\tailwind.config.js",
   "PreviewInSolutionExplorer": false
 }
