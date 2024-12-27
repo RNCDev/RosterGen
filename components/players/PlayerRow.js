@@ -7,6 +7,7 @@ export function PlayerRow({ player, onUpdate, onDelete }) {
 
   const handleEdit = () => {
     setIsEditing(true);
+    setEditedPlayer(player); // Reset to original values when starting edit
   };
 
   const handleSave = () => {
@@ -23,20 +24,27 @@ export function PlayerRow({ player, onUpdate, onDelete }) {
     const { name, value } = e.target;
     setEditedPlayer(prev => ({
       ...prev,
-      [name]: value
+      [name]: name === 'skillLevel' ? parseInt(value, 10) : value
     }));
+  };
+
+  const handleDelete = () => {
+    // Add confirmation before deleting
+    if (window.confirm('Are you sure you want to delete this player?')) {
+      onDelete(player.id);
+    }
   };
 
   return (
     <tr className="hover:bg-gray-50">
-      <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm sm:pl-6">
+      <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm">
         {isEditing ? (
           <input
             type="text"
             name="name"
             value={editedPlayer.name}
             onChange={handleChange}
-            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+            className="block w-full rounded-md border border-gray-300 p-2"
           />
         ) : (
           <span className="font-medium text-gray-900">{player.name}</span>
@@ -49,7 +57,7 @@ export function PlayerRow({ player, onUpdate, onDelete }) {
             name="position"
             value={editedPlayer.position}
             onChange={handleChange}
-            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+            className="block w-full rounded-md border border-gray-300 p-2"
           />
         ) : (
           player.position
@@ -64,7 +72,7 @@ export function PlayerRow({ player, onUpdate, onDelete }) {
             onChange={handleChange}
             min="1"
             max="10"
-            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+            className="block w-full rounded-md border border-gray-300 p-2"
           />
         ) : (
           player.skillLevel
@@ -73,12 +81,18 @@ export function PlayerRow({ player, onUpdate, onDelete }) {
       <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
         <input
           type="checkbox"
-          checked={player.status}
-          onChange={(e) => onUpdate({ ...player, status: e.target.checked })}
-          className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+          checked={isEditing ? editedPlayer.status : player.status}
+          onChange={(e) => {
+            if (isEditing) {
+              setEditedPlayer(prev => ({ ...prev, status: e.target.checked }));
+            } else {
+              onUpdate({ ...player, status: e.target.checked });
+            }
+          }}
+          className="h-4 w-4 rounded border-gray-300"
         />
       </td>
-      <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+      <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium">
         <div className="flex justify-end gap-2">
           {isEditing ? (
             <>
@@ -104,7 +118,7 @@ export function PlayerRow({ player, onUpdate, onDelete }) {
                 Edit
               </button>
               <button
-                onClick={() => onDelete(player.id)}
+                onClick={handleDelete}
                 className="text-red-600 hover:text-red-900"
               >
                 Delete
