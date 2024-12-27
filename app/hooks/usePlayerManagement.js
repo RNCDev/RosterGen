@@ -1,6 +1,5 @@
-// app/hooks/usePlayerManagement.js
+// hooks/usePlayerManagement.js
 import { useState, useCallback } from 'react';
-import { PlayerService } from '../services/PlayerService';
 
 export function usePlayerManagement() {
   const [players, setPlayers] = useState([]);
@@ -8,59 +7,90 @@ export function usePlayerManagement() {
   const [error, setError] = useState(null);
 
   const fetchPlayers = useCallback(async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      setError(null);
-      const fetchedPlayers = await PlayerService.fetchPlayers();
-      setPlayers(fetchedPlayers);
+      const response = await fetch('/api/players');
+      if (!response.ok) throw new Error('Failed to fetch players');
+      const data = await response.json();
+      setPlayers(data);
     } catch (err) {
-      setError(`Failed to load players: ${err.message}`);
-      console.error('Fetch error:', err);
+      setError(err.message);
     } finally {
       setLoading(false);
     }
   }, []);
 
-  const updatePlayer = useCallback(async (id, field, value) => {
-    const playerToUpdate = players.find(p => p.id === id);
-    if (!playerToUpdate) return;
+  const updatePlayer = async (updatedPlayer) => {
+    try {
+      const response = await fetch(`/api/players/${updatedPlayer.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatedPlayer),
+      });
+      
+      if (!response.ok) throw new Error('Failed to update player');
+      
+      setPlayers(current =>
+        current.map(p => p.id === updatedPlayer.id ? updatedPlayer : p)
+      );
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const deletePlayer = async (playerId) => {
+    try {
+      const response = await fetch(`/api/players/${playerId}`, {
+        method: 'DELETE',
+      });
+      
+      if (!response.ok) throw new Error('Failed to delete player');
+      
+      setPlayers(current => current.filter(p => p.id !== playerId));
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const addPlayer = async (newPlayer) => {
+    try {
+      const response = await fetch('/api/players', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newPlayer),
+      });
+      
+      if (!response.ok) throw new Error('Failed to add player');
+      
+      const savedPlayer = await response.json();
+      setPlayers(current => [...current, savedPlayer]);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const handleFileUpload = async (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
 
     try {
-      setLoading(true);
-      setError(null);
-
-      const updatedData = {
-        ...playerToUpdate,
-        [field]: field === 'skill' ? Number(value) : 
-                field === 'is_defense' || field === 'is_attending' ? Boolean(value) : 
-                value
-      };
-
-      await PlayerService.updatePlayer(id, updatedData);
-      await fetchPlayers(); // Refresh the player list
+      const response = await fetch('/api/players/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) throw new Error('Failed to upload players');
+      
+      const data = await response.json();
+      setPlayers(data);
     } catch (err) {
-      setError(`Failed to update player: ${err.message}`);
-      console.error('Update error:', err);
-    } finally {
-      setLoading(false);
+      setError(err.message);
     }
-  }, [players, fetchPlayers]);
-
-  const handleFileUpload = useCallback(async (file) => {
-    if (!file) return;
-
-    try {
-      setLoading(true);
-      setError(null);
-      await PlayerService.uploadPlayersFromCsv(file);
-      await fetchPlayers(); // Refresh the player list
-    } catch (err) {
-      setError(`Failed to upload players: ${err.message}`);
-      console.error('Upload error:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [fetchPlayers]);
+  };
 
   return {
     players,
@@ -68,6 +98,8 @@ export function usePlayerManagement() {
     error,
     fetchPlayers,
     updatePlayer,
-    handleFileUpload
+    deletePlayer,
+    addPlayer,
+    handleFileUpload,
   };
 }
