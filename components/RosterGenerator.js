@@ -1,7 +1,7 @@
 // app/components/RosterGenerator.js
 import React, { useEffect, useState } from 'react';
-import { usePlayerManagement } from './app/hooks/usePlayerManagement';
-import { useTeamGeneration } from './app/hooks/useTeamGeneration';
+import { usePlayerManagement } from '../app/hooks/usePlayerManagement';
+import { useTeamGeneration } from '../app/hooks/useTeamGeneration';
 import { PlayerTable } from './players/PlayerTable';
 import { PlayerUpload } from './players/PlayerUpload';
 import { TeamRoster } from './teams/TeamRoster';
