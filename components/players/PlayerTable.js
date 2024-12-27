@@ -2,21 +2,7 @@
 import React from 'react';
 import { PlayerRow } from './PlayerRow';
 
-export const PlayerTable = ({ players, onUpdatePlayer, debounceUpdate = false }) => {
-  
-    const debouncedUpdate = debounce((id, field, value) => {
-        onUpdatePlayer(id, field, value);
-    }, 500); // Debounce for 500ms
-
-    const handleInputChange = (event, player) => {
-        const { name, value } = event.target;
-        if (debounceUpdate) {
-            debouncedUpdate(player.id, name, value);
-        } else {
-            onUpdatePlayer(player.id, name, value);
-        }
-    };
-  
+export function PlayerTable({ players, onUpdatePlayer }) {
   return (
     <div className="overflow-x-auto">
       <table className="min-w-full border-collapse border">
