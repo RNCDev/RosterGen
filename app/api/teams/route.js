@@ -1,6 +1,6 @@
 // app/api/teams/route.js
 import { NextResponse } from 'next/server';
-import { saveTeamAssignments } from '../../../lib/db';
+import { saveTeamAssignments } from '@/lib/db';
 
 export async function POST(request) {
   try {
