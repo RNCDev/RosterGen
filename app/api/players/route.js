@@ -1,6 +1,6 @@
 // app/api/players/route.js
 import { NextResponse } from 'next/server';
-import { getAllPlayers, addPlayer, updatePlayer } from '@/lib/db';
+import { getAllPlayers, addPlayer, updatePlayer } from '../../../lib/db';
 
 export async function GET() {
   try {
