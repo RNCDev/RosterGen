@@ -1,12 +1,12 @@
 // app/components/RosterGenerator.js
 import React, { useEffect, useState } from 'react';
 
-import { LoadingSpinner } from '../shared/LoadingSpinner';
-import { ErrorMessage } from '../shared/ErrorMessage';
-import { TabNavigation } from '../shared/TabNavigation';
-
 import { usePlayerManagement } from '../app/hooks/usePlayerManagement';
 import { useTeamGeneration } from '../app/hooks/useTeamGeneration';
+
+import { LoadingSpinner } from './shared/LoadingSpinner';
+import { ErrorMessage } from './shared/ErrorMessage';
+import { TabNavigation } from './shared/TabNavigation';
 
 import { PlayerTable } from './players/PlayerTable';
 import { PlayerUpload } from './players/PlayerUpload';
