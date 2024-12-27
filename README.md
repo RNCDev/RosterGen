@@ -1,4 +1,3 @@
 # RosterGen
 Roster Generator for Hockey
-
-This is a STABLE VERSION 0.2 as of 12/27
+Creating a roster generator with the help of Claude
