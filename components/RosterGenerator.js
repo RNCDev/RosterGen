@@ -3,9 +3,8 @@
 // components/RosterGenerator.js
 import React, { useEffect, useState } from 'react';
 import { usePlayerManagement } from '../hooks/usePlayerManagement';
-import { PlayerTable } from '@/components/players/PlayerTable';
-import { PlayerUpload } from '@/components/players/PlayerUpload';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { PlayerTable } from './players/PlayerTable';
+import { PlayerUpload } from './players/PlayerUpload';
 import { Loader2 } from 'lucide-react';
 
 const LoadingSpinner = () => (
