@@ -222,13 +222,13 @@ export default function RosterGenerator() {
               </tr>
             </thead>
             <tbody>
-              {players.map((player) => (
-                <tr key={player.id} className="hover:bg-gray-50">
+              {players.map((player, index) => (
+                <tr key={player.id || index} className="hover:bg-gray-50">
                   <td className="border p-2">
                     <input
                       type="text"
                       value={player.first_name}
-                      onChange={(e) => updatePlayer(player.id, 'first_name', e.target.value)}
+                      onChange={(e) => updatePlayer(player.id || index, 'first_name', e.target.value)}
                       className="w-full p-1"
                     />
                   </td>
@@ -304,8 +304,8 @@ export default function RosterGenerator() {
           <div className="p-4">
             <h3 className="font-bold mb-2">Forwards</h3>
             <div className="space-y-1 mb-4">
-              {teams.red.forwards.map((player) => (
-                <div key={player.id} className="flex justify-between p-2 bg-gray-50">
+              {teams.red.forwards.map((player, index) => (
+                <div key={player.id || `red-forward-${index}`} className="flex justify-between p-2 bg-gray-50">
                   <span>{player.first_name} {player.last_name}</span>
                   <span className="text-gray-600">Skill: {player.skill}</span>
                 </div>
@@ -313,8 +313,8 @@ export default function RosterGenerator() {
             </div>
             <h3 className="font-bold mb-2">Defense</h3>
             <div className="space-y-1">
-              {teams.red.defensemen.map((player) => (
-                <div key={player.id} className="flex justify-between p-2 bg-gray-50">
+              {teams.red.defensemen.map((player, index) => (
+                <div key={player.id || `red-defense-${index}`} className="flex justify-between p-2 bg-gray-50">
                   <span>{player.first_name} {player.last_name}</span>
                   <span className="text-gray-600">Skill: {player.skill}</span>
                 </div>
@@ -331,8 +331,8 @@ export default function RosterGenerator() {
           <div className="p-4">
             <h3 className="font-bold mb-2">Forwards</h3>
             <div className="space-y-1 mb-4">
-              {teams.white.forwards.map((player) => (
-                <div key={player.id} className="flex justify-between p-2 bg-gray-50">
+              {teams.white.forwards.map((player, index) => (
+                <div key={player.id || `white-forward-${index}`} className="flex justify-between p-2 bg-gray-50">
                   <span>{player.first_name} {player.last_name}</span>
                   <span className="text-gray-600">Skill: {player.skill}</span>
                 </div>
@@ -340,8 +340,8 @@ export default function RosterGenerator() {
             </div>
             <h3 className="font-bold mb-2">Defense</h3>
             <div className="space-y-1">
-              {teams.white.defensemen.map((player) => (
-                <div key={player.id} className="flex justify-between p-2 bg-gray-50">
+              {teams.white.defensemen.map((player, index) => (
+                <div key={player.id || `white-defense-${index}`} className="flex justify-between p-2 bg-gray-50">
                   <span>{player.first_name} {player.last_name}</span>
                   <span className="text-gray-600">Skill: {player.skill}</span>
                 </div>
