@@ -5,8 +5,7 @@ import { PlayerRow } from './PlayerRow';
 export function PlayerTable({ players, onUpdatePlayer, onDeletePlayer, onAddPlayer }) {
   const handleAddPlayer = () => {
     const newPlayer = {
-      id: Date.now(), // temporary ID
-      name: '',
+      name: 'New Player',
       position: '',
       skillLevel: 5,
       status: true
@@ -29,7 +28,7 @@ export function PlayerTable({ players, onUpdatePlayer, onDeletePlayer, onAddPlay
           <button
             type="button"
             onClick={handleAddPlayer}
-            className="block rounded-md bg-blue-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+            className="block rounded-md bg-blue-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-blue-500"
           >
             Add Player
           </button>
@@ -42,11 +41,11 @@ export function PlayerTable({ players, onUpdatePlayer, onDeletePlayer, onAddPlay
             <table className="min-w-full divide-y divide-gray-300">
               <thead>
                 <tr>
-                  <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-0">Name</th>
+                  <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900">Name</th>
                   <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Position</th>
                   <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Skill Level</th>
                   <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Active</th>
-                  <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-0">
+                  <th scope="col" className="relative py-3.5 pl-3 pr-4">
                     <span className="sr-only">Actions</span>
                   </th>
                 </tr>
