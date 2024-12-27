@@ -31,57 +31,59 @@ export default function RosterGenerator() {
   };
 
   // Handle CSV upload
-  const handleFileUpload = async (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      setLoading(true);
-      setError(null);
-      
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        try {
-          const text = e.target.result;
-          const lines = text.split('\n');
-          const playerData = lines.slice(1).filter(line => line.trim());
+const handleFileUpload = async (event) => {
+  const file = event.target.files[0];
+  if (file) {
+    setLoading(true);
+    setError(null);
+    
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      try {
+        const text = e.target.result;
+        const lines = text.split('\n');
+        const playerData = lines.slice(1).filter(line => line.trim());
+        
+        for (const line of playerData) {
+          const [firstName, lastName, skill, defense, attending] = line.split(',').map(item => item.trim());
+          const playerData = {
+            first_name: firstName,
+            last_name: lastName,
+            skill: Number(skill) || 0,
+            is_defense: Number(defense) === 1,
+            is_attending: Number(attending) === 1
+          };
           
-          for (const line of playerData) {
-            const [firstName, lastName, skill, defense, attending] = line.split(',').map(item => item.trim());
-            const playerData = {
-              first_name: firstName,
-              last_name: lastName,
-              skill: Number(skill) || 0,
-              is_defense: Number(defense) === 1,
-              is_attending: Number(attending) === 1
-            };
-            
-            const response = await fetch('/api/players', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(playerData),
-            });
+          const response = await fetch('/api/players', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(playerData),
+          });
 
-            if (!response.ok) {
-              throw new Error(`Failed to add player ${firstName} ${lastName}`);
-            }
+          console.log('Server response:', response); // Add this line
+
+          if (!response.ok) {
+            throw new Error(`Failed to add player ${firstName} ${lastName}`);
           }
-          
-          await fetchPlayers();
-        } catch (err) {
-          setError(`Failed to process CSV: ${err.message}`);
-          console.error('Failed to process CSV:', err);
-        } finally {
-          setLoading(false);
         }
-      };
-
-      reader.onerror = () => {
-        setError('Failed to read the CSV file');
+        
+        await fetchPlayers();
+      } catch (err) {
+        setError(`Failed to process CSV: ${err.message}`);
+        console.error('Failed to process CSV:', err);
+      } finally {
         setLoading(false);
-      };
+      }
+    };
 
-      reader.readAsText(file);
-    }
-  };
+    reader.onerror = () => {
+      setError('Failed to read the CSV file');
+      setLoading(false);
+    };
+
+    reader.readAsText(file);
+  }
+};
 
   // Function to update player data
   const updatePlayer = async (id, field, value) => {
