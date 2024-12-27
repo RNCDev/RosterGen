@@ -1,115 +1,30 @@
-// hooks/usePlayerManagement.js
-import { useState, useCallback } from 'react';
+'use client';
 
-export const usePlayerManagement = () => {
-  const [players, setPlayers] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+// components/RosterGenerator.js
+import React, { useEffect, useState } from 'react';
+import { usePlayerManagement } from '@/hooks/usePlayerManagement';
+import { PlayerTable } from '@/components/players/PlayerTable';
+import { PlayerUpload } from '@/components/players/PlayerUpload';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Loader2 } from 'lucide-react';
 
-  const fetchPlayers = useCallback(async () => {
-    setLoading(true);
-    try {
-      // In a real app, this would be an API call
-      // For now, we'll just use localStorage
-      const savedPlayers = localStorage.getItem('players');
-      if (savedPlayers) {
-        setPlayers(JSON.parse(savedPlayers));
-      }
-      setError(null);
-    } catch (err) {
-      setError('Failed to fetch players');
-      console.error('Error fetching players:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+const LoadingSpinner = () => (
+  <div className="flex justify-center items-center">
+    <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+  </div>
+);
 
-  const updatePlayer = useCallback(async (updatedPlayer) => {
-    setLoading(true);
-    try {
-      setPlayers(currentPlayers => {
-        const newPlayers = currentPlayers.map(player =>
-          player.id === updatedPlayer.id ? updatedPlayer : player
-        );
-        localStorage.setItem('players', JSON.stringify(newPlayers));
-        return newPlayers;
-      });
-      setError(null);
-    } catch (err) {
-      setError('Failed to update player');
-      console.error('Error updating player:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+const ErrorMessage = ({ message }) => (
+  <Alert variant="destructive" className="mt-4">
+    <AlertDescription>{message}</AlertDescription>
+  </Alert>
+);
 
-  const deletePlayer = useCallback(async (playerId) => {
-    setLoading(true);
-    try {
-      setPlayers(currentPlayers => {
-        const newPlayers = currentPlayers.filter(player => player.id !== playerId);
-        localStorage.setItem('players', JSON.stringify(newPlayers));
-        return newPlayers;
-      });
-      setError(null);
-    } catch (err) {
-      setError('Failed to delete player');
-      console.error('Error deleting player:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const addPlayer = useCallback(async (newPlayer) => {
-    setLoading(true);
-    try {
-      setPlayers(currentPlayers => {
-        const playersWithNew = [...currentPlayers, { ...newPlayer, id: Date.now() }];
-        localStorage.setItem('players', JSON.stringify(playersWithNew));
-        return playersWithNew;
-      });
-      setError(null);
-    } catch (err) {
-      setError('Failed to add player');
-      console.error('Error adding player:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const handleFileUpload = useCallback(async (file) => {
-    setLoading(true);
-    try {
-      const text = await file.text();
-      const rows = text.split('\n').filter(row => row.trim());
-      const headers = rows[0].split(',');
-      
-      const parsedPlayers = rows.slice(1).map((row, index) => {
-        const values = row.split(',');
-        return {
-          id: Date.now() + index, // Ensure unique IDs
-          name: values[0]?.trim() || '',
-          position: values[1]?.trim() || '',
-          skillLevel: parseInt(values[2]?.trim()) || 5,
-          status: values[3] ? values[3].trim().toLowerCase() === 'true' : true
-        };
-      });
-      
-      setPlayers(currentPlayers => {
-        const allPlayers = [...currentPlayers, ...parsedPlayers];
-        localStorage.setItem('players', JSON.stringify(allPlayers));
-        return allPlayers;
-      });
-      setError(null);
-    } catch (err) {
-      setError('Failed to process CSV file');
-      console.error('Error processing CSV:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  return {
+const RosterGenerator = () => {
+  const [showUpload, setShowUpload] = useState(false);
+  const [activeTab, setActiveTab] = useState('players');
+  
+  const {
     players,
     loading,
     error,
@@ -118,5 +33,75 @@ export const usePlayerManagement = () => {
     deletePlayer,
     addPlayer,
     handleFileUpload
-  };
+  } = usePlayerManagement();
+
+  useEffect(() => {
+    fetchPlayers();
+  }, [fetchPlayers]);
+
+  const renderActionButtons = () => (
+    <div className="flex gap-3 md:gap-4">
+      <button
+        onClick={() => setShowUpload(!showUpload)}
+        className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 
+          bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+      >
+        {showUpload ? 'Hide Upload' : 'Upload CSV'}
+      </button>
+      {players.length > 0 && (
+        <button
+          onClick={() => setActiveTab('roster')}
+          className="inline-flex items-center px-4 py-2 text-sm font-medium text-white 
+            bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700"
+        >
+          Generate Teams
+        </button>
+      )}
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+          <div className="px-6 py-5 border-b border-gray-200">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <h1 className="text-2xl font-bold text-gray-900">
+                Hockey Roster Generator
+              </h1>
+              {renderActionButtons()}
+            </div>
+          </div>
+          
+          {error && <ErrorMessage message={error} />}
+          
+          {loading ? (
+            <div className="px-6 py-12">
+              <LoadingSpinner />
+            </div>
+          ) : (
+            <div className="px-6 py-6">
+              <div className="space-y-6">
+                {showUpload && (
+                  <div className="bg-gray-50 rounded-lg border border-gray-200">
+                    <div className="px-6 py-5">
+                      <PlayerUpload onUpload={handleFileUpload} />
+                    </div>
+                  </div>
+                )}
+                <PlayerTable 
+                  players={players}
+                  onUpdatePlayer={updatePlayer}
+                  onDeletePlayer={deletePlayer}
+                  onAddPlayer={addPlayer}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 };
+
+export default RosterGenerator;
