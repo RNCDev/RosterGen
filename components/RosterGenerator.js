@@ -45,6 +45,7 @@ export default function RosterGenerator() {
       Papa.parse(file, {
         header: true,
         skipEmptyLines: true,
+        transformHeader: header => header.trim().toLowerCase().replace(/\s+/g, '_'),
         complete: async (results) => {
           try {
             if (results.errors.length > 0) {
@@ -52,12 +53,15 @@ export default function RosterGenerator() {
             }
 
             for (const row of results.data) {
+              // Handle both camelCase and snake_case column names
               const playerData = {
-                first_name: row.firstName?.trim() || '',
-                last_name: row.lastName?.trim() || '',
-                skill: parseInt(row.skill) || 0,
-                is_defense: row.defense?.toLowerCase() === 'true' || row.defense === '1',
-                is_attending: row.attending?.toLowerCase() === 'true' || row.attending === '1'
+                first_name: (row.first_name || row.firstName || row.firstname || '')?.trim(),
+                last_name: (row.last_name || row.lastName || row.lastname || '')?.trim(),
+                skill: parseInt(row.skill || row.skill_level || '0'),
+                is_defense: (row.defense || row.is_defense || row.isDefense || '0')?.toString().toLowerCase() === 'true' || 
+                          (row.defense || row.is_defense || row.isDefense || '0')?.toString() === '1',
+                is_attending: (row.attending || row.is_attending || row.isAttending || '1')?.toString().toLowerCase() === 'true' || 
+                            (row.attending || row.is_attending || row.isAttending || '1')?.toString() === '1'
               };
 
               if (!playerData.first_name || !playerData.last_name) {
