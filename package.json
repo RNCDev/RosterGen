@@ -1,0 +1,19 @@
+{
+  "name": "roster-generator",
+  "version": "1.0.0",
+  "description": "Roster Generator for Hockey Creating a roster generator with the help of Claude",
+  "main": "index.js",
+  "scripts": {
+    "start": "next dev",
+    "build": "next build"
+  },
+  "dependencies": {
+    "next": "^14.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "papaparse": "^5.4.1",
+    "lodash": "^4.17.21",
+    "lucide-react": "^0.263.1",
+    "@vercel/postgres": "latest"
+  }
+}
