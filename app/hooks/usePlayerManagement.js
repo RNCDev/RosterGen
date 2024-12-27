@@ -1,4 +1,6 @@
 // hooks/usePlayerManagement.js
+'use client';
+
 import { useState, useCallback } from 'react';
 
 export const usePlayerManagement = () => {
@@ -7,11 +9,11 @@ export const usePlayerManagement = () => {
   const [error, setError] = useState(null);
 
   const fetchPlayers = useCallback(async () => {
+    if (typeof window === 'undefined') return; // Guard for SSR
+    
     setLoading(true);
     try {
-      // In a real app, this would be an API call
-      // For now, we'll just use localStorage
-      const savedPlayers = localStorage.getItem('players');
+      const savedPlayers = localStorage.getItem('hockey-players');
       if (savedPlayers) {
         setPlayers(JSON.parse(savedPlayers));
       }
@@ -24,6 +26,15 @@ export const usePlayerManagement = () => {
     }
   }, []);
 
+  const savePlayersToStorage = useCallback((newPlayers) => {
+    if (typeof window === 'undefined') return; // Guard for SSR
+    try {
+      localStorage.setItem('hockey-players', JSON.stringify(newPlayers));
+    } catch (err) {
+      console.error('Error saving to localStorage:', err);
+    }
+  }, []);
+
   const updatePlayer = useCallback(async (updatedPlayer) => {
     setLoading(true);
     try {
@@ -31,7 +42,7 @@ export const usePlayerManagement = () => {
         const newPlayers = currentPlayers.map(player =>
           player.id === updatedPlayer.id ? updatedPlayer : player
         );
-        localStorage.setItem('players', JSON.stringify(newPlayers));
+        savePlayersToStorage(newPlayers);
         return newPlayers;
       });
       setError(null);
@@ -41,14 +52,14 @@ export const usePlayerManagement = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [savePlayersToStorage]);
 
   const deletePlayer = useCallback(async (playerId) => {
     setLoading(true);
     try {
       setPlayers(currentPlayers => {
         const newPlayers = currentPlayers.filter(player => player.id !== playerId);
-        localStorage.setItem('players', JSON.stringify(newPlayers));
+        savePlayersToStorage(newPlayers);
         return newPlayers;
       });
       setError(null);
@@ -58,15 +69,22 @@ export const usePlayerManagement = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [savePlayersToStorage]);
 
-  const addPlayer = useCallback(async (newPlayer) => {
+  const addPlayer = useCallback(async (playerData) => {
     setLoading(true);
     try {
+      const newPlayer = {
+        ...playerData,
+        id: Date.now(),
+        status: true,
+        skillLevel: playerData.skillLevel || 5
+      };
+      
       setPlayers(currentPlayers => {
-        const playersWithNew = [...currentPlayers, { ...newPlayer, id: Date.now() }];
-        localStorage.setItem('players', JSON.stringify(playersWithNew));
-        return playersWithNew;
+        const newPlayers = [...currentPlayers, newPlayer];
+        savePlayersToStorage(newPlayers);
+        return newPlayers;
       });
       setError(null);
     } catch (err) {
@@ -75,30 +93,29 @@ export const usePlayerManagement = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [savePlayersToStorage]);
 
   const handleFileUpload = useCallback(async (file) => {
     setLoading(true);
     try {
       const text = await file.text();
       const rows = text.split('\n').filter(row => row.trim());
-      const headers = rows[0].split(',');
       
       const parsedPlayers = rows.slice(1).map((row, index) => {
-        const values = row.split(',');
+        const values = row.split(',').map(val => val.trim());
         return {
-          id: Date.now() + index, // Ensure unique IDs
-          name: values[0]?.trim() || '',
-          position: values[1]?.trim() || '',
-          skillLevel: parseInt(values[2]?.trim()) || 5,
-          status: values[3] ? values[3].trim().toLowerCase() === 'true' : true
+          id: Date.now() + index,
+          name: values[0] || '',
+          position: values[1] || '',
+          skillLevel: parseInt(values[2]) || 5,
+          status: values[3] ? values[3].toLowerCase() === 'true' : true
         };
       });
       
       setPlayers(currentPlayers => {
-        const allPlayers = [...currentPlayers, ...parsedPlayers];
-        localStorage.setItem('players', JSON.stringify(allPlayers));
-        return allPlayers;
+        const newPlayers = [...currentPlayers, ...parsedPlayers];
+        savePlayersToStorage(newPlayers);
+        return newPlayers;
       });
       setError(null);
     } catch (err) {
@@ -107,7 +124,7 @@ export const usePlayerManagement = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [savePlayersToStorage]);
 
   return {
     players,
