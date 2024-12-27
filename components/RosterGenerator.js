@@ -1,13 +1,13 @@
 // app/components/RosterGenerator.js
 import React, { useEffect, useState } from 'react';
-import { usePlayerManagement } from '@/hooks/usePlayerManagement';
-import { useTeamGeneration } from '@/hooks/useTeamGeneration';
-import { PlayerTable } from '@/components/players/PlayerTable';
-import { PlayerUpload } from '@/components/players/PlayerUpload';
-import { TeamRoster } from '@/components/teams/TeamRoster';
-import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
-import { ErrorMessage } from '@/components/shared/ErrorMessage';
-import { TabNavigation } from '@/components/shared/TabNavigation';
+import { usePlayerManagement } from '../../hooks/usePlayerManagement';
+import { useTeamGeneration } from '../../hooks/useTeamGeneration';
+import { PlayerTable } from '../players/PlayerTable';
+import { PlayerUpload } from '../players/PlayerUpload';
+import { TeamRoster } from '../teams/TeamRoster';
+import { LoadingSpinner } from '../shared/LoadingSpinner';
+import { ErrorMessage } from '../shared/ErrorMessage';
+import { TabNavigation } from '../shared/TabNavigation';
 
 export default function RosterGenerator() {
   const [activeTab, setActiveTab] = useState('players');
