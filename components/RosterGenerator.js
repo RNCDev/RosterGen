@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeftRight } from 'lucide-react';
 
-export const RosterGenerator = () => {
+export default function RosterGenerator() {
   const [activeTab, setActiveTab] = useState('players');
   const [players, setPlayers] = useState([]);
   const [teams, setTeams] = useState({ red: { forwards: [], defensemen: [] }, white: { forwards: [], defensemen: [] }});
@@ -170,9 +170,174 @@ export const RosterGenerator = () => {
     }
   };
 
-  // Tab components remain the same as in your previous code
-  const PlayersTab = () => (/* Your existing PlayersTab code */);
-  const RosterTab = () => (/* Your existing RosterTab code */);
+ // Tab Components
+  const PlayersTab = () => {
+    if (loading) {
+      return (
+        <div className="flex justify-center py-4">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="mt-4">
+        <div className="mb-4 space-y-4">
+          <input
+            type="file"
+            accept=".csv"
+            onChange={handleFileUpload}
+            className="block w-full text-sm text-gray-500
+              file:mr-4 file:py-2 file:px-4
+              file:rounded-md file:border-0
+              file:text-sm file:font-semibold
+              file:bg-blue-50 file:text-blue-700
+              hover:file:bg-blue-100"
+          />
+        </div>
+        
+        <div className="overflow-x-auto">
+          <table className="min-w-full border-collapse border">
+            <thead>
+              <tr className="bg-gray-100">
+                <th className="border p-2">First Name</th>
+                <th className="border p-2">Last Name</th>
+                <th className="border p-2">Skill (1-10)</th>
+                <th className="border p-2">Defense</th>
+                <th className="border p-2">Attending</th>
+              </tr>
+            </thead>
+            <tbody>
+              {players.map((player) => (
+                <tr key={player.id} className="hover:bg-gray-50">
+                  <td className="border p-2">
+                    <input
+                      type="text"
+                      value={player.first_name}
+                      onChange={(e) => updatePlayer(player.id, 'first_name', e.target.value)}
+                      className="w-full p-1"
+                    />
+                  </td>
+                  <td className="border p-2">
+                    <input
+                      type="text"
+                      value={player.last_name}
+                      onChange={(e) => updatePlayer(player.id, 'last_name', e.target.value)}
+                      className="w-full p-1"
+                    />
+                  </td>
+                  <td className="border p-2">
+                    <input
+                      type="number"
+                      min="1"
+                      max="10"
+                      value={player.skill}
+                      onChange={(e) => updatePlayer(player.id, 'skill', e.target.value)}
+                      className="w-full p-1"
+                    />
+                  </td>
+                  <td className="border p-2 text-center">
+                    <input
+                      type="checkbox"
+                      checked={player.is_defense}
+                      onChange={(e) => updatePlayer(player.id, 'is_defense', e.target.checked)}
+                      className="w-4 h-4"
+                    />
+                  </td>
+                  <td className="border p-2 text-center">
+                    <input
+                      type="checkbox"
+                      checked={player.is_attending}
+                      onChange={(e) => updatePlayer(player.id, 'is_attending', e.target.checked)}
+                      className="w-4 h-4"
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {players.length > 0 && (
+          <button
+            onClick={generateRosters}
+            className="mt-4 bg-blue-600 text-white py-2 px-4 rounded-md
+              hover:bg-blue-700 transition-colors"
+          >
+            Generate Teams
+          </button>
+        )}
+      </div>
+    );
+  };
+
+  const RosterTab = () => {
+    if (loading) {
+      return (
+        <div className="col-span-2 flex justify-center py-4">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="grid md:grid-cols-2 gap-6 mt-4">
+        {/* Red Team */}
+        <div className="border rounded-lg overflow-hidden">
+          <div className="bg-red-600 text-white p-4">
+            <h2 className="text-xl font-bold">Red Team</h2>
+          </div>
+          <div className="p-4">
+            <h3 className="font-bold mb-2">Forwards</h3>
+            <div className="space-y-1 mb-4">
+              {teams.red.forwards.map((player) => (
+                <div key={player.id} className="flex justify-between p-2 bg-gray-50">
+                  <span>{player.first_name} {player.last_name}</span>
+                  <span className="text-gray-600">Skill: {player.skill}</span>
+                </div>
+              ))}
+            </div>
+            <h3 className="font-bold mb-2">Defense</h3>
+            <div className="space-y-1">
+              {teams.red.defensemen.map((player) => (
+                <div key={player.id} className="flex justify-between p-2 bg-gray-50">
+                  <span>{player.first_name} {player.last_name}</span>
+                  <span className="text-gray-600">Skill: {player.skill}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* White Team */}
+        <div className="border rounded-lg overflow-hidden">
+          <div className="bg-gray-100 p-4">
+            <h2 className="text-xl font-bold">White Team</h2>
+          </div>
+          <div className="p-4">
+            <h3 className="font-bold mb-2">Forwards</h3>
+            <div className="space-y-1 mb-4">
+              {teams.white.forwards.map((player) => (
+                <div key={player.id} className="flex justify-between p-2 bg-gray-50">
+                  <span>{player.first_name} {player.last_name}</span>
+                  <span className="text-gray-600">Skill: {player.skill}</span>
+                </div>
+              ))}
+            </div>
+            <h3 className="font-bold mb-2">Defense</h3>
+            <div className="space-y-1">
+              {teams.white.defensemen.map((player) => (
+                <div key={player.id} className="flex justify-between p-2 bg-gray-50">
+                  <span>{player.first_name} {player.last_name}</span>
+                  <span className="text-gray-600">Skill: {player.skill}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="max-w-6xl mx-auto p-4">
