@@ -11,6 +11,7 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Missing required fields' });
       }
 
+      // Note: Removed id from the INSERT statement - let the database generate it
       const result = await sql`
         INSERT INTO players (first_name, last_name, skill, is_defense, is_attending)
         VALUES (${first_name}, ${last_name}, ${skill}, ${is_defense}, ${is_attending})
