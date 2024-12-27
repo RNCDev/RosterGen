@@ -1,16 +1,17 @@
-// components/RosterGenerator.js
-'use client';
 import React, { useState, useEffect } from 'react';
 import { ArrowLeftRight } from 'lucide-react';
+import Papa from 'papaparse';
 
 export default function RosterGenerator() {
   const [activeTab, setActiveTab] = useState('players');
   const [players, setPlayers] = useState([]);
-  const [teams, setTeams] = useState({ red: { forwards: [], defensemen: [] }, white: { forwards: [], defensemen: [] }});
+  const [teams, setTeams] = useState({ 
+    red: { forwards: [], defensemen: [] }, 
+    white: { forwards: [], defensemen: [] }
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Fetch players on component mount
   useEffect(() => {
     fetchPlayers();
   }, []);
@@ -19,73 +20,82 @@ export default function RosterGenerator() {
     try {
       setLoading(true);
       const response = await fetch('/api/players');
-      if (!response.ok) throw new Error('Failed to fetch players');
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to fetch players: ${errorText}`);
+      }
       const data = await response.json();
       setPlayers(data);
     } catch (err) {
-      setError('Failed to load players');
-      console.error(err);
+      setError(`Failed to load players: ${err.message}`);
+      console.error('Fetch error:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  // Handle CSV upload
-const handleFileUpload = async (event) => {
-  const file = event.target.files[0];
-  if (file) {
+  const handleFileUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
     setLoading(true);
     setError(null);
-    
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      try {
-        const text = e.target.result;
-        const lines = text.split('\n');
-        const playerData = lines.slice(1).filter(line => line.trim());
-        
-        for (const line of playerData) {
-          const [firstName, lastName, skill, defense, attending] = line.split(',').map(item => item.trim());
-          const playerData = {
-            first_name: firstName,
-            last_name: lastName,
-            skill: Number(skill) || 0,
-            is_defense: Number(defense) === 1,
-            is_attending: Number(attending) === 1
-          };
-          
-          const response = await fetch('/api/players', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(playerData),
-          });
 
-          console.log('Server response:', response); // Add this line
+    try {
+      Papa.parse(file, {
+        header: true,
+        skipEmptyLines: true,
+        complete: async (results) => {
+          try {
+            if (results.errors.length > 0) {
+              throw new Error(`CSV parsing errors: ${results.errors.map(e => e.message).join(', ')}`);
+            }
 
-          if (!response.ok) {
-            throw new Error(`Failed to add player ${firstName} ${lastName}`);
+            for (const row of results.data) {
+              const playerData = {
+                first_name: row.firstName?.trim() || '',
+                last_name: row.lastName?.trim() || '',
+                skill: parseInt(row.skill) || 0,
+                is_defense: row.defense?.toLowerCase() === 'true' || row.defense === '1',
+                is_attending: row.attending?.toLowerCase() === 'true' || row.attending === '1'
+              };
+
+              if (!playerData.first_name || !playerData.last_name) {
+                throw new Error(`Missing required fields for player: ${JSON.stringify(row)}`);
+              }
+
+              const response = await fetch('/api/players', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(playerData),
+              });
+
+              if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Failed to add player ${playerData.first_name} ${playerData.last_name}: ${errorText}`);
+              }
+            }
+
+            await fetchPlayers();
+            setError(null);
+          } catch (err) {
+            setError(`Failed to process players: ${err.message}`);
+            console.error('Processing error:', err);
+          } finally {
+            setLoading(false);
           }
+        },
+        error: (err) => {
+          setError(`Failed to parse CSV: ${err.message}`);
+          setLoading(false);
         }
-        
-        await fetchPlayers();
-      } catch (err) {
-        setError(`Failed to process CSV: ${err.message}`);
-        console.error('Failed to process CSV:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    reader.onerror = () => {
-      setError('Failed to read the CSV file');
+      });
+    } catch (err) {
+      setError(`Failed to read file: ${err.message}`);
       setLoading(false);
-    };
+    }
+  };
 
-    reader.readAsText(file);
-  }
-};
-
-  // Function to update player data
   const updatePlayer = async (id, field, value) => {
     const playerToUpdate = players.find(p => p.id === id);
     if (!playerToUpdate) return;
@@ -117,7 +127,6 @@ const handleFileUpload = async (event) => {
     }
   };
 
-  // Generate balanced teams
   const generateRosters = async () => {
     setLoading(true);
     setError(null);
@@ -172,7 +181,6 @@ const handleFileUpload = async (event) => {
     }
   };
 
- // Tab Components
   const PlayersTab = () => {
     if (loading) {
       return (
@@ -379,5 +387,4 @@ const handleFileUpload = async (event) => {
       {activeTab === 'players' ? <PlayersTab /> : <RosterTab />}
     </div>
   );
-};
-
+}
