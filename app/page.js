@@ -108,11 +108,11 @@ const handleFileUpload = async (event) => {
   };
 
   // Generate balanced teams
-  const generateRosters = async () => {
-    const attendingPlayers = players.filter(p => p.attending);
-    const forwards = attendingPlayers.filter(p => !p.defense);
+    const generateRosters = async () => {
     const defensemen = attendingPlayers.filter(p => p.defense);
-
+    const attendingPlayers = players.filter(p => p.is_attending);
+    const forwards = attendingPlayers.filter(p => !p.is_defense);
+      
     // Sort by skill level
     const sortedForwards = [...forwards].sort((a, b) => b.skill - a.skill);
     const sortedDefensemen = [...defensemen].sort((a, b) => b.skill - a.skill);
