@@ -1,7 +1,18 @@
 // app/components/RosterGenerator.js
 import React, { useEffect, useState } from 'react';
+<<<<<<< HEAD
 import { usePlayerManagement } from '../app/hooks/usePlayerManagement';
 import { useTeamGeneration } from '../app/hooks/useTeamGeneration';
+=======
+
+import { LoadingSpinner } from '../shared/LoadingSpinner';
+import { ErrorMessage } from '../shared/ErrorMessage';
+import { TabNavigation } from '../shared/TabNavigation';
+
+import { usePlayerManagement } from '../app/hooks/usePlayerManagement';
+import { useTeamGeneration } from '../app/hooks/useTeamGeneration';
+
+>>>>>>> parent of 69278ab (Update RosterGenerator.js)
 import { PlayerTable } from './players/PlayerTable';
 import { PlayerUpload } from './players/PlayerUpload';
 import { TeamRoster } from './teams/TeamRoster';
