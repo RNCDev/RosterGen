@@ -48,7 +48,7 @@ export const RosterGenerator = () => {
       skipEmptyLines: true,
       complete: async (results) => {
         try {
-          // Validate CSV structure
+          // Validate CSV structure from file
           const requiredFields = ['firstName', 'lastName', 'skill', 'defense', 'attending'];
           const missingFields = requiredFields.filter(field => 
             !results.meta.fields.includes(field)
