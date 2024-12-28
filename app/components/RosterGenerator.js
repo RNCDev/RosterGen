@@ -7,10 +7,10 @@ import { RosterTab } from "./RosterTab";
 
 export const RosterGenerator = () => {
   const [activeTab, setActiveTab] = useState("players");
-  const [players, setPlayers] = useState([]); // Initialize as an empty array
+  const [players, setPlayers] = useState([]);
 
   const [teams, setTeams] = useState({
-    red: { forwards: [], defensemen: [] }, 
+    red: { forwards: [], defensemen: [] },
     white: { forwards: [], defensemen: [] },
   });
 
@@ -19,7 +19,7 @@ export const RosterGenerator = () => {
 
   useEffect(() => {
     fetchPlayers();
-  }, []); // Added dependency array
+  }, []);
 
   const fetchPlayers = async () => {
     try {
@@ -39,7 +39,6 @@ export const RosterGenerator = () => {
   const generateRosters = async () => {
     setLoading(true);
     setError(null);
-
     try {
       const attendingPlayers = players.filter((p) => p.is_attending);
       const forwards = attendingPlayers.filter((p) => !p.is_defense);
@@ -49,13 +48,13 @@ export const RosterGenerator = () => {
       const sortedDefensemen = [...defensemen].sort((a, b) => b.skill - a.skill);
 
       const newTeams = {
-        red: { 
-          forwards: [], 
-          defensemen: [] 
+        red: {
+          forwards: [],
+          defensemen: [],
         },
-        white: { 
-          forwards: [], 
-          defensemen: [] 
+        white: {
+          forwards: [],
+          defensemen: [],
         },
       };
 
@@ -75,6 +74,7 @@ export const RosterGenerator = () => {
         }
       });
 
+      // Save team assignments to the database
       const response = await fetch("/api/teams", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -102,13 +102,17 @@ export const RosterGenerator = () => {
       <nav className="col-span-3 bg-gray-200 p-4 rounded-md">
         <button
           onClick={() => setActiveTab("players")}
-          className={`w-full text-left py-2 px-4 rounded ${activeTab === "players" ? "bg-blue-500 text-white" : "hover:bg-gray-300"}`}
+          className={`w-full text-left py-2 px-4 rounded ${
+            activeTab === "players" ? "bg-blue-500 text-white" : "hover:bg-gray-300"
+          }`}
         >
           Players
         </button>
         <button
           onClick={() => setActiveTab("roster")}
-          className={`w-full text-left py-2 px-4 rounded mt-2 ${activeTab === "roster" ? "bg-blue-500 text-white" : "hover:bg-gray-300"}`}
+          className={`w-full text-left py-2 px-4 rounded mt-2 ${
+            activeTab === "roster" ? "bg-blue-500 text-white" : "hover:bg-gray-300"
+          }`}
         >
           Roster
         </button>
@@ -117,29 +121,28 @@ export const RosterGenerator = () => {
       <div className="col-span-9 p-4 rounded-md bg-white">
         <h1 className="text-2xl font-bold mb-6">Hockey Roster Generator</h1>
 
-        {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">{error}</div>}
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            {error}
+          </div>
+        )}
 
         {loading ? (
           <div>Loading players...</div>
         ) : (
           <>
             {activeTab === "players" ? (
-              <PlayersTab 
-                players={players} 
-                setPlayers={setPlayers} 
-                loading={loading} 
-                setLoading={setLoading} 
-                error={error} 
-                setError={setError} 
-                fetchPlayers={fetchPlayers} 
+              <PlayersTab
+                players={players}
+                setPlayers={setPlayers}
+                loading={loading}
+                setLoading={setLoading}
+                error={error}
+                setError={setError}
+                fetchPlayers={fetchPlayers}
               />
             ) : (
-              <RosterTab 
-                teams={teams} 
-                generateRosters={generateRosters} 
-                players={players} 
-                loading={loading} 
-              />
+              <RosterTab teams={teams} generateRosters={generateRosters} players={players} loading={loading} />
             )}
           </>
         )}
