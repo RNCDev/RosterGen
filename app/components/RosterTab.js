@@ -3,9 +3,19 @@ import React from "react";
 import { ArrowLeftRight } from "lucide-react";
 
 export const RosterTab = ({ teams, generateRosters, players, loading }) => {
+  // Check if teams exist and have players
+  const hasTeams =
+    teams &&
+    teams.red &&
+    teams.red.forwards &&
+    teams.red.forwards.length > 0 &&
+    teams.white &&
+    teams.white.forwards &&
+    teams.white.forwards.length > 0;
+
   return (
     <div className="roster-tab">
-      {teams.red.forwards.length > 0 ? (
+      {hasTeams ? (
         <div className="teams-display grid md:grid-cols-2 gap-4">
           <div className="red-team team-card bg-red-50 p-4 rounded shadow">
             <h2 className="text-lg font-bold mb-3 text-red-600 border-b pb-2">
@@ -19,7 +29,7 @@ export const RosterTab = ({ teams, generateRosters, players, loading }) => {
                   className="player-item bg-red-100 rounded px-3 py-2 mb-1 flex justify-between items-center"
                 >
                   <span>
-                    {player.firstName} {player.lastName} 
+                    {player.firstName} {player.lastName}
                   </span>
                   <span className="text-sm text-red-600">
                     Skill: {player.skill}
@@ -37,7 +47,7 @@ export const RosterTab = ({ teams, generateRosters, players, loading }) => {
                   className="player-item bg-red-100 rounded px-3 py-2 mb-1 flex justify-between items-center"
                 >
                   <span>
-                    {player.firstName} {player.lastName} 
+                    {player.firstName} {player.lastName}
                   </span>
                   <span className="text-sm text-red-600">
                     Skill: {player.skill}
@@ -59,7 +69,7 @@ export const RosterTab = ({ teams, generateRosters, players, loading }) => {
                   className="player-item bg-gray-100 rounded px-3 py-2 mb-1 flex justify-between items-center"
                 >
                   <span>
-                    {player.firstName} {player.lastName} 
+                    {player.firstName} {player.lastName}
                   </span>
                   <span className="text-sm text-gray-600">
                     Skill: {player.skill}
@@ -77,7 +87,7 @@ export const RosterTab = ({ teams, generateRosters, players, loading }) => {
                   className="player-item bg-gray-100 rounded px-3 py-2 mb-1 flex justify-between items-center"
                 >
                   <span>
-                    {player.firstName} {player.lastName} 
+                    {player.firstName} {player.lastName}
                   </span>
                   <span className="text-sm text-gray-600">
                     Skill: {player.skill}
