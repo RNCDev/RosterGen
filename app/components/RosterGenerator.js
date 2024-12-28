@@ -6,8 +6,8 @@ export const RosterGenerator = () => {
   const [activeTab, setActiveTab] = useState("players");
   const [players, setPlayers] = useState();
   const [teams, setTeams] = useState({
-    red: { forwards:, defensemen: },
-    white: { forwards:, defensemen: },
+    red: { forwards: [], defensemen: [] },
+    white: { forwards: [], defensemen: [] },
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -31,13 +31,14 @@ export const RosterGenerator = () => {
     }
   };
 
-const generateRosters = async () => {
+  const generateRosters = async () => {
     setLoading(true);
     setError(null);
+
     try {
-      const attendingPlayers = players.filter((p) => p.isAttending); // Use p.isAttending
-      const forwards = attendingPlayers.filter((p) => !p.isDefense); // Use p.isDefense
-      const defensemen = attendingPlayers.filter((p) => p.isDefense); // Use p.isDefense
+      const attendingPlayers = players.filter((p) => p.isAttending);
+      const forwards = attendingPlayers.filter((p) => !p.isDefense);
+      const defensemen = attendingPlayers.filter((p) => p.isDefense);
 
       const sortedForwards = [...forwards].sort((a, b) => b.skill - a.skill);
       const sortedDefensemen = [...defensemen].sort(
