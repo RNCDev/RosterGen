@@ -1,14 +1,17 @@
 /** @type {import('next').NextConfig} */
+const path = require('path');
+
 const nextConfig = {
   reactStrictMode: true,
   webpack: (config, { isServer }) => {
-    config.resolve.alias['@/components'] = __dirname + '/components';
+    // Explicitly resolve @/components
+    config.resolve.alias['@/components'] = path.resolve(__dirname, 'components');
+    config.resolve.alias['@/components/RosterGenerator'] = path.resolve(__dirname, 'components/RosterGenerator.js');
     return config;
   },
-  // Add any other necessary configurations
+  // Ensure correct module resolution
   experimental: {
-    // Optional: Enable incremental static regeneration if needed
-    // incrementalStatic: true
+    serverComponentsExternalPackages: ['@vercel/postgres']
   }
 }
 
