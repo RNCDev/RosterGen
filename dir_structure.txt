@@ -6,15 +6,15 @@ Directory Structure for: C:\Users\rnc\documents\github\rostergen
       ?? route.js
     ?? teams\
       ?? route.js
+  ?? components\
+    ?? RosterGenerator.js
+    ?? PlayersTab.js
+    ?? RosterTab.js
   ?? globals.css
   ?? layout.js
   ?? next.config.js
   ?? page.js
   ?? tailwind.config.js
-?? components\
-  ?? RosterGenerator.js
-  ?? PlayersTab.js
-  ?? RosterTab.js
 ?? lib\
   ?? db.js
 ?? dir_structure.txt
