@@ -98,25 +98,23 @@ export const RosterGenerator = () => {
   };
 
   return (
-    <main className="grid grid-cols-12 gap-4 max-w-7xl mx-auto p-4">
-      <nav className="col-span-3 bg-gray-200 p-4 rounded-md">
-        <button
-          onClick={() => setActiveTab("players")}
-          className={`w-full text-left py-2 px-4 rounded ${
-            activeTab === "players" ? "bg-blue-500 text-white" : "hover:bg-gray-300"
-          }`}
-        >
-          Players
-        </button>
-        <button
-          onClick={() => setActiveTab("roster")}
-          className={`w-full text-left py-2 px-4 rounded mt-2 ${
-            activeTab === "roster" ? "bg-blue-500 text-white" : "hover:bg-gray-300"
-          }`}
-        >
-          Roster
-        </button>
-      </nav>
+  <main className="grid grid-cols-12 gap-4 max-w-7xl mx-auto p-4">
+  <div className="col-span-3"> {/* Wrap the nav in a div with col-span-3 */}
+    <nav className="bg-gray-200 p-4 rounded-md">
+      <button
+        onClick={() => setActiveTab("players")}
+        className={`w-full text-left py-2 px-4 rounded ${activeTab === "players" ? "bg-blue-500 text-white" : "hover:bg-gray-300"}`}
+      >
+        Players
+      </button>
+      <button
+        onClick={() => setActiveTab("roster")}
+        className={`w-full text-left py-2 px-4 rounded mt-2 ${activeTab === "roster" ? "bg-blue-500 text-white" : "hover:bg-gray-300"}`}
+      >
+        Roster
+      </button>
+    </nav>
+  </div> {/* Close the div */}
 
       <div className="col-span-9 p-4 rounded-md bg-white">
         <h1 className="text-2xl font-bold mb-6">Hockey Roster Generator</h1>
