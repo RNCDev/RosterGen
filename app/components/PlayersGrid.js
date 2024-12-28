@@ -1,11 +1,67 @@
 // components/PlayersGrid.js
 "use client";
 
+import { useState, useEffect } from "react";
 import { ArrowUpFromLine, ArrowLeftRight } from "lucide-react";
+import Papa from "papaparse";
 
 const PlayersGrid = ({ players }) => {
-  // ... your state variables and functions for handling file uploads, generating rosters, etc.
+  const [loading, setLoading] = useState(false);
+  const [teams, setTeams] = useState([]);
 
+  // Function to handle CSV file uploads
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      Papa.parse(file, {
+        header: true,
+        dynamicTyping: true,
+        complete: (results) => {
+          // Assuming your CSV has columns like first_name, last_name, skill, is_defense, is_attending
+          const playerData = results.data.map((row) => ({
+            ...row,
+            // Add an id if your CSV doesn't have one
+            id: `${row.first_name}-${row.last_name}`,
+          }));
+          // Update the players state with the parsed data
+          players = playerData
+        },
+      });
+    }
+  };
+
+  // Function to generate rosters (replace with your actual logic)
+  const generateRosters = async () => {
+    setLoading(true);
+    try {
+      // Simulate an API call or any other logic to generate rosters
+      const response = await new Promise((resolve) =>
+        setTimeout(
+          resolve({
+            data: [
+              // Sample roster data
+              {
+                team_name: "Team A",
+                players: players.slice(0, Math.ceil(players.length / 2)),
+              },
+              {
+                team_name: "Team B",
+                players: players.slice(Math.ceil(players.length / 2)),
+              },
+            ],
+          }),
+          2000
+        )
+      );
+
+      setTeams(response.data);
+    } catch (error) {
+      console.error("Error generating rosters:", error);
+      // Handle errors (e.g., display an error message)
+    } finally {
+      setLoading(false);
+    }
+  };
   return (
     <div className="space-y-6">
       {/* Header with buttons */}
