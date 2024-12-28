@@ -1,5 +1,4 @@
-"use client";
-
+// app/page.js
 import { RosterGenerator } from './components/RosterGenerator';
 
 export default function Home() {
