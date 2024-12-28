@@ -31,13 +31,13 @@ export const RosterGenerator = () => {
     }
   };
 
-  const generateRosters = async () => {
+const generateRosters = async () => {
     setLoading(true);
     setError(null);
     try {
-      const attendingPlayers = players.filter((p) => p.is_attending);
-      const forwards = attendingPlayers.filter((p) => !p.is_defense);
-      const defensemen = attendingPlayers.filter((p) => p.is_defense);
+      const attendingPlayers = players.filter((p) => p.isAttending); // Use p.isAttending
+      const forwards = attendingPlayers.filter((p) => !p.isDefense); // Use p.isDefense
+      const defensemen = attendingPlayers.filter((p) => p.isDefense); // Use p.isDefense
 
       const sortedForwards = [...forwards].sort((a, b) => b.skill - a.skill);
       const sortedDefensemen = [...defensemen].sort(
@@ -45,8 +45,8 @@ export const RosterGenerator = () => {
       );
 
       const newTeams = {
-        red: { forwards:, defensemen: },
-        white: { forwards:, defensemen: },
+        red: { forwards: [], defensemen: [] },
+        white: { forwards: [], defensemen: [] },
       };
 
       sortedForwards.forEach((player, index) => {
