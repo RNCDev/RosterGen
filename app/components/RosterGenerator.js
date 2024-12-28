@@ -8,10 +8,12 @@ import { RosterTab } from "./RosterTab";
 export const RosterGenerator = () => {
   const [activeTab, setActiveTab] = useState("players");
   const [players, setPlayers] = useState(); // Initialize as an empty array
+
   const [teams, setTeams] = useState({
-    red: { forwards:, defensemen: },
-    white: { forwards:, defensemen: },
+    red: { forwards: [], defensemen: [] }, 
+    white: { forwards: [], defensemen: [] },
   });
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
