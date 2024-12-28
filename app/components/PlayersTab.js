@@ -2,7 +2,7 @@
 'use client';
 import React from 'react';
 import Papa from 'papaparse';
-import { ArrowUpFromLine } from 'lucide-react';
+import { ArrowUpFromLine, Upload } from 'lucide-react';
 
 export const PlayersTab = ({ 
   players, 
