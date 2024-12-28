@@ -7,7 +7,7 @@ import { RosterTab } from "./RosterTab";
 
 export const RosterGenerator = () => {
   const [activeTab, setActiveTab] = useState("players");
-  const [players, setPlayers] = useState(); // Initialize as an empty array
+  const [players, setPlayers] = useState([]); // Initialize as an empty array
 
   const [teams, setTeams] = useState({
     red: { forwards: [], defensemen: [] }, 
@@ -19,7 +19,7 @@ export const RosterGenerator = () => {
 
   useEffect(() => {
     fetchPlayers();
-  },);
+  }, []); // Added dependency array
 
   const fetchPlayers = async () => {
     try {
@@ -49,8 +49,14 @@ export const RosterGenerator = () => {
       const sortedDefensemen = [...defensemen].sort((a, b) => b.skill - a.skill);
 
       const newTeams = {
-        red: { forwards:, defensemen: },
-        white: { forwards:, defensemen: },
+        red: { 
+          forwards: [], 
+          defensemen: [] 
+        },
+        white: { 
+          forwards: [], 
+          defensemen: [] 
+        },
       };
 
       sortedForwards.forEach((player, index) => {
@@ -118,9 +124,22 @@ export const RosterGenerator = () => {
         ) : (
           <>
             {activeTab === "players" ? (
-              <PlayersTab players={players} setPlayers={setPlayers} loading={loading} setLoading={setLoading} error={error} setError={setError} fetchPlayers={fetchPlayers} />
+              <PlayersTab 
+                players={players} 
+                setPlayers={setPlayers} 
+                loading={loading} 
+                setLoading={setLoading} 
+                error={error} 
+                setError={setError} 
+                fetchPlayers={fetchPlayers} 
+              />
             ) : (
-              <RosterTab teams={teams} generateRosters={generateRosters} players={players} loading={loading} />
+              <RosterTab 
+                teams={teams} 
+                generateRosters={generateRosters} 
+                players={players} 
+                loading={loading} 
+              />
             )}
           </>
         )}
