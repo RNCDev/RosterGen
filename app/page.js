@@ -3,8 +3,8 @@ import { RosterGenerator } from './components/RosterGenerator';
 
 export default function Home() {
   return (
-    <main>
+    <div className="min-h-screen bg-gray-100">
       <RosterGenerator />
-    </main>
+    </div>
   );
 }
