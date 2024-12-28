@@ -2,8 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { ArrowUpFromLine, ArrowLeftRight } from 'lucide-react';
+import { PlayersTab } from './PlayersTab';
+import { RosterTab } from './RosterTab';
 
-const RosterGenerator = () => {
+export const RosterGenerator = () => {
   const [activeTab, setActiveTab] = useState("players");
   const [players, setPlayers] = useState([]);
   const [teams, setTeams] = useState({
@@ -13,17 +15,83 @@ const RosterGenerator = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Existing fetch and generate functions remain the same
+  useEffect(() => {
+    fetchPlayers();
+  }, []);
+
   const fetchPlayers = async () => {
-    // ... existing fetchPlayers implementation
+    try {
+      setLoading(true);
+      const response = await fetch("/api/players");
+      if (!response.ok) throw new Error("Failed to fetch players");
+      const data = await response.json();
+      setPlayers(data);
+    } catch (err) {
+      setError("Failed to load players");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const generateRosters = async () => {
-    // ... existing generateRosters implementation
-  };
+    setLoading(true);
+    setError(null);
+    try {
+      const attendingPlayers = players.filter((p) => p.is_attending);
+      const forwards = attendingPlayers.filter((p) => !p.is_defense);
+      const defensemen = attendingPlayers.filter((p) => p.is_defense);
 
-  const handleFileUpload = async (event) => {
-    // ... existing handleFileUpload implementation
+      const sortedForwards = [...forwards].sort((a, b) => b.skill - a.skill);
+      const sortedDefensemen = [...defensemen].sort((a, b) => b.skill - a.skill);
+
+      const newTeams = {
+        red: {
+          forwards: [],
+          defensemen: [],
+        },
+        white: {
+          forwards: [],
+          defensemen: [],
+        },
+      };
+
+      sortedForwards.forEach((player, index) => {
+        if (index % 2 === 0) {
+          newTeams.red.forwards.push(player);
+        } else {
+          newTeams.white.forwards.push(player);
+        }
+      });
+
+      sortedDefensemen.forEach((player, index) => {
+        if (index % 2 === 0) {
+          newTeams.red.defensemen.push(player);
+        } else {
+          newTeams.white.defensemen.push(player);
+        }
+      });
+
+      const response = await fetch("/api/teams", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          redTeam: newTeams.red,
+          whiteTeam: newTeams.white,
+          sessionDate: new Date().toISOString().split("T")[0],
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to save teams");
+
+      setTeams(newTeams);
+      setActiveTab("roster");
+    } catch (err) {
+      setError("Failed to generate teams");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -54,8 +122,6 @@ const RosterGenerator = () => {
               Roster
             </button>
           </div>
-          
-          {/* Navigation only */}
         </div>
       </nav>
 
@@ -74,7 +140,8 @@ const RosterGenerator = () => {
         ) : (
           <div className="bg-white rounded-lg shadow-lg p-6">
             {activeTab === "players" ? (
-              <div className="players-list">
+              <div className="players-tab">
+                {/* Players Tab Header with Buttons */}
                 <div className="flex justify-between items-center mb-6">
                   <h2 className="text-xl font-semibold">Player List</h2>
                   <div className="flex space-x-4">
@@ -94,7 +161,13 @@ const RosterGenerator = () => {
                         <input
                           type="file"
                           accept=".csv"
-                          onChange={handleFileUpload}
+                          onChange={(e) => {
+                            const file = e.target.files[0];
+                            if (file) {
+                              // Handle file upload
+                              console.log("File selected:", file);
+                            }
+                          }}
                           className="hidden"
                           disabled={loading}
                         />
@@ -102,6 +175,8 @@ const RosterGenerator = () => {
                     </label>
                   </div>
                 </div>
+
+                {/* Players Table */}
                 {players.length > 0 ? (
                   <table className="w-full border-collapse">
                     <thead>
@@ -134,25 +209,12 @@ const RosterGenerator = () => {
                 )}
               </div>
             ) : (
-              <div className="roster-view">
-                <h2 className="text-xl font-semibold mb-4">Team Rosters</h2>
-                {teams.red.forwards.length > 0 ? (
-                  <div className="grid grid-cols-2 gap-6">
-                    {/* Red Team */}
-                    <div className="bg-red-50 p-4 rounded-lg">
-                      <h3 className="text-lg font-semibold text-red-700 mb-3">Red Team</h3>
-                      {/* ... existing team roster display ... */}
-                    </div>
-                    {/* White Team */}
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <h3 className="text-lg font-semibold text-gray-700 mb-3">White Team</h3>
-                      {/* ... existing team roster display ... */}
-                    </div>
-                  </div>
-                ) : (
-                  <p className="text-gray-500">No teams generated yet. Click "Generate Roster" to create teams.</p>
-                )}
-              </div>
+              <RosterTab 
+                teams={teams} 
+                generateRosters={generateRosters} 
+                players={players} 
+                loading={loading} 
+              />
             )}
           </div>
         )}
