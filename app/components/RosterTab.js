@@ -19,7 +19,7 @@ export const RosterTab = ({ teams, generateRosters, players, loading }) => {
                   className="player-item bg-red-100 rounded px-3 py-2 mb-1 flex justify-between items-center"
                 >
                   <span>
-                    {player.first_name} {player.last_name}
+                    {player.firstName} {player.lastName} 
                   </span>
                   <span className="text-sm text-red-600">
                     Skill: {player.skill}
@@ -37,7 +37,7 @@ export const RosterTab = ({ teams, generateRosters, players, loading }) => {
                   className="player-item bg-red-100 rounded px-3 py-2 mb-1 flex justify-between items-center"
                 >
                   <span>
-                    {player.first_name} {player.last_name}
+                    {player.firstName} {player.lastName} 
                   </span>
                   <span className="text-sm text-red-600">
                     Skill: {player.skill}
@@ -59,7 +59,7 @@ export const RosterTab = ({ teams, generateRosters, players, loading }) => {
                   className="player-item bg-gray-100 rounded px-3 py-2 mb-1 flex justify-between items-center"
                 >
                   <span>
-                    {player.first_name} {player.last_name}
+                    {player.firstName} {player.lastName} 
                   </span>
                   <span className="text-sm text-gray-600">
                     Skill: {player.skill}
@@ -77,7 +77,7 @@ export const RosterTab = ({ teams, generateRosters, players, loading }) => {
                   className="player-item bg-gray-100 rounded px-3 py-2 mb-1 flex justify-between items-center"
                 >
                   <span>
-                    {player.first_name} {player.last_name}
+                    {player.firstName} {player.lastName} 
                   </span>
                   <span className="text-sm text-gray-600">
                     Skill: {player.skill}
