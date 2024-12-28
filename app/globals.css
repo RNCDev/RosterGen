@@ -1,3 +1,4 @@
+/* globals.css */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -36,4 +37,9 @@ body {
 
 .white-team {
   background-color: rgba(229, 231, 235, 0.5);
+}
+
+/* Ensure the grid displays correctly */
+.grid { 
+  display: grid; 
 }
