@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useEffect } from "react";
 import { PlayersTab } from "./PlayersTab";
 import { RosterTab } from "./RosterTab";
