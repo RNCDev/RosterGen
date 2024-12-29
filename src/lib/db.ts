@@ -99,7 +99,6 @@ export async function updatePlayer(
                 skill = ${skill},
                 is_defense = ${defense},
                 is_attending = ${attending},
-                updated_at = CURRENT_TIMESTAMP
             WHERE id = ${id}
             RETURNING *
         `;
