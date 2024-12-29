@@ -148,9 +148,6 @@ export default function Home() {
                                     loading={loading}
                                     handleFileUpload={handleFileUpload}
                                     handleDeletePlayer={handleDeletePlayer}
-                                />
-                                <TeamGenerator
-                                    players={players}
                                     onTeamsGenerated={handleTeamsGenerated}
                                 />
                             </div>

@@ -3,19 +3,22 @@
 
 import { type Player } from '@/types/PlayerTypes';
 import { ArrowUpFromLine, Users, Trash2 } from 'lucide-react';
+import TeamGenerator from './TeamGenerator';
 
 interface PlayersViewProps {
     players: Player[];
     loading: boolean;
     handleFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
     handleDeletePlayer?: (id: number) => void;
+    onTeamsGenerated?: (teams: any) => void;
 }
 
 export default function PlayersView({
     players,
     loading,
     handleFileUpload,
-    handleDeletePlayer
+    handleDeletePlayer,
+    onTeamsGenerated
 }: PlayersViewProps) {
     return (
         <div className="space-y-6">
@@ -34,6 +37,12 @@ export default function PlayersView({
                             className="hidden"
                         />
                     </label>
+                    {onTeamsGenerated && (
+                        <TeamGenerator
+                            players={players}
+                            onTeamsGenerated={onTeamsGenerated}
+                        />
+                    )}
                 </div>
             </div>
 
