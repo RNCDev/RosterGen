@@ -7,6 +7,7 @@ import Sidebar from '@/components/Sidebar';
 import PlayersView from '@/components/PlayersView';
 import TeamsView from '@/components/TeamsView';
 import ErrorAlert from '@/components/ErrorAlert';
+
 import { type Player, type Teams } from '@/types/PlayerTypes';
 
 export default function Home() {
