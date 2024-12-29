@@ -87,9 +87,9 @@ export default function PlayersView({
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {handleDeletePlayer && player.id && (
+                                        {handleDeletePlayer && player.id !== undefined && (
                                             <button
-                                                onClick={() => handleDeletePlayer(player.id)}
+                                                onClick={() => handleDeletePlayer(player.id as number)}
                                                 disabled={loading}
                                                 className="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-full transition-colors disabled:opacity-50"
                                                 title="Delete Player"
