@@ -105,17 +105,14 @@ export default function Home() {
             const defensemen = attendingPlayers.filter(p => p.is_defense);
             console.log('Forwards:', forwards.length, 'Defensemen:', defensemen.length);
 
-            // Sort players by skill, but add a small random factor to introduce variation
-            const sortedForwards = [...forwards].sort((a, b) => b.skill - a.skill + Math.random() * 0.2 - 0.1);
-            const sortedDefensemen = [...defensemen].sort((a, b) => b.skill - a.skill + Math.random() * 0.2 - 0.1);
-
+            // Create teams object for frontend state
             const newTeams: Teams = {
                 red: { forwards: [], defensemen: [] },
                 white: { forwards: [], defensemen: [] },
             };
 
-            // Alternate players between the red and white teams
-            sortedForwards.forEach((player, index) => {
+            // Alternate players between teams
+            forwards.forEach((player, index) => {
                 if (index % 2 === 0) {
                     newTeams.red.forwards.push(player);
                 } else {
@@ -123,7 +120,7 @@ export default function Home() {
                 }
             });
 
-            sortedDefensemen.forEach((player, index) => {
+            defensemen.forEach((player, index) => {
                 if (index % 2 === 0) {
                     newTeams.red.defensemen.push(player);
                 } else {
@@ -133,16 +130,14 @@ export default function Home() {
 
             console.log('Generated teams:', newTeams);
 
-            // Prepare data for API
+            // Set frontend state first
+            setTeams(newTeams);
+            setActiveTab('roster');
+
+            // Transform teams object for API
             const teamAssignmentData = {
-                redTeam: {
-                    forwards: newTeams.red.forwards,
-                    defensemen: newTeams.red.defensemen
-                },
-                whiteTeam: {
-                    forwards: newTeams.white.forwards,
-                    defensemen: newTeams.white.defensemen
-                },
+                redTeam: newTeams.red,
+                whiteTeam: newTeams.white,
                 sessionDate: new Date().toISOString()
             };
 
@@ -164,9 +159,6 @@ export default function Home() {
             }
 
             console.log('Teams saved successfully');
-
-            setTeams(newTeams);
-            setActiveTab('roster');
         } catch (err) {
             console.error('Error in generateTeams:', err);
             setError(err instanceof Error ? err.message : 'Failed to generate teams');
