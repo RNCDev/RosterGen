@@ -46,7 +46,7 @@ const EditableRow = ({ player, onSave, onDelete }: EditableRowProps) => {
     if (!isEditing) {
         return (
             <tr className="hover:bg-gray-50">
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 w-1/3">
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 w-2/5">
                     {player.first_name} {player.last_name}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 w-24 text-center">
@@ -96,20 +96,20 @@ const EditableRow = ({ player, onSave, onDelete }: EditableRowProps) => {
 
     return (
         <tr className="bg-blue-50">
-            <td className="px-6 py-4 whitespace-nowrap w-1/3">
+            <td className="px-6 py-4 whitespace-nowrap w-2/5">
                 <div className="flex gap-2">
                     <input
                         type="text"
                         value={editedPlayer.first_name}
                         onChange={(e) => setEditedPlayer(prev => ({ ...prev, first_name: e.target.value }))}
-                        className="block w-32 rounded-md border border-gray-300 px-2 py-1 text-sm"
+                        className="block w-1/2 rounded-md border border-gray-300 px-2 py-1 text-sm"
                         placeholder="First Name"
                     />
                     <input
                         type="text"
                         value={editedPlayer.last_name}
                         onChange={(e) => setEditedPlayer(prev => ({ ...prev, last_name: e.target.value }))}
-                        className="block w-32 rounded-md border border-gray-300 px-2 py-1 text-sm"
+                        className="block w-1/2 rounded-md border border-gray-300 px-2 py-1 text-sm"
                         placeholder="Last Name"
                     />
                 </div>
@@ -119,7 +119,7 @@ const EditableRow = ({ player, onSave, onDelete }: EditableRowProps) => {
                     <select
                         value={editedPlayer.skill}
                         onChange={(e) => setEditedPlayer(prev => ({ ...prev, skill: parseInt(e.target.value) }))}
-                        className="block w-16 rounded-md border border-gray-300 px-2 py-1 text-sm"
+                        className="block w-16 rounded-md border border-gray-300 px-2 py-1 text-sm text-center"
                     >
                         {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
                             <option key={num} value={num}>{num}</option>

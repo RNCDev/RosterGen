@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import { type Player } from '@/types/PlayerTypes';
-import { ArrowUpFromLine, Users, Plus, Trash2 } from 'lucide-react';
+import { ArrowUpFromLine, Users, Plus } from 'lucide-react';
 import TeamGenerator from './TeamGenerator';
 import EditableRow from './EditableRow';
 
@@ -67,7 +67,6 @@ export default function PlayersView({
                 throw new Error('Failed to add player');
             }
 
-            // Reset form
             setNewPlayer({
                 first_name: '',
                 last_name: '',
@@ -77,7 +76,6 @@ export default function PlayersView({
             });
             setShowAddForm(false);
 
-            // Trigger refresh of players list
             window.location.reload();
         } catch (error) {
             console.error('Error adding player:', error);
@@ -175,31 +173,21 @@ export default function PlayersView({
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                             <tr>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase w-1/3">Name</th>
-                                <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase w-24">Skill</th>
-                                <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase w-32">Position</th>
-                                <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase w-32">Attending</th>
-                                <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase w-24">Actions</th>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-2/5">Name</th>
+                                <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Skill</th>
+                                <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-32">Position</th>
+                                <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-32">Attending</th>
+                                <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
                             {players.map((player) => (
-                                <tr key={player.id} className="hover:bg-gray-50">
-                                    <EditableRow
-                                        player={player}
-                                        onSave={handleSave}
-                                    />
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        {handleDeletePlayer && (
-                                            <button
-                                                onClick={() => handleDeletePlayer(player.id)}
-                                                className="text-red-600 hover:text-red-900"
-                                            >
-                                                <Trash2 className="h-5 w-5" />
-                                            </button>
-                                        )}
-                                    </td>
-                                </tr>
+                                <EditableRow
+                                    key={player.id}
+                                    player={player}
+                                    onSave={handleSave}
+                                    onDelete={handleDeletePlayer}
+                                />
                             ))}
                         </tbody>
                     </table>
