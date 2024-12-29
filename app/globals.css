@@ -1,45 +1,57 @@
-/* globals.css */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --foreground-rgb: 0, 0, 0;
-  --background-rgb: 255, 255, 255;
+    --foreground-rgb: 0, 0, 0;
+    --background-rgb: 243, 244, 246;
 }
 
+html,
 body {
-  color: rgb(var(--foreground-rgb));
-  background: rgb(var(--background-rgb));
-  padding: 1rem;
+    @apply h-full bg-gray-50;
 }
 
-.file-input-wrapper {
-  margin: 1rem 0;
+.nav-item {
+    @apply w-full px-4 py-2 text-left rounded transition-colors;
+}
+
+.nav-item-active {
+    @apply bg-blue-500 text-white;
+}
+
+.nav-item-inactive {
+    @apply text-gray-600 hover:bg-gray-100;
 }
 
 .team-card {
-  border: 1px solid #e5e7eb;
-  border-radius: 0.5rem;
-  padding: 1rem;
-  margin-bottom: 1rem;
+    @apply rounded-lg shadow-sm p-6;
 }
 
-.team-header {
-  font-size: 1.25rem;
-  font-weight: bold;
-  margin-bottom: 1rem;
+.team-card-red {
+    @apply bg-red-50;
 }
 
-.red-team {
-  background-color: rgba(239, 68, 68, 0.1);
+.team-card-white {
+    @apply bg-gray-50;
 }
 
-.white-team {
-  background-color: rgba(229, 231, 235, 0.5);
+.player-card {
+    @apply p-3 rounded-md mb-2 flex justify-between items-center;
 }
 
-/* Ensure the grid displays correctly */
-.grid { 
-  display: grid; 
+.player-card-red {
+    @apply bg-red-100/50;
+}
+
+.player-card-white {
+    @apply bg-gray-100/50;
+}
+
+.button-primary {
+    @apply px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.button-secondary {
+    @apply px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed;
 }
