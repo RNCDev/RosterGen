@@ -73,6 +73,15 @@ export default function TeamsView({ teams, generateTeams, hasPlayers }: TeamsVie
         }
     };
 
+    const getTotalSkill = (players: Player[]) => {
+        return players.reduce((total, player) => total + player.skill, 0);
+    };
+
+    const redTeamTotalSkill = getTotalSkill([...teams.red.forwards, ...teams.red.defensemen]);
+    const whiteTeamTotalSkill = getTotalSkill([...teams.white.forwards, ...teams.white.defensemen]);
+    const totalPlayers = teams.red.forwards.length + teams.red.defensemen.length + teams.white.forwards.length + teams.white.defensemen.length;
+    const averageSkill = (redTeamTotalSkill + whiteTeamTotalSkill) / totalPlayers;
+
     return (
         <div className="space-y-6">
             <h2 className="text-xl font-semibold text-gray-900 border-b pb-4">Team Rosters</h2>
@@ -109,6 +118,22 @@ export default function TeamsView({ teams, generateTeams, hasPlayers }: TeamsVie
                     )}
                 </div>
             )}
+
+            {/* Team summary footer */}
+            <div className="bg-gray-50 rounded-lg p-4 flex justify-between">
+                <div>
+                    <h3 className="text-lg font-medium text-gray-900">Red Team Total Skill:</h3>
+                    <p className="text-gray-700">{redTeamTotalSkill}</p>
+                </div>
+                <div>
+                    <h3 className="text-lg font-medium text-gray-900">White Team Total Skill:</h3>
+                    <p className="text-gray-700">{whiteTeamTotalSkill}</p>
+                </div>
+                <div>
+                    <h3 className="text-lg font-medium text-gray-900">Average Player Skill:</h3>
+                    <p className="text-gray-700">{averageSkill.toFixed(2)}</p>
+                </div>
+            </div>
         </div>
     );
 }
