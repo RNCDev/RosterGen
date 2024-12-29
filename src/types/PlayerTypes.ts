@@ -1,5 +1,5 @@
-// types/PlayerTypes.js
 export type Player = {
+    id?: number;  // Made optional to maintain backward compatibility
     first_name: string;
     last_name: string;
     skill: number;
@@ -23,6 +23,7 @@ type PlayersViewProps = {
     loading: boolean;
     generateTeams: () => void;
     handleFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
+    handleDeletePlayer?: (id: number) => void;  // Optional new prop for deletion
 };
 
 // components/TeamsView.js props

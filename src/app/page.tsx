@@ -64,6 +64,34 @@ export default function Home() {
         }
     };
 
+    const handleDeletePlayer = async (playerId: number) => {
+        try {
+            setLoading(true);
+            setError(null);
+
+            const response = await fetch('/api/players', {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ id: playerId }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to delete player');
+            }
+
+            // Refresh players list after successful deletion
+            await fetchPlayers();
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to delete player');
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const generateTeams = () => {
         const attendingPlayers = players.filter(p => p.is_attending);
         const forwards = attendingPlayers.filter(p => !p.is_defense);
@@ -117,6 +145,7 @@ export default function Home() {
                                 loading={loading}
                                 generateTeams={generateTeams}
                                 handleFileUpload={handleFileUpload}
+                                handleDeletePlayer={handleDeletePlayer}
                             />
                         ) : (
                             <TeamsView

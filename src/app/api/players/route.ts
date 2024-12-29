@@ -1,3 +1,5 @@
+//player route
+
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getAllPlayers, addPlayer, updatePlayer } from '@/lib/db';
@@ -41,6 +43,36 @@ export async function POST(
 
         const player = await addPlayer(data);
         return NextResponse.json(player);
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        return NextResponse.json({ error: errorMessage }, { status: 500 });
+    }
+}
+
+export async function DELETE(
+    request: NextRequest
+): Promise<NextResponse<{ success: boolean } | { error: string }>> {
+    try {
+        const { id } = await request.json();
+
+        // Validate id
+        if (!id || typeof id !== 'number') {
+            return NextResponse.json(
+                { error: 'Invalid player ID' },
+                { status: 400 }
+            );
+        }
+
+        const deleted = await deletePlayer(id);
+
+        if (!deleted) {
+            return NextResponse.json(
+                { error: 'Player not found' },
+                { status: 404 }
+            );
+        }
+
+        return NextResponse.json({ success: true });
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
         return NextResponse.json({ error: errorMessage }, { status: 500 });

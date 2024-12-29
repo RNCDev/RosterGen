@@ -2,16 +2,23 @@
 'use client';
 
 import { type Player } from '@/types/PlayerTypes';
-import { ArrowUpFromLine, ArrowLeftRight, Users } from 'lucide-react';
+import { ArrowUpFromLine, ArrowLeftRight, Users, Trash2 } from 'lucide-react';
 
 interface PlayersViewProps {
     players: Player[];
     loading: boolean;
     generateTeams: () => void;
     handleFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
+    handleDeletePlayer?: (id: number) => void;
 }
 
-export default function PlayersView({ players, loading, generateTeams, handleFileUpload }: PlayersViewProps) {
+export default function PlayersView({
+    players,
+    loading,
+    generateTeams,
+    handleFileUpload,
+    handleDeletePlayer
+}: PlayersViewProps) {
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center border-b pb-4">
@@ -49,11 +56,12 @@ export default function PlayersView({ players, loading, generateTeams, handleFil
                                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Skill</th>
                                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Position</th>
                                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Attending</th>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
                             {players.map((player, idx) => (
-                                <tr key={idx} className="hover:bg-gray-50">
+                                <tr key={player.id || idx} className="hover:bg-gray-50">
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                         {player.first_name} {player.last_name}
                                     </td>
@@ -64,19 +72,31 @@ export default function PlayersView({ players, loading, generateTeams, handleFil
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${player.is_defense
-                                                ? 'bg-purple-100 text-purple-800'
-                                                : 'bg-green-100 text-green-800'
+                                            ? 'bg-purple-100 text-purple-800'
+                                            : 'bg-green-100 text-green-800'
                                             }`}>
                                             {player.is_defense ? 'Defense' : 'Forward'}
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${player.is_attending
-                                                ? 'bg-green-100 text-green-800'
-                                                : 'bg-gray-100 text-gray-800'
+                                            ? 'bg-green-100 text-green-800'
+                                            : 'bg-gray-100 text-gray-800'
                                             }`}>
                                             {player.is_attending ? 'Yes' : 'No'}
                                         </span>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        {handleDeletePlayer && player.id && (
+                                            <button
+                                                onClick={() => handleDeletePlayer(player.id)}
+                                                disabled={loading}
+                                                className="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-full transition-colors disabled:opacity-50"
+                                                title="Delete Player"
+                                            >
+                                                <Trash2 className="h-5 w-5" />
+                                            </button>
+                                        )}
                                     </td>
                                 </tr>
                             ))}

@@ -115,6 +115,19 @@ export async function updatePlayer(
     }
 }
 
+export async function deletePlayer(id: number): Promise<boolean> {
+    try {
+        const result = await sql`
+            DELETE FROM players 
+            WHERE id = ${id}
+        `;
+        return result.rowCount > 0;
+    } catch (error) {
+        console.error('Error deleting player:', error);
+        throw new Error('Failed to delete player');
+    }
+}
+
 export async function saveTeamAssignments(
     redTeam: TeamAssignment,
     whiteTeam: TeamAssignment,
