@@ -1,6 +1,6 @@
 'use client';
 
-import { type Teams } from '@/types/PlayerTypes';
+import { type Teams, type Player } from '@/types/PlayerTypes';
 import { ListChecks, ArrowLeftRight } from 'lucide-react';
 
 interface TeamsViewProps {
@@ -9,8 +9,21 @@ interface TeamsViewProps {
     hasPlayers: boolean;
 }
 
+interface TeamSectionProps {
+    teamName: string;
+    players: {
+        forwards: Player[];
+        defensemen: Player[];
+    };
+    colorScheme: {
+        bg: string;
+        text: string;
+        card: string;
+    };
+}
+
 export default function TeamsView({ teams, generateTeams, hasPlayers }: TeamsViewProps) {
-    const TeamSection = ({ teamName, players, colorScheme }) => {
+    const TeamSection = ({ teamName, players, colorScheme }: TeamSectionProps) => {
         const { bg, text, card } = colorScheme;
 
         return (
