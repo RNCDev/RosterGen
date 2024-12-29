@@ -92,39 +92,75 @@ export default function Home() {
         }
     };
 
-    const generateTeams = () => {
-        const attendingPlayers = players.filter(p => p.is_attending);
-        const forwards = attendingPlayers.filter(p => !p.is_defense);
-        const defensemen = attendingPlayers.filter(p => p.is_defense);
+    const generateTeams = async () => {
+        try {
+            setLoading(true);
+            setError(null);
 
-        // Sort players by skill, but add a small random factor to introduce variation
-        const sortedForwards = [...forwards].sort((a, b) => b.skill - a.skill + Math.random() * 0.2 - 0.1);
-        const sortedDefensemen = [...defensemen].sort((a, b) => b.skill - a.skill + Math.random() * 0.2 - 0.1);
+            const attendingPlayers = players.filter(p => p.is_attending);
+            const forwards = attendingPlayers.filter(p => !p.is_defense);
+            const defensemen = attendingPlayers.filter(p => p.is_defense);
 
-        const newTeams: Teams = {
-            red: { forwards: [], defensemen: [] },
-            white: { forwards: [], defensemen: [] },
-        };
+            // Sort players by skill, but add a small random factor to introduce variation
+            const sortedForwards = [...forwards].sort((a, b) => b.skill - a.skill + Math.random() * 0.2 - 0.1);
+            const sortedDefensemen = [...defensemen].sort((a, b) => b.skill - a.skill + Math.random() * 0.2 - 0.1);
 
-        // Alternate players between the red and white teams
-        sortedForwards.forEach((player, index) => {
-            if (index % 2 === 0) {
-                newTeams.red.forwards.push(player);
-            } else {
-                newTeams.white.forwards.push(player);
+            const newTeams: Teams = {
+                red: { forwards: [], defensemen: [] },
+                white: { forwards: [], defensemen: [] },
+            };
+
+            // Alternate players between the red and white teams
+            sortedForwards.forEach((player, index) => {
+                if (index % 2 === 0) {
+                    newTeams.red.forwards.push(player);
+                } else {
+                    newTeams.white.forwards.push(player);
+                }
+            });
+
+            sortedDefensemen.forEach((player, index) => {
+                if (index % 2 === 0) {
+                    newTeams.red.defensemen.push(player);
+                } else {
+                    newTeams.white.defensemen.push(player);
+                }
+            });
+
+            // Prepare data for API
+            const teamAssignmentData = {
+                redTeam: {
+                    forwards: newTeams.red.forwards,
+                    defensemen: newTeams.red.defensemen
+                },
+                whiteTeam: {
+                    forwards: newTeams.white.forwards,
+                    defensemen: newTeams.white.defensemen
+                },
+                sessionDate: new Date().toISOString()
+            };
+
+            // Save teams to the backend
+            const response = await fetch('/api/teams', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(teamAssignmentData),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to save teams');
             }
-        });
 
-        sortedDefensemen.forEach((player, index) => {
-            if (index % 2 === 0) {
-                newTeams.red.defensemen.push(player);
-            } else {
-                newTeams.white.defensemen.push(player);
-            }
-        });
-
-        setTeams(newTeams);
-        setActiveTab('roster');
+            setTeams(newTeams);
+            setActiveTab('roster');
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to generate teams');
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (

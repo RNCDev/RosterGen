@@ -1,3 +1,4 @@
+//teams route
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { saveTeamAssignments } from '@/lib/db';
