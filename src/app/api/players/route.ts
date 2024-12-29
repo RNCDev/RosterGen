@@ -1,3 +1,6 @@
+//player api route
+
+
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getAllPlayers, addPlayer, updatePlayer, deletePlayer } from '@/lib/db';
@@ -44,18 +47,46 @@ export async function POST(request: NextRequest): Promise<NextResponse<DbPlayer[
             const fileContent = await file.text();
             const csvRows = fileContent.split('\n').map(row => row.trim()).filter(row => row);
 
-            // Assuming CSV headers: first_name,last_name,skill,is_defense,is_attending
-            const headers = csvRows[0].split(',');
+            // Assuming CSV headers: first_name,last_name,skill,defense,attending
+            const headers = csvRows[0].toLowerCase().split(',');
+
+            // Validate required columns
+            const requiredColumns = ['first_name', 'last_name', 'skill', 'defense', 'attending'];
+            const missingColumns = requiredColumns.filter(col => !headers.includes(col));
+
+            if (missingColumns.length > 0) {
+                return NextResponse.json(
+                    { error: `Missing required columns: ${missingColumns.join(', ')}` },
+                    { status: 400 }
+                );
+            }
+
             const players = csvRows.slice(1).map(row => {
-                const values = row.split(',');
+                const values = row.split(',').map(value => value.trim());
                 return {
                     firstName: values[0],
                     lastName: values[1],
                     skill: parseInt(values[2], 10),
-                    defense: values[3].toLowerCase() === 'true',
-                    attending: values[4].toLowerCase() === 'true'
+                    defense: Boolean(parseInt(values[3], 10)),  // Convert "0"/"1" to boolean
+                    attending: Boolean(parseInt(values[4], 10)) // Convert "0"/"1" to boolean
                 };
             });
+
+            // Validate all players have required fields
+            const invalidPlayers = players.filter(
+                player => !player.firstName ||
+                    !player.lastName ||
+                    isNaN(player.skill) ||
+                    typeof player.defense !== 'boolean' ||
+                    typeof player.attending !== 'boolean'
+            );
+
+            if (invalidPlayers.length > 0) {
+                return NextResponse.json(
+                    { error: 'Invalid player data found in CSV' },
+                    { status: 400 }
+                );
+            }
 
             // Add players to the database
             const addedPlayers = [];
