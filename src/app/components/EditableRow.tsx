@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { type Player } from '@/types/PlayerTypes';
-import { Check, X } from 'lucide-react';
+import { Check, X, Trash2, Edit2 } from 'lucide-react';
 
 interface EditableRowProps {
     player: Player;
@@ -23,7 +23,6 @@ const EditableRow = ({ player, onSave, onDelete }: EditableRowProps) => {
             setIsEditing(false);
             setError(null);
         } catch (err) {
-            // Show the actual error message if available
             setError(err instanceof Error ? err.message : 'Failed to save changes');
         }
     };
@@ -36,7 +35,7 @@ const EditableRow = ({ player, onSave, onDelete }: EditableRowProps) => {
 
     if (!isEditing) {
         return (
-            <tr onClick={handleEdit} className="hover:bg-gray-50 cursor-pointer">
+            <tr className="hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {player.first_name} {player.last_name}
                 </td>
@@ -58,7 +57,22 @@ const EditableRow = ({ player, onSave, onDelete }: EditableRowProps) => {
                     </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <span className="text-blue-600 text-xs">Click to edit</span>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={handleEdit}
+                            className="text-blue-600 hover:text-blue-900"
+                        >
+                            <Edit2 className="h-5 w-5" />
+                        </button>
+                        {onDelete && (
+                            <button
+                                onClick={() => onDelete(player.id)}
+                                className="text-red-600 hover:text-red-900"
+                            >
+                                <Trash2 className="h-5 w-5" />
+                            </button>
+                        )}
+                    </div>
                 </td>
             </tr>
         );
@@ -72,33 +86,34 @@ const EditableRow = ({ player, onSave, onDelete }: EditableRowProps) => {
                         type="text"
                         value={editedPlayer.first_name}
                         onChange={(e) => setEditedPlayer(prev => ({ ...prev, first_name: e.target.value }))}
-                        className="block w-24 rounded-md border border-gray-300 px-2 py-1 text-sm focus:outline-none focus:border-blue-500"
+                        className="block w-24 rounded-md border border-gray-300 px-2 py-1 text-sm"
                         placeholder="First Name"
                     />
                     <input
                         type="text"
                         value={editedPlayer.last_name}
                         onChange={(e) => setEditedPlayer(prev => ({ ...prev, last_name: e.target.value }))}
-                        className="block w-24 rounded-md border-gray-300 shadow-sm text-sm"
+                        className="block w-24 rounded-md border border-gray-300 px-2 py-1 text-sm"
                         placeholder="Last Name"
                     />
                 </div>
             </td>
             <td className="px-6 py-4 whitespace-nowrap">
-                <input
-                    type="number"
-                    min="1"
-                    max="10"
+                <select
                     value={editedPlayer.skill}
-                    onChange={(e) => setEditedPlayer(prev => ({ ...prev, skill: parseInt(e.target.value) || prev.skill }))}
-                    className="block w-16 rounded-md border border-gray-300 px-2 py-1 text-sm focus:outline-none focus:border-blue-500"
-                />
+                    onChange={(e) => setEditedPlayer(prev => ({ ...prev, skill: parseInt(e.target.value) }))}
+                    className="block w-16 rounded-md border border-gray-300 px-2 py-1 text-sm"
+                >
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
+                        <option key={num} value={num}>{num}</option>
+                    ))}
+                </select>
             </td>
             <td className="px-6 py-4 whitespace-nowrap">
                 <select
                     value={editedPlayer.is_defense ? "defense" : "forward"}
                     onChange={(e) => setEditedPlayer(prev => ({ ...prev, is_defense: e.target.value === "defense" }))}
-                    className="block w-24 rounded-md border-gray-300 shadow-sm text-sm"
+                    className="block w-24 rounded-md border border-gray-300 px-2 py-1 text-sm"
                 >
                     <option value="forward">Forward</option>
                     <option value="defense">Defense</option>
@@ -108,7 +123,7 @@ const EditableRow = ({ player, onSave, onDelete }: EditableRowProps) => {
                 <select
                     value={editedPlayer.is_attending ? "yes" : "no"}
                     onChange={(e) => setEditedPlayer(prev => ({ ...prev, is_attending: e.target.value === "yes" }))}
-                    className="block w-20 rounded-md border-gray-300 shadow-sm text-sm"
+                    className="block w-20 rounded-md border border-gray-300 px-2 py-1 text-sm"
                 >
                     <option value="yes">Yes</option>
                     <option value="no">No</option>
@@ -119,12 +134,14 @@ const EditableRow = ({ player, onSave, onDelete }: EditableRowProps) => {
                     <button
                         onClick={handleSave}
                         className="text-green-600 hover:text-green-700 p-1 rounded hover:bg-green-100"
+                        title="Save"
                     >
                         <Check className="h-4 w-4" />
                     </button>
                     <button
                         onClick={handleCancel}
                         className="text-red-600 hover:text-red-700 p-1 rounded hover:bg-red-100"
+                        title="Cancel"
                     >
                         <X className="h-4 w-4" />
                     </button>
