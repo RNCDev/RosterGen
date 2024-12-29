@@ -164,6 +164,7 @@ export async function PUT(
         const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
         return NextResponse.json({ error: errorMessage }, { status: 500 });
     }
+} // Added missing closing brace for PUT function
 
 export async function DELETE(
     request: NextRequest
