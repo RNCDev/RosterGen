@@ -1,14 +1,11 @@
-'use client';
+\'use client';
 
-import { useState } from 'react';
-import Papa from 'papaparse';
-
+import { useState, useEffect } from 'react';
+import { type Player, type Teams } from '@/types/PlayerTypes';
 import Sidebar from '@/components/Sidebar';
 import PlayersView from '@/components/PlayersView';
 import TeamsView from '@/components/TeamsView';
 import ErrorAlert from '@/components/ErrorAlert';
-
-import { type Player, type Teams } from '@/types/PlayerTypes';
 
 export default function Home() {
     const [players, setPlayers] = useState<Player[]>([]);
@@ -20,37 +17,51 @@ export default function Home() {
         white: { forwards: [], defensemen: [] },
     });
 
-    const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    useEffect(() => {
+        fetchPlayers();
+    }, []);
+
+    const fetchPlayers = async () => {
+        try {
+            setLoading(true);
+            const response = await fetch('/api/players');
+            if (!response.ok) throw new Error('Failed to fetch players');
+            const data = await response.json();
+            setPlayers(data);
+        } catch (err) {
+            setError('Failed to load players');
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (!file) return;
 
         setLoading(true);
         setError(null);
 
-        Papa.parse(file, {
-            header: true,
-            skipEmptyLines: true,
-            complete: (results) => {
-                try {
-                    const formattedPlayers = results.data.map((player: any) => ({
-                        first_name: player.firstName,
-                        last_name: player.lastName,
-                        skill: parseInt(player.skill),
-                        is_defense: player.defense === '1',
-                        is_attending: player.attending === '1'
-                    }));
-                    setPlayers(formattedPlayers);
-                    setLoading(false);
-                } catch (err) {
-                    setError('Error processing file: Please check the CSV format');
-                    setLoading(false);
-                }
-            },
-            error: () => {
-                setError('Error parsing file: Please ensure it is a valid CSV');
-                setLoading(false);
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+            const response = await fetch('/api/players', {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (!response.ok) {
+                throw new Error('Upload failed');
             }
-        });
+
+            await fetchPlayers();
+        } catch (err) {
+            setError('Failed to upload file');
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const generateTeams = () => {
@@ -63,7 +74,7 @@ export default function Home() {
 
         const newTeams: Teams = {
             red: { forwards: [], defensemen: [] },
-            white: { forwards: [], defensemen: [] }
+            white: { forwards: [], defensemen: [] },
         };
 
         sortedForwards.forEach((player, index) => {
@@ -88,25 +99,25 @@ export default function Home() {
 
     return (
         <div className="h-screen flex bg-gray-50">
-            <Sidebar 
-                activeTab={activeTab} 
-                setActiveTab={setActiveTab} 
+            <Sidebar
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
             />
-            
+
             <main className="flex-1 p-8 overflow-auto">
                 <div className="max-w-6xl mx-auto">
                     <ErrorAlert message={error} />
-                    
+
                     <div className="bg-white rounded-lg shadow-lg p-6">
                         {activeTab === 'players' ? (
-                            <PlayersView 
+                            <PlayersView
                                 players={players}
                                 loading={loading}
                                 generateTeams={generateTeams}
                                 handleFileUpload={handleFileUpload}
                             />
                         ) : (
-                            <TeamsView 
+                            <TeamsView
                                 teams={teams}
                                 generateTeams={generateTeams}
                                 hasPlayers={players.length > 0}
