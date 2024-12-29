@@ -25,7 +25,7 @@ export async function GET(): Promise<NextResponse<DbPlayer[] | { error: string }
     }
 }
 
-export async function POST(request: NextRequest): Promise<NextResponse<DbPlayer[] | { error: string }>> {
+export async function POST(request: NextRequest): Promise<NextResponse<DbPlayer[] | DbPlayer | { error: string }>> {
     try {
         const contentType = request.headers.get('content-type');
 
