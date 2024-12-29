@@ -11,7 +11,7 @@ interface PlayersViewProps {
     players: Player[];
     loading: boolean;
     handleFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
-    handleDeletePlayer?: (id: number) => void;
+    handleDeletePlayer?: (id: number) => Promise<void>;  // Updated to Promise<void>
     onTeamsGenerated?: (teams: any) => void;
     onUpdatePlayer?: (player: Player) => Promise<void>;
 }
