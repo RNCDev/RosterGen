@@ -98,29 +98,38 @@ export default function Home() {
             setLoading(true);
             setError(null);
 
+            console.log('Original player data:', updatedPlayer);
+
+            const payload = {
+                id: updatedPlayer.id,
+                firstName: updatedPlayer.first_name,
+                lastName: updatedPlayer.last_name,
+                skill: Number(updatedPlayer.skill),
+                defense: Boolean(updatedPlayer.is_defense),
+                attending: Boolean(updatedPlayer.is_attending)
+            };
+
+            console.log('Sending update payload:', payload);
+
             const response = await fetch('/api/players', {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    id: updatedPlayer.id,
-                    firstName: updatedPlayer.first_name,  // convert to camelCase
-                    lastName: updatedPlayer.last_name,    // convert to camelCase
-                    skill: updatedPlayer.skill,
-                    defense: updatedPlayer.is_defense,    // remove 'is_' prefix
-                    attending: updatedPlayer.is_attending // remove 'is_' prefix
-                }),
+                body: JSON.stringify(payload),
             });
 
+            const responseData = await response.json();
+            console.log('Response from server:', responseData);
+
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to update player');
+                throw new Error(responseData.error || 'Failed to update player');
             }
 
             // Refresh the players list
             await fetchPlayers();
         } catch (err) {
+            console.error('Update error:', err);
             setError(err instanceof Error ? err.message : 'Failed to update player');
             throw err;
         } finally {

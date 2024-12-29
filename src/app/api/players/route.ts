@@ -119,40 +119,51 @@ export async function PUT(
 ): Promise<NextResponse<DbPlayer | { error: string }>> {
     try {
         const data = await request.json();
+        console.log('Received update request data:', data);
 
         // Map the incoming data to match our PlayerInput interface
         const playerInput: PlayerInput = {
             firstName: data.firstName,
             lastName: data.lastName,
-            skill: data.skill,
-            defense: data.defense,    // this will map to is_defense in the DB
-            attending: data.attending  // this will map to is_attending in the DB
+            skill: Number(data.skill), // Ensure number type
+            defense: Boolean(data.defense),    // Ensure boolean
+            attending: Boolean(data.attending)  // Ensure boolean
         };
+
+        console.log('Transformed player input:', playerInput);
 
         // Validate required fields
         if (!data.id || !playerInput.firstName || !playerInput.lastName || typeof playerInput.skill !== 'number') {
+            console.log('Validation failed:', {
+                hasId: !!data.id,
+                hasFirstName: !!playerInput.firstName,
+                hasLastName: !!playerInput.lastName,
+                skillIsNumber: typeof playerInput.skill === 'number'
+            });
             return NextResponse.json(
                 { error: 'Missing required fields' },
                 { status: 400 }
             );
         }
 
+        console.log('Calling updatePlayer with:', { id: data.id, ...playerInput });
         const player = await updatePlayer(data.id, playerInput);
 
         if (!player) {
+            console.log('No player returned from update');
             return NextResponse.json(
                 { error: 'Player not found' },
                 { status: 404 }
             );
         }
 
+        console.log('Update successful:', player);
         return NextResponse.json(player);
     } catch (error) {
-        console.error('Database error:', error); // Add this to see the actual error
+        console.error('Database error:', error);
         const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
         return NextResponse.json({ error: errorMessage }, { status: 500 });
     }
-}
 
 export async function DELETE(
     request: NextRequest
