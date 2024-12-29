@@ -2,12 +2,11 @@
 'use client';
 
 import { type Player } from '@/types/PlayerTypes';
-import { ArrowUpFromLine, ArrowLeftRight, Users, Trash2 } from 'lucide-react';
+import { ArrowUpFromLine, Users, Trash2 } from 'lucide-react';
 
 interface PlayersViewProps {
     players: Player[];
     loading: boolean;
-    generateTeams: () => void;
     handleFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
     handleDeletePlayer?: (id: number) => void;
 }
@@ -15,7 +14,6 @@ interface PlayersViewProps {
 export default function PlayersView({
     players,
     loading,
-    generateTeams,
     handleFileUpload,
     handleDeletePlayer
 }: PlayersViewProps) {
@@ -24,14 +22,6 @@ export default function PlayersView({
             <div className="flex justify-between items-center border-b pb-4">
                 <h2 className="text-xl font-semibold text-gray-900">Players</h2>
                 <div className="flex items-center gap-4">
-                    <button
-                        onClick={generateTeams}
-                        disabled={loading || players.length === 0}
-                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-50"
-                    >
-                        <ArrowLeftRight className="h-5 w-5" />
-                        Generate Teams
-                    </button>
                     <label className="cursor-pointer">
                         <span className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-blue-500 text-white hover:bg-blue-600">
                             <ArrowUpFromLine className="h-5 w-5" />
