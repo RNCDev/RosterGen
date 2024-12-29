@@ -1,12 +1,11 @@
 'use client';
 
 import { type Teams, type Player } from '@/types/PlayerTypes';
-import { ListChecks, ArrowLeftRight, Trash2 } from 'lucide-react';
+import { ListChecks, ArrowLeftRight } from 'lucide-react';
 
 interface TeamsViewProps {
     teams: Teams;
     generateTeams: () => void;
-    clearTeams: () => void;  // New prop for clearing teams
     hasPlayers: boolean;
 }
 
@@ -23,12 +22,7 @@ interface TeamSectionProps {
     };
 }
 
-export default function TeamsView({
-    teams,
-    generateTeams,
-    clearTeams,  // Add new prop
-    hasPlayers
-}: TeamsViewProps) {
+export default function TeamsView({ teams, generateTeams, hasPlayers }: TeamsViewProps) {
     const TeamSection = ({ teamName, players, colorScheme }: TeamSectionProps) => {
         const { bg, text, card } = colorScheme;
 
@@ -90,28 +84,7 @@ export default function TeamsView({
 
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-center border-b pb-4">
-                <h2 className="text-xl font-semibold text-gray-900">Team Rosters</h2>
-                <div className="flex items-center gap-4">
-                    <button
-                        onClick={generateTeams}
-                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-blue-500 text-white hover:bg-blue-600"
-                        disabled={!hasPlayers}
-                    >
-                        <ArrowLeftRight className="h-5 w-5" />
-                        Regenerate Teams
-                    </button>
-                    {teams.red.forwards.length > 0 && (
-                        <button
-                            onClick={clearTeams}
-                            className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-red-500 text-white hover:bg-red-600"
-                        >
-                            <Trash2 className="h-5 w-5" />
-                            Clear Teams
-                        </button>
-                    )}
-                </div>
-            </div>
+            <h2 className="text-xl font-semibold text-gray-900 border-b pb-4">Team Rosters</h2>
 
             {teams.red.forwards.length > 0 ? (
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
