@@ -1,5 +1,5 @@
 export type Player = {
-    id?: number;  // Made optional to maintain backward compatibility
+    id: number;
     first_name: string;
     last_name: string;
     skill: number;
@@ -18,28 +18,41 @@ export type Teams = {
 };
 
 // components/PlayersView.js props
-type PlayersViewProps = {
+export type PlayersViewProps = {
     players: Player[];
     loading: boolean;
-    generateTeams: () => void;
     handleFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
-    handleDeletePlayer?: (id: number) => void;  // Optional new prop for deletion
+    handleDeletePlayer?: (id: number) => Promise<void>;  // Updated to Promise<void>
+    onTeamsGenerated?: (teams: Teams) => void;
+    onUpdatePlayer?: (player: Player) => Promise<void>;
 };
 
 // components/TeamsView.js props
-type TeamsViewProps = {
+export type TeamsViewProps = {
     teams: Teams;
-    generateTeams: () => void;
     hasPlayers: boolean;
 };
 
+// components/EditableRow.js props
+export type EditableRowProps = {
+    player: Player;
+    onSave: (updatedPlayer: Player) => Promise<void>;
+    onDelete?: (id: number) => Promise<void>;
+};
+
 // components/Sidebar.js props
-type SidebarProps = {
+export type SidebarProps = {
     activeTab: 'players' | 'roster';
     setActiveTab: (tab: 'players' | 'roster') => void;
 };
 
 // components/ErrorAlert.js props
-type ErrorAlertProps = {
+export type ErrorAlertProps = {
     message: string | null;
+};
+
+// components/TeamGenerator.js props
+export type TeamGeneratorProps = {
+    players: Player[];
+    onTeamsGenerated: (teams: Teams) => void;
 };

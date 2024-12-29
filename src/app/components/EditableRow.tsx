@@ -5,12 +5,12 @@ import { Check, X, Trash2, Edit2 } from 'lucide-react';
 interface EditableRowProps {
     player: Player;
     onSave: (updatedPlayer: Player) => Promise<void>;
-    onDelete?: (id: number) => void;
+    onDelete?: (id: number) => Promise<void>;
 }
 
 const EditableRow = ({ player, onSave, onDelete }: EditableRowProps) => {
     const [isEditing, setIsEditing] = useState(false);
-    const [editedPlayer, setEditedPlayer] = useState(player);
+    const [editedPlayer, setEditedPlayer] = useState<Player>(player);
     const [error, setError] = useState<string | null>(null);
 
     const handleEdit = () => {
@@ -24,6 +24,16 @@ const EditableRow = ({ player, onSave, onDelete }: EditableRowProps) => {
             setError(null);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to save changes');
+        }
+    };
+
+    const handleDelete = async () => {
+        if (onDelete) {
+            try {
+                await onDelete(player.id);
+            } catch (err) {
+                setError(err instanceof Error ? err.message : 'Failed to delete player');
+            }
         }
     };
 
@@ -66,7 +76,7 @@ const EditableRow = ({ player, onSave, onDelete }: EditableRowProps) => {
                         </button>
                         {onDelete && (
                             <button
-                                onClick={() => onDelete(player.id)}
+                                onClick={handleDelete}
                                 className="text-red-600 hover:text-red-900"
                             >
                                 <Trash2 className="h-5 w-5" />
