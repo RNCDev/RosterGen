@@ -91,15 +91,21 @@ export async function updatePlayer(
 ): Promise<DbPlayer> {
     try {
         const { firstName, lastName, skill, defense, attending } = input;
+
+        // Validate skill is within constraints
+        if (skill < 1 || skill > 10) {
+            throw new Error('Skill must be between 1 and 10');
+        }
+
         const { rows } = await sql<DbPlayer>`
-            UPDATE players SET 
-                first_name = ${firstName},
+            UPDATE players
+            SET first_name = ${firstName},
                 last_name = ${lastName},
                 skill = ${skill},
                 is_defense = ${defense},
                 is_attending = ${attending}
             WHERE id = ${id}
-            RETURNING *;
+            RETURNING *
         `;
 
         if (rows.length === 0) {
@@ -109,7 +115,14 @@ export async function updatePlayer(
         return rows[0];
     } catch (error) {
         console.error('Database error in updatePlayer:', error);
-        console.error('Query parameters:', { id, ...input }); // Add this for debugging
+        console.error('Query parameters:', { id, ...input });
+
+        // Enhanced error handling
+        if (error instanceof Error) {
+            if (error.message.includes('players_skill_check')) {
+                throw new Error('Skill must be between 1 and 10');
+            }
+        }
         throw new Error('Failed to update player');
     }
 }
