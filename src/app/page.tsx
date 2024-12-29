@@ -94,12 +94,16 @@ export default function Home() {
 
     const generateTeams = async () => {
         try {
+            console.log('Starting team generation...');
             setLoading(true);
             setError(null);
 
             const attendingPlayers = players.filter(p => p.is_attending);
+            console.log('Attending players:', attendingPlayers);
+
             const forwards = attendingPlayers.filter(p => !p.is_defense);
             const defensemen = attendingPlayers.filter(p => p.is_defense);
+            console.log('Forwards:', forwards.length, 'Defensemen:', defensemen.length);
 
             // Sort players by skill, but add a small random factor to introduce variation
             const sortedForwards = [...forwards].sort((a, b) => b.skill - a.skill + Math.random() * 0.2 - 0.1);
@@ -127,6 +131,8 @@ export default function Home() {
                 }
             });
 
+            console.log('Generated teams:', newTeams);
+
             // Prepare data for API
             const teamAssignmentData = {
                 redTeam: {
@@ -140,6 +146,8 @@ export default function Home() {
                 sessionDate: new Date().toISOString()
             };
 
+            console.log('Sending to API:', teamAssignmentData);
+
             // Save teams to the backend
             const response = await fetch('/api/teams', {
                 method: 'POST',
@@ -150,14 +158,18 @@ export default function Home() {
             });
 
             if (!response.ok) {
-                throw new Error('Failed to save teams');
+                const errorData = await response.json();
+                console.error('API Error:', errorData);
+                throw new Error(errorData.error || 'Failed to save teams');
             }
+
+            console.log('Teams saved successfully');
 
             setTeams(newTeams);
             setActiveTab('roster');
         } catch (err) {
+            console.error('Error in generateTeams:', err);
             setError(err instanceof Error ? err.message : 'Failed to generate teams');
-            console.error(err);
         } finally {
             setLoading(false);
         }
