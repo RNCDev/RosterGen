@@ -105,11 +105,11 @@ export default function Home() {
                 },
                 body: JSON.stringify({
                     id: updatedPlayer.id,
-                    firstName: updatedPlayer.first_name,
-                    lastName: updatedPlayer.last_name,
+                    firstName: updatedPlayer.first_name,  // convert to camelCase
+                    lastName: updatedPlayer.last_name,    // convert to camelCase
                     skill: updatedPlayer.skill,
-                    defense: updatedPlayer.is_defense,
-                    attending: updatedPlayer.is_attending,
+                    defense: updatedPlayer.is_defense,    // remove 'is_' prefix
+                    attending: updatedPlayer.is_attending // remove 'is_' prefix
                 }),
             });
 
@@ -122,7 +122,7 @@ export default function Home() {
             await fetchPlayers();
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to update player');
-            throw err; // Re-throw to be handled by the EditableRow component
+            throw err;
         } finally {
             setLoading(false);
         }

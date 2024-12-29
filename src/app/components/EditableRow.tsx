@@ -23,7 +23,8 @@ const EditableRow = ({ player, onSave, onDelete }: EditableRowProps) => {
             setIsEditing(false);
             setError(null);
         } catch (err) {
-            setError('Failed to save changes');
+            // Show the actual error message if available
+            setError(err instanceof Error ? err.message : 'Failed to save changes');
         }
     };
 
