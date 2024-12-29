@@ -1,7 +1,7 @@
 'use client';
 
 import { type Teams, type Player } from '@/types/PlayerTypes';
-import { ListChecks, ArrowLeftRight } from 'lucide-react';
+import { ListChecks } from 'lucide-react';
 
 interface TeamsViewProps {
     teams: Teams;
@@ -22,7 +22,7 @@ interface TeamSectionProps {
     };
 }
 
-export default function TeamsView({ teams, generateTeams, hasPlayers }: TeamsViewProps) {
+export default function TeamsView({ teams, hasPlayers }: TeamsViewProps) {
     const TeamSection = ({ teamName, players, colorScheme }: TeamSectionProps) => {
         const { bg, text, card } = colorScheme;
 
@@ -79,8 +79,15 @@ export default function TeamsView({ teams, generateTeams, hasPlayers }: TeamsVie
 
     const redTeamTotalSkill = getTotalSkill([...teams.red.forwards, ...teams.red.defensemen]);
     const whiteTeamTotalSkill = getTotalSkill([...teams.white.forwards, ...teams.white.defensemen]);
-    const totalPlayers = teams.red.forwards.length + teams.red.defensemen.length + teams.white.forwards.length + teams.white.defensemen.length;
-    const averageSkill = totalPlayers > 0 ? (redTeamTotalSkill + whiteTeamTotalSkill) / totalPlayers : 0;
+
+    // Calculate average skill only for teams that have been generated
+    const redTeamCount = teams.red.forwards.length + teams.red.defensemen.length;
+    const whiteTeamCount = teams.white.forwards.length + teams.white.defensemen.length;
+    const totalTeamPlayers = redTeamCount + whiteTeamCount;
+
+    const averageTeamSkill = totalTeamPlayers > 0
+        ? ((redTeamTotalSkill + whiteTeamTotalSkill) / totalTeamPlayers).toFixed(2)
+        : '0.00';
 
     return (
         <div className="space-y-6">
@@ -105,17 +112,11 @@ export default function TeamsView({ teams, generateTeams, hasPlayers }: TeamsVie
             ) : (
                 <div className="text-center py-12">
                     <ListChecks className="mx-auto h-12 w-12 text-gray-400" />
-                    <button
-                        onClick={generateTeams}
-                        className="mt-4 flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-blue-500 text-white hover:bg-blue-600 mx-auto"
-                        disabled={!hasPlayers}
-                    >
-                        <ArrowLeftRight className="h-5 w-5" />
-                        Generate Teams
-                    </button>
-                    {!hasPlayers && (
-                        <p className="mt-4 text-sm text-red-500">Please add players before generating teams.</p>
-                    )}
+                    <p className="mt-4 text-sm text-gray-500">
+                        {hasPlayers
+                            ? "Use the Generate Teams button in the Players tab to create teams."
+                            : "Add players before generating teams."}
+                    </p>
                 </div>
             )}
 
@@ -131,7 +132,7 @@ export default function TeamsView({ teams, generateTeams, hasPlayers }: TeamsVie
                 </div>
                 <div>
                     <h3 className="text-lg font-medium text-gray-900">Average Player Skill:</h3>
-                    <p className="text-gray-700">{averageSkill.toFixed(2)}</p>
+                    <p className="text-gray-700">{averageTeamSkill}</p>
                 </div>
             </div>
         </div>
