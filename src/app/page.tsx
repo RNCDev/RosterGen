@@ -5,6 +5,7 @@ import { type Player, type Teams } from '@/types/PlayerTypes';
 import Sidebar from '@/components/Sidebar';
 import PlayersView from '@/components/PlayersView';
 import TeamsView from '@/components/TeamsView';
+import TeamGenerator from '@/components/TeamGenerator';
 import ErrorAlert from '@/components/ErrorAlert';
 
 export default function Home() {
@@ -82,7 +83,6 @@ export default function Home() {
                 throw new Error(errorData.error || 'Failed to delete player');
             }
 
-            // Refresh players list after successful deletion
             await fetchPlayers();
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to delete player');
@@ -92,45 +92,10 @@ export default function Home() {
         }
     };
 
-    const generateTeams = async () => {
+    const handleTeamsGenerated = async (newTeams: Teams) => {
         try {
-            console.log('Starting team generation...');
             setLoading(true);
             setError(null);
-
-            const attendingPlayers = players.filter(p => p.is_attending);
-            console.log('Attending players:', attendingPlayers);
-
-            const forwards = attendingPlayers.filter(p => !p.is_defense);
-            const defensemen = attendingPlayers.filter(p => p.is_defense);
-            console.log('Forwards:', forwards.length, 'Defensemen:', defensemen.length);
-
-            // Create teams object for frontend state
-            const newTeams: Teams = {
-                red: { forwards: [], defensemen: [] },
-                white: { forwards: [], defensemen: [] },
-            };
-
-            // Alternate players between teams
-            forwards.forEach((player, index) => {
-                if (index % 2 === 0) {
-                    newTeams.red.forwards.push(player);
-                } else {
-                    newTeams.white.forwards.push(player);
-                }
-            });
-
-            defensemen.forEach((player, index) => {
-                if (index % 2 === 0) {
-                    newTeams.red.defensemen.push(player);
-                } else {
-                    newTeams.white.defensemen.push(player);
-                }
-            });
-
-            console.log('Generated teams:', newTeams);
-
-            // Set frontend state first
             setTeams(newTeams);
             setActiveTab('roster');
 
@@ -140,8 +105,6 @@ export default function Home() {
                 whiteTeam: newTeams.white,
                 sessionDate: new Date().toISOString()
             };
-
-            console.log('Sending to API:', teamAssignmentData);
 
             // Save teams to the backend
             const response = await fetch('/api/teams', {
@@ -158,10 +121,9 @@ export default function Home() {
                 throw new Error(errorData.error || 'Failed to save teams');
             }
 
-            console.log('Teams saved successfully');
         } catch (err) {
-            console.error('Error in generateTeams:', err);
-            setError(err instanceof Error ? err.message : 'Failed to generate teams');
+            console.error('Error in handleTeamsGenerated:', err);
+            setError(err instanceof Error ? err.message : 'Failed to save teams');
         } finally {
             setLoading(false);
         }
@@ -180,17 +142,21 @@ export default function Home() {
 
                     <div className="bg-white rounded-lg shadow-lg p-6">
                         {activeTab === 'players' ? (
-                            <PlayersView
-                                players={players}
-                                loading={loading}
-                                generateTeams={generateTeams}
-                                handleFileUpload={handleFileUpload}
-                                handleDeletePlayer={handleDeletePlayer}
-                            />
+                            <div className="space-y-6">
+                                <PlayersView
+                                    players={players}
+                                    loading={loading}
+                                    handleFileUpload={handleFileUpload}
+                                    handleDeletePlayer={handleDeletePlayer}
+                                />
+                                <TeamGenerator
+                                    players={players}
+                                    onTeamsGenerated={handleTeamsGenerated}
+                                />
+                            </div>
                         ) : (
                             <TeamsView
                                 teams={teams}
-                                generateTeams={generateTeams}
                                 hasPlayers={players.length > 0}
                             />
                         )}
