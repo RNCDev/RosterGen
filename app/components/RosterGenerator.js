@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import { ArrowUpFromLine, ArrowLeftRight, Users, ListChecks } from 'lucide-react';
 
-export function RosterGenerator() {
+const RosterGenerator = () => {
     const [activeTab, setActiveTab] = useState("players");
     const [players, setPlayers] = useState([]);
     const [teams, setTeams] = useState({
@@ -111,7 +111,7 @@ export function RosterGenerator() {
                             className={`nav-item ${activeTab === "players" ? "nav-item-active" : "nav-item-inactive"
                                 } flex items-center space-x-2`}
                         >
-                            <Users size={20} />
+                            <Users className="w-5 h-5" />
                             <span>Players</span>
                         </button>
                         <button
@@ -119,7 +119,7 @@ export function RosterGenerator() {
                             className={`nav-item ${activeTab === "roster" ? "nav-item-active" : "nav-item-inactive"
                                 } flex items-center space-x-2`}
                         >
-                            <ListChecks size={20} />
+                            <ListChecks className="w-5 h-5" />
                             <span>Roster</span>
                         </button>
                     </nav>
@@ -127,163 +127,176 @@ export function RosterGenerator() {
             </div>
 
             {/* Main Content */}
-            <div className="flex-1 overflow-auto">
-                <div className="p-8 max-w-7xl mx-auto">
-                    {error && (
-                        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
-                            {error}
+            <div className="flex-1 overflow-auto p-8">
+                {error && (
+                    <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+                        {error}
+                    </div>
+                )}
+
+                <div className="bg-white rounded-lg shadow-lg p-6">
+                    {activeTab === "players" ? (
+                        <div className="space-y-6">
+                            {/* Header with buttons */}
+                            <div className="flex justify-between items-center pb-4 border-b">
+                                <h2 className="text-xl font-semibold text-gray-800">Player List</h2>
+                                <div className="flex space-x-4">
+                                    <button
+                                        onClick={generateRosters}
+                                        disabled={loading || players.length === 0}
+                                        className="button-primary"
+                                    >
+                                        <ArrowLeftRight className="w-5 h-5" />
+                                        <span>Generate Roster</span>
+                                    </button>
+
+                                    <label className="cursor-pointer">
+                                        <div className="button-primary">
+                                            <ArrowUpFromLine className="w-5 h-5" />
+                                            <span>Upload CSV</span>
+                                            <input
+                                                type="file"
+                                                accept=".csv"
+                                                onChange={handleFileUpload}
+                                                className="hidden"
+                                                disabled={loading}
+                                            />
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+
+                            {/* Players Table */}
+                            {players.length > 0 ? (
+                                <div className="overflow-x-auto">
+                                    <table className="w-full">
+                                        <thead>
+                                            <tr className="bg-gray-50">
+                                                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Name</th>
+                                                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Skill</th>
+                                                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Position</th>
+                                                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Attending</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-100">
+                                            {players.map((player) => (
+                                                <tr
+                                                    key={`${player.first_name}-${player.last_name}`}
+                                                    className="hover:bg-gray-50 transition-colors"
+                                                >
+                                                    <td className="px-4 py-3 text-sm text-gray-900">
+                                                        {player.first_name} {player.last_name}
+                                                    </td>
+                                                    <td className="px-4 py-3 text-sm text-gray-900">
+                                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                                            {player.skill}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-4 py-3 text-sm text-gray-900">
+                                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${player.is_defense
+                                                                ? "bg-purple-100 text-purple-800"
+                                                                : "bg-green-100 text-green-800"
+                                                            }`}>
+                                                            {player.is_defense ? "Defense" : "Forward"}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-4 py-3 text-sm text-gray-900">
+                                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${player.is_attending
+                                                                ? "bg-green-100 text-green-800"
+                                                                : "bg-gray-100 text-gray-800"
+                                                            }`}>
+                                                            {player.is_attending ? "Yes" : "No"}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            ) : (
+                                <div className="text-center py-12">
+                                    <Users className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+                                    <p className="text-gray-500 text-lg">No players found. Upload a CSV to add players.</p>
+                                </div>
+                            )}
                         </div>
-                    )}
-
-                    <div className="bg-white rounded-lg shadow-card">
-                        {activeTab === "players" ? (
-                            <div className="space-y-6 p-6">
-                                {/* Header with buttons */}
-                                <div className="flex justify-between items-center border-b pb-4">
-                                    <h2 className="text-xl font-semibold text-gray-800">Player List</h2>
-                                    <div className="flex space-x-4">
-                                        <button
-                                            onClick={generateRosters}
-                                            disabled={loading || players.length === 0}
-                                            className="button-primary"
-                                        >
-                                            <ArrowLeftRight size={20} />
-                                            Generate Roster
-                                        </button>
-
-                                        <label className="cursor-pointer">
-                                            <div className="button-primary">
-                                                <ArrowUpFromLine size={20} />
-                                                Upload CSV
-                                                <input
-                                                    type="file"
-                                                    accept=".csv"
-                                                    onChange={handleFileUpload}
-                                                    className="hidden"
-                                                    disabled={loading}
-                                                />
+                    ) : (
+                        <div className="space-y-6">
+                            <h2 className="text-xl font-semibold text-gray-800 pb-4 border-b">Team Rosters</h2>
+                            {teams.red.forwards.length > 0 ? (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    {/* Red Team */}
+                                    <div className="team-card team-card-red">
+                                        <h3 className="text-lg font-semibold text-red-700 mb-4">Red Team</h3>
+                                        <div className="space-y-4">
+                                            <div>
+                                                <h4 className="font-medium text-red-600 mb-2">Forwards</h4>
+                                                {teams.red.forwards.map((player) => (
+                                                    <div key={`${player.first_name}-${player.last_name}`} className="player-card player-card-red">
+                                                        <span className="font-medium">{player.first_name} {player.last_name}</span>
+                                                        <span className="text-sm text-red-600">Skill: {player.skill}</span>
+                                                    </div>
+                                                ))}
                                             </div>
-                                        </label>
+                                            <div>
+                                                <h4 className="font-medium text-red-600 mb-2">Defense</h4>
+                                                {teams.red.defensemen.map((player) => (
+                                                    <div key={`${player.first_name}-${player.last_name}`} className="player-card player-card-red">
+                                                        <span className="font-medium">{player.first_name} {player.last_name}</span>
+                                                        <span className="text-sm text-red-600">Skill: {player.skill}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* White Team */}
+                                    <div className="team-card team-card-white">
+                                        <h3 className="text-lg font-semibold text-gray-700 mb-4">White Team</h3>
+                                        <div className="space-y-4">
+                                            <div>
+                                                <h4 className="font-medium text-gray-600 mb-2">Forwards</h4>
+                                                {teams.white.forwards.map((player) => (
+                                                    <div key={`${player.first_name}-${player.last_name}`} className="player-card player-card-white">
+                                                        <span className="font-medium">{player.first_name} {player.last_name}</span>
+                                                        <span className="text-sm text-gray-600">Skill: {player.skill}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <div>
+                                                <h4 className="font-medium text-gray-600 mb-2">Defense</h4>
+                                                {teams.white.defensemen.map((player) => (
+                                                    <div key={`${player.first_name}-${player.last_name}`} className="player-card player-card-white">
+                                                        <span className="font-medium">{player.first_name} {player.last_name}</span>
+                                                        <span className="text-sm text-gray-600">Skill: {player.skill}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-
-                                {/* Players Table */}
-                                {players.length > 0 ? (
-                                    <div className="overflow-x-auto">
-                                        <table className="w-full">
-                                            <thead>
-                                                <tr className="bg-gray-50">
-                                                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">First Name</th>
-                                                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Last Name</th>
-                                                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Skill</th>
-                                                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Position</th>
-                                                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Attending</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-gray-100">
-                                                {players.map((player) => (
-                                                    <tr
-                                                        key={player.id || `${player.first_name}-${player.last_name}`}
-                                                        className="hover:bg-gray-50 transition-colors"
-                                                    >
-                                                        <td className="px-4 py-3 text-sm text-gray-900">{player.first_name}</td>
-                                                        <td className="px-4 py-3 text-sm text-gray-900">{player.last_name}</td>
-                                                        <td className="px-4 py-3 text-sm text-gray-900">{player.skill}</td>
-                                                        <td className="px-4 py-3 text-sm text-gray-900">{player.is_defense ? "Defense" : "Forward"}</td>
-                                                        <td className="px-4 py-3 text-sm text-gray-900">
-                                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${player.is_attending ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                                                                }`}>
-                                                                {player.is_attending ? "Yes" : "No"}
-                                                            </span>
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                ) : (
-                                    <div className="text-center py-12">
-                                        <Users size={48} className="mx-auto text-gray-400 mb-4" />
-                                        <p className="text-gray-500 text-lg">No players found. Upload a CSV to add players.</p>
-                                    </div>
-                                )}
-                            </div>
-                        ) : (
-                            <div className="space-y-6 p-6">
-                                <h2 className="text-xl font-semibold text-gray-800 border-b pb-4">Team Rosters</h2>
-                                {teams.red.forwards.length > 0 ? (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        {/* Red Team */}
-                                        <div className="team-card team-card-red">
-                                            <h3 className="text-lg font-semibold text-red-700 mb-4">Red Team</h3>
-                                            <div className="space-y-4">
-                                                <div>
-                                                    <h4 className="font-medium text-red-600 mb-2">Forwards</h4>
-                                                    {teams.red.forwards.map((player) => (
-                                                        <div key={player.id} className="player-card player-card-red">
-                                                            <span className="font-medium">{player.first_name} {player.last_name}</span>
-                                                            <span className="text-sm text-red-600">Skill: {player.skill}</span>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                                <div>
-                                                    <h4 className="font-medium text-red-600 mb-2">Defense</h4>
-                                                    {teams.red.defensemen.map((player) => (
-                                                        <div key={player.id} className="player-card player-card-red">
-                                                            <span className="font-medium">{player.first_name} {player.last_name}</span>
-                                                            <span className="text-sm text-red-600">Skill: {player.skill}</span>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* White Team */}
-                                        <div className="team-card team-card-white">
-                                            <h3 className="text-lg font-semibold text-gray-700 mb-4">White Team</h3>
-                                            <div className="space-y-4">
-                                                <div>
-                                                    <h4 className="font-medium text-gray-600 mb-2">Forwards</h4>
-                                                    {teams.white.forwards.map((player) => (
-                                                        <div key={player.id} className="player-card player-card-white">
-                                                            <span className="font-medium">{player.first_name} {player.last_name}</span>
-                                                            <span className="text-sm text-gray-600">Skill: {player.skill}</span>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                                <div>
-                                                    <h4 className="font-medium text-gray-600 mb-2">Defense</h4>
-                                                    {teams.white.defensemen.map((player) => (
-                                                        <div key={player.id} className="player-card player-card-white">
-                                                            <span className="font-medium">{player.first_name} {player.last_name}</span>
-                                                            <span className="text-sm text-gray-600">Skill: {player.skill}</span>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="text-center py-12">
-                                        <ArrowLeftRight size={48} className="mx-auto text-gray-400 mb-4" />
-                                        <button
-                                            onClick={generateRosters}
-                                            className="button-primary mx-auto"
-                                            disabled={players.length === 0 || loading}
-                                        >
-                                            <ArrowLeftRight size={20} />
-                                            Generate Teams
-                                        </button>
-                                        {players.length === 0 && (
-                                            <p className="text-red-500 mt-4">Please add players before generating teams.</p>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    </div>
+                            ) : (
+                                <div className="text-center py-12">
+                                    <ListChecks className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+                                    <button
+                                        onClick={generateRosters}
+                                        className="button-primary mx-auto"
+                                        disabled={players.length === 0 || loading}
+                                    >
+                                        <ArrowLeftRight className="w-5 h-5" />
+                                        <span>{loading ? "Generating..." : "Generate Teams"}</span>
+                                    </button>
+                                    {players.length === 0 && (
+                                        <p className="text-red-500 mt-4">Please add players before generating teams.</p>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
     );
-}
+};
+
+export default RosterGenerator;
