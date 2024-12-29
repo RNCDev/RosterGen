@@ -92,15 +92,14 @@ export async function updatePlayer(
     try {
         const { firstName, lastName, skill, defense, attending } = input;
         const { rows } = await sql<DbPlayer>`
-            UPDATE players 
-            SET 
+            UPDATE players SET 
                 first_name = ${firstName},
                 last_name = ${lastName},
                 skill = ${skill},
                 is_defense = ${defense},
-                is_attending = ${attending},
+                is_attending = ${attending}
             WHERE id = ${id}
-            RETURNING *
+            RETURNING *;
         `;
 
         if (rows.length === 0) {
@@ -110,6 +109,7 @@ export async function updatePlayer(
         return rows[0];
     } catch (error) {
         console.error('Database error in updatePlayer:', error);
+        console.error('Query parameters:', { id, ...input }); // Add this for debugging
         throw new Error('Failed to update player');
     }
 }
