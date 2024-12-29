@@ -24,6 +24,11 @@ interface TeamSectionProps {
 export default function TeamsView({ teams, hasPlayers }: TeamsViewProps) {
     const TeamSection = ({ teamName, players, colorScheme }: TeamSectionProps) => {
         const { bg, text, card } = colorScheme;
+        const allPlayers = [...players.forwards, ...players.defensemen];
+        const totalSkill = allPlayers.reduce((sum, player) => sum + player.skill, 0);
+        const averageSkill = allPlayers.length > 0
+            ? (totalSkill / allPlayers.length).toFixed(2)
+            : '0.00';
 
         return (
             <div className={`rounded-lg ${bg} p-6`}>
@@ -54,6 +59,20 @@ export default function TeamsView({ teams, hasPlayers }: TeamsViewProps) {
                             ))}
                         </div>
                     </div>
+
+                    {/* Team Stats Section */}
+                    <div className={`mt-4 ${card} rounded-lg p-4`}>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <h4 className={`text-sm font-medium ${text}`}>Total Skill</h4>
+                                <p className={`text-lg font-semibold ${text}`}>{totalSkill}</p>
+                            </div>
+                            <div>
+                                <h4 className={`text-sm font-medium ${text}`}>Average Skill</h4>
+                                <p className={`text-lg font-semibold ${text}`}>{averageSkill}</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         );
@@ -71,22 +90,6 @@ export default function TeamsView({ teams, hasPlayers }: TeamsViewProps) {
             card: 'bg-gray-100'
         }
     };
-
-    const getTotalSkill = (players: Player[]) => {
-        return players.reduce((total, player) => total + player.skill, 0);
-    };
-
-    const redTeamTotalSkill = getTotalSkill([...teams.red.forwards, ...teams.red.defensemen]);
-    const whiteTeamTotalSkill = getTotalSkill([...teams.white.forwards, ...teams.white.defensemen]);
-
-    // Calculate average skill only for teams that have been generated
-    const redTeamCount = teams.red.forwards.length + teams.red.defensemen.length;
-    const whiteTeamCount = teams.white.forwards.length + teams.white.defensemen.length;
-    const totalTeamPlayers = redTeamCount + whiteTeamCount;
-
-    const averageTeamSkill = totalTeamPlayers > 0
-        ? ((redTeamTotalSkill + whiteTeamTotalSkill) / totalTeamPlayers).toFixed(2)
-        : '0.00';
 
     return (
         <div className="space-y-6">
@@ -118,22 +121,6 @@ export default function TeamsView({ teams, hasPlayers }: TeamsViewProps) {
                     </p>
                 </div>
             )}
-
-            {/* Team summary footer */}
-            <div className="bg-gray-50 rounded-lg p-4 flex justify-between">
-                <div>
-                    <h3 className="text-lg font-medium text-gray-900">Red Team Total Skill:</h3>
-                    <p className="text-gray-700">{redTeamTotalSkill}</p>
-                </div>
-                <div>
-                    <h3 className="text-lg font-medium text-gray-900">White Team Total Skill:</h3>
-                    <p className="text-gray-700">{whiteTeamTotalSkill}</p>
-                </div>
-                <div>
-                    <h3 className="text-lg font-medium text-gray-900">Average Player Skill:</h3>
-                    <p className="text-gray-700">{averageTeamSkill}</p>
-                </div>
-            </div>
         </div>
     );
 }
