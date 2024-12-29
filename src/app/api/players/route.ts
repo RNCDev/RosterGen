@@ -1,6 +1,3 @@
-//player api route
-
-
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getAllPlayers, addPlayer, updatePlayer, deletePlayer } from '@/lib/db';
@@ -121,18 +118,26 @@ export async function PUT(
     request: NextRequest
 ): Promise<NextResponse<DbPlayer | { error: string }>> {
     try {
-        const data = await request.json() as UpdatePlayerInput;
-        const { id, ...playerData } = data;
+        const data = await request.json();
+
+        // Map the incoming data to match our PlayerInput interface
+        const playerInput: PlayerInput = {
+            firstName: data.firstName,
+            lastName: data.lastName,
+            skill: data.skill,
+            defense: data.defense,    // this will map to is_defense in the DB
+            attending: data.attending  // this will map to is_attending in the DB
+        };
 
         // Validate required fields
-        if (!id || !playerData.firstName || !playerData.lastName || typeof playerData.skill !== 'number') {
+        if (!data.id || !playerInput.firstName || !playerInput.lastName || typeof playerInput.skill !== 'number') {
             return NextResponse.json(
                 { error: 'Missing required fields' },
                 { status: 400 }
             );
         }
 
-        const player = await updatePlayer(id, playerData);
+        const player = await updatePlayer(data.id, playerInput);
 
         if (!player) {
             return NextResponse.json(
@@ -143,6 +148,7 @@ export async function PUT(
 
         return NextResponse.json(player);
     } catch (error) {
+        console.error('Database error:', error); // Add this to see the actual error
         const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
         return NextResponse.json({ error: errorMessage }, { status: 500 });
     }
