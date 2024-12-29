@@ -2,56 +2,58 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-    --foreground-rgb: 0, 0, 0;
-    --background-rgb: 243, 244, 246;
+@layer base {
+    html {
+        @apply h-full bg-gray-50;
+    }
+
+    body {
+        @apply h-full;
+    }
 }
 
-html,
-body {
-    @apply h-full bg-gray-50;
-}
+@layer components {
+    .nav-item {
+        @apply w-full px-4 py-2 text-left rounded transition-colors;
+    }
 
-.nav-item {
-    @apply w-full px-4 py-2 text-left rounded transition-colors;
-}
+    .nav-item-active {
+        @apply bg-blue-500 text-white;
+    }
 
-.nav-item-active {
-    @apply bg-blue-500 text-white;
-}
+    .nav-item-inactive {
+        @apply text-gray-600 hover:bg-gray-100;
+    }
 
-.nav-item-inactive {
-    @apply text-gray-600 hover:bg-gray-100;
-}
+    .team-card {
+        @apply rounded-lg shadow-sm p-6;
+    }
 
-.team-card {
-    @apply rounded-lg shadow-sm p-6;
-}
+    .team-card-red {
+        @apply bg-red-50;
+    }
 
-.team-card-red {
-    @apply bg-red-50;
-}
+    .team-card-white {
+        @apply bg-gray-50;
+    }
 
-.team-card-white {
-    @apply bg-gray-50;
-}
+    .player-card {
+        @apply p-3 rounded-md mb-2 flex justify-between items-center;
+    }
 
-.player-card {
-    @apply p-3 rounded-md mb-2 flex justify-between items-center;
-}
+    .player-card-red {
+        @apply bg-red-100/50;
+    }
 
-.player-card-red {
-    @apply bg-red-100/50;
-}
+    .player-card-white {
+        @apply bg-gray-100/50;
+    }
 
-.player-card-white {
-    @apply bg-gray-100/50;
-}
+    .button-primary {
+        @apply px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed;
+    }
 
-.button-primary {
-    @apply px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed;
-}
-
-.button-secondary {
-    @apply px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed;
+    .button-secondary {
+        @apply px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed;
+    }
 }
