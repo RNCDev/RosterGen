@@ -5,7 +5,6 @@ import { ListChecks } from 'lucide-react';
 
 interface TeamsViewProps {
     teams: Teams;
-    generateTeams: () => void;
     hasPlayers: boolean;
 }
 
