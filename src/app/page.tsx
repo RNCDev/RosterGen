@@ -92,6 +92,42 @@ export default function Home() {
         }
     };
 
+    // Add this function to your page.tsx component
+    const handlePlayerUpdate = async (updatedPlayer: Player) => {
+        try {
+            setLoading(true);
+            setError(null);
+
+            const response = await fetch('/api/players', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    id: updatedPlayer.id,
+                    firstName: updatedPlayer.first_name,
+                    lastName: updatedPlayer.last_name,
+                    skill: updatedPlayer.skill,
+                    defense: updatedPlayer.is_defense,
+                    attending: updatedPlayer.is_attending,
+                }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to update player');
+            }
+
+            // Refresh the players list
+            await fetchPlayers();
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to update player');
+            throw err; // Re-throw to be handled by the EditableRow component
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const handleTeamsGenerated = async (newTeams: Teams) => {
         try {
             setLoading(true);
@@ -149,6 +185,7 @@ export default function Home() {
                                     handleFileUpload={handleFileUpload}
                                     handleDeletePlayer={handleDeletePlayer}
                                     onTeamsGenerated={handleTeamsGenerated}
+                                    onUpdatePlayer={handlePlayerUpdate}
                                 />
                             </div>
                         ) : (
