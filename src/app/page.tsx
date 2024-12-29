@@ -127,13 +127,6 @@ export default function Home() {
         setActiveTab('roster');
     };
 
-    const clearTeams = () => {
-        setTeams({
-            red: { forwards: [], defensemen: [] },
-            white: { forwards: [], defensemen: [] },
-        });
-    };
-
     return (
         <div className="h-screen flex bg-gray-50">
             <Sidebar
@@ -158,7 +151,6 @@ export default function Home() {
                             <TeamsView
                                 teams={teams}
                                 generateTeams={generateTeams}
-                                clearTeams={clearTeams}
                                 hasPlayers={players.length > 0}
                             />
                         )}
