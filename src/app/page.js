@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ArrowUpFromLine, ArrowLeftRight, Users } from 'lucide-react';
+import { ArrowUpFromLine, ArrowLeftRight, Users, ListChecks } from 'lucide-react';
 import Papa from 'papaparse';
 
 export default function Home() {
@@ -47,7 +47,7 @@ export default function Home() {
         });
     };
 
-    const generateRosters = () => {
+    const generateTeams = () => {
         const attendingPlayers = players.filter(p => p.is_attending);
         const forwards = attendingPlayers.filter(p => !p.is_defense);
         const defensemen = attendingPlayers.filter(p => p.is_defense);
@@ -61,19 +61,13 @@ export default function Home() {
         };
 
         sortedForwards.forEach((player, index) => {
-            if (index % 2 === 0) {
-                newTeams.red.forwards.push(player);
-            } else {
-                newTeams.white.forwards.push(player);
-            }
+            if (index % 2 === 0) newTeams.red.forwards.push(player);
+            else newTeams.white.forwards.push(player);
         });
 
         sortedDefensemen.forEach((player, index) => {
-            if (index % 2 === 0) {
-                newTeams.red.defensemen.push(player);
-            } else {
-                newTeams.white.defensemen.push(player);
-            }
+            if (index % 2 === 0) newTeams.red.defensemen.push(player);
+            else newTeams.white.defensemen.push(player);
         });
 
         setTeams(newTeams);
@@ -81,41 +75,41 @@ export default function Home() {
     };
 
     return (
-        <div className="flex h-screen">
+        <div className="h-screen flex bg-gray-50">
             {/* Sidebar */}
-            <div className="w-64 min-h-screen bg-white shadow-lg">
+            <aside className="w-64 bg-white shadow-lg">
                 <div className="p-6">
-                    <h1 className="text-xl font-bold text-gray-800 mb-8">Hockey Roster</h1>
-                    <nav className="space-y-2">
+                    <h1 className="text-2xl font-bold text-gray-900">Hockey Roster</h1>
+                    <nav className="mt-6 space-y-2">
                         <button
                             onClick={() => setActiveTab('players')}
-                            className={`w-full px-4 py-2 text-left rounded transition-colors flex items-center space-x-2 ${activeTab === 'players'
+                            className={`w-full flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg ${activeTab === 'players'
                                     ? 'bg-blue-500 text-white'
-                                    : 'text-gray-600 hover:bg-gray-100'
+                                    : 'text-gray-700 hover:bg-gray-100'
                                 }`}
                         >
-                            <Users size={20} />
-                            <span>Players</span>
+                            <Users className="h-5 w-5" />
+                            Players
                         </button>
                         <button
                             onClick={() => setActiveTab('roster')}
-                            className={`w-full px-4 py-2 text-left rounded transition-colors flex items-center space-x-2 ${activeTab === 'roster'
+                            className={`w-full flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg ${activeTab === 'roster'
                                     ? 'bg-blue-500 text-white'
-                                    : 'text-gray-600 hover:bg-gray-100'
+                                    : 'text-gray-700 hover:bg-gray-100'
                                 }`}
                         >
-                            <ArrowLeftRight size={20} />
-                            <span>Roster</span>
+                            <ListChecks className="h-5 w-5" />
+                            Teams
                         </button>
                     </nav>
                 </div>
-            </div>
+            </aside>
 
-            {/* Main Content */}
-            <div className="flex-1 p-8 bg-gray-50">
-                <div className="max-w-5xl mx-auto">
+            {/* Main content */}
+            <main className="flex-1 p-8 overflow-auto">
+                <div className="max-w-6xl mx-auto">
                     {error && (
-                        <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-lg">
+                        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
                             {error}
                         </div>
                     )}
@@ -124,21 +118,21 @@ export default function Home() {
                         {activeTab === 'players' ? (
                             <div className="space-y-6">
                                 <div className="flex justify-between items-center border-b pb-4">
-                                    <h2 className="text-xl font-semibold">Player List</h2>
-                                    <div className="flex space-x-4">
+                                    <h2 className="text-xl font-semibold text-gray-900">Players</h2>
+                                    <div className="flex items-center gap-4">
                                         <button
-                                            onClick={generateRosters}
+                                            onClick={generateTeams}
                                             disabled={loading || players.length === 0}
-                                            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors flex items-center space-x-2 disabled:opacity-50"
+                                            className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-50"
                                         >
-                                            <ArrowLeftRight size={20} />
-                                            <span>Generate Teams</span>
+                                            <ArrowLeftRight className="h-5 w-5" />
+                                            Generate Teams
                                         </button>
                                         <label className="cursor-pointer">
-                                            <div className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors flex items-center space-x-2">
-                                                <ArrowUpFromLine size={20} />
-                                                <span>Upload CSV</span>
-                                            </div>
+                                            <span className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-blue-500 text-white hover:bg-blue-600">
+                                                <ArrowUpFromLine className="h-5 w-5" />
+                                                Upload CSV
+                                            </span>
                                             <input
                                                 type="file"
                                                 accept=".csv"
@@ -149,95 +143,133 @@ export default function Home() {
                                     </div>
                                 </div>
 
-                                {/* Players Table */}
                                 {players.length > 0 ? (
                                     <div className="overflow-x-auto">
-                                        <table className="w-full">
-                                            <thead>
-                                                <tr className="bg-gray-50">
-                                                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-500">Name</th>
-                                                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-500">Skill</th>
-                                                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-500">Position</th>
-                                                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-500">Attending</th>
+                                        <table className="min-w-full divide-y divide-gray-200">
+                                            <thead className="bg-gray-50">
+                                                <tr>
+                                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Skill</th>
+                                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Position</th>
+                                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Attending</th>
                                                 </tr>
                                             </thead>
-                                            <tbody>
+                                            <tbody className="bg-white divide-y divide-gray-200">
                                                 {players.map((player, idx) => (
-                                                    <tr key={idx} className="border-t border-gray-100">
-                                                        <td className="px-4 py-2">{player.first_name} {player.last_name}</td>
-                                                        <td className="px-4 py-2">{player.skill}</td>
-                                                        <td className="px-4 py-2">{player.is_defense ? 'Defense' : 'Forward'}</td>
-                                                        <td className="px-4 py-2">{player.is_attending ? 'Yes' : 'No'}</td>
+                                                    <tr key={idx} className="hover:bg-gray-50">
+                                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                            {player.first_name} {player.last_name}
+                                                        </td>
+                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                                                {player.skill}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${player.is_defense
+                                                                    ? 'bg-purple-100 text-purple-800'
+                                                                    : 'bg-green-100 text-green-800'
+                                                                }`}>
+                                                                {player.is_defense ? 'Defense' : 'Forward'}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${player.is_attending
+                                                                    ? 'bg-green-100 text-green-800'
+                                                                    : 'bg-gray-100 text-gray-800'
+                                                                }`}>
+                                                                {player.is_attending ? 'Yes' : 'No'}
+                                                            </span>
+                                                        </td>
                                                     </tr>
                                                 ))}
                                             </tbody>
                                         </table>
                                     </div>
                                 ) : (
-                                    <div className="text-center py-12 text-gray-500">
-                                        No players uploaded yet. Use the CSV upload button to add players.
+                                    <div className="text-center py-12">
+                                        <Users className="mx-auto h-12 w-12 text-gray-400" />
+                                        <h3 className="mt-2 text-sm font-medium text-gray-900">No players</h3>
+                                        <p className="mt-1 text-sm text-gray-500">Get started by uploading a CSV file.</p>
                                     </div>
                                 )}
                             </div>
                         ) : (
                             <div className="space-y-6">
-                                {/* Roster Content */}
-                                <h2 className="text-xl font-semibold border-b pb-4">Team Rosters</h2>
+                                <h2 className="text-xl font-semibold text-gray-900 border-b pb-4">Team Rosters</h2>
                                 {teams.red.forwards.length > 0 ? (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                                         {/* Red Team */}
-                                        <div className="bg-red-50 p-6 rounded-lg">
-                                            <h3 className="text-lg font-semibold text-red-700 mb-4">Red Team</h3>
-                                            <div>
-                                                <h4 className="font-medium mb-2">Forwards</h4>
-                                                {teams.red.forwards.map((player, idx) => (
-                                                    <div key={idx} className="bg-red-100 p-2 rounded mb-2">
-                                                        {player.first_name} {player.last_name} (Skill: {player.skill})
+                                        <div className="rounded-lg bg-red-50 p-6">
+                                            <h3 className="text-lg font-medium text-red-900">Red Team</h3>
+                                            <div className="mt-4 space-y-4">
+                                                <div>
+                                                    <h4 className="font-medium text-red-900">Forwards</h4>
+                                                    <div className="mt-2 space-y-2">
+                                                        {teams.red.forwards.map((player, idx) => (
+                                                            <div key={idx} className="rounded-md bg-red-100 px-3 py-2 text-sm">
+                                                                <span className="font-medium">{player.first_name} {player.last_name}</span>
+                                                                <span className="ml-2 text-red-700">Skill: {player.skill}</span>
+                                                            </div>
+                                                        ))}
                                                     </div>
-                                                ))}
-                                            </div>
-                                            <div className="mt-4">
-                                                <h4 className="font-medium mb-2">Defense</h4>
-                                                {teams.red.defensemen.map((player, idx) => (
-                                                    <div key={idx} className="bg-red-100 p-2 rounded mb-2">
-                                                        {player.first_name} {player.last_name} (Skill: {player.skill})
+                                                </div>
+                                                <div>
+                                                    <h4 className="font-medium text-red-900">Defense</h4>
+                                                    <div className="mt-2 space-y-2">
+                                                        {teams.red.defensemen.map((player, idx) => (
+                                                            <div key={idx} className="rounded-md bg-red-100 px-3 py-2 text-sm">
+                                                                <span className="font-medium">{player.first_name} {player.last_name}</span>
+                                                                <span className="ml-2 text-red-700">Skill: {player.skill}</span>
+                                                            </div>
+                                                        ))}
                                                     </div>
-                                                ))}
+                                                </div>
                                             </div>
                                         </div>
 
                                         {/* White Team */}
-                                        <div className="bg-gray-50 p-6 rounded-lg">
-                                            <h3 className="text-lg font-semibold text-gray-700 mb-4">White Team</h3>
-                                            <div>
-                                                <h4 className="font-medium mb-2">Forwards</h4>
-                                                {teams.white.forwards.map((player, idx) => (
-                                                    <div key={idx} className="bg-gray-100 p-2 rounded mb-2">
-                                                        {player.first_name} {player.last_name} (Skill: {player.skill})
+                                        <div className="rounded-lg bg-gray-50 p-6">
+                                            <h3 className="text-lg font-medium text-gray-900">White Team</h3>
+                                            <div className="mt-4 space-y-4">
+                                                <div>
+                                                    <h4 className="font-medium text-gray-900">Forwards</h4>
+                                                    <div className="mt-2 space-y-2">
+                                                        {teams.white.forwards.map((player, idx) => (
+                                                            <div key={idx} className="rounded-md bg-gray-100 px-3 py-2 text-sm">
+                                                                <span className="font-medium">{player.first_name} {player.last_name}</span>
+                                                                <span className="ml-2 text-gray-700">Skill: {player.skill}</span>
+                                                            </div>
+                                                        ))}
                                                     </div>
-                                                ))}
-                                            </div>
-                                            <div className="mt-4">
-                                                <h4 className="font-medium mb-2">Defense</h4>
-                                                {teams.white.defensemen.map((player, idx) => (
-                                                    <div key={idx} className="bg-gray-100 p-2 rounded mb-2">
-                                                        {player.first_name} {player.last_name} (Skill: {player.skill})
+                                                </div>
+                                                <div>
+                                                    <h4 className="font-medium text-gray-900">Defense</h4>
+                                                    <div className="mt-2 space-y-2">
+                                                        {teams.white.defensemen.map((player, idx) => (
+                                                            <div key={idx} className="rounded-md bg-gray-100 px-3 py-2 text-sm">
+                                                                <span className="font-medium">{player.first_name} {player.last_name}</span>
+                                                                <span className="ml-2 text-gray-700">Skill: {player.skill}</span>
+                                                            </div>
+                                                        ))}
                                                     </div>
-                                                ))}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 ) : (
                                     <div className="text-center py-12">
+                                        <ListChecks className="mx-auto h-12 w-12 text-gray-400" />
                                         <button
-                                            onClick={generateRosters}
+                                            onClick={generateTeams}
+                                            className="mt-4 flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-blue-500 text-white hover:bg-blue-600 mx-auto"
                                             disabled={players.length === 0}
-                                            className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50"
                                         >
+                                            <ArrowLeftRight className="h-5 w-5" />
                                             Generate Teams
                                         </button>
                                         {players.length === 0 && (
-                                            <p className="mt-4 text-red-500">Please add players first</p>
+                                            <p className="mt-4 text-sm text-red-500">Please add players before generating teams.</p>
                                         )}
                                     </div>
                                 )}
@@ -245,7 +277,7 @@ export default function Home() {
                         )}
                     </div>
                 </div>
-            </div>
+            </main>
         </div>
     );
 }
