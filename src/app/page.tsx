@@ -69,14 +69,16 @@ export default function Home() {
         const forwards = attendingPlayers.filter(p => !p.is_defense);
         const defensemen = attendingPlayers.filter(p => p.is_defense);
 
-        const sortedForwards = [...forwards].sort((a, b) => b.skill - a.skill);
-        const sortedDefensemen = [...defensemen].sort((a, b) => b.skill - a.skill);
+        // Sort players by skill, but add a small random factor to introduce variation
+        const sortedForwards = [...forwards].sort((a, b) => b.skill - a.skill + Math.random() * 0.2 - 0.1);
+        const sortedDefensemen = [...defensemen].sort((a, b) => b.skill - a.skill + Math.random() * 0.2 - 0.1);
 
         const newTeams: Teams = {
             red: { forwards: [], defensemen: [] },
             white: { forwards: [], defensemen: [] },
         };
 
+        // Alternate players between the red and white teams
         sortedForwards.forEach((player, index) => {
             if (index % 2 === 0) {
                 newTeams.red.forwards.push(player);
