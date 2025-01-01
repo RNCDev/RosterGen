@@ -1,4 +1,3 @@
-//page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -66,8 +65,8 @@ export default function Home() {
     };
 
     const handleGroupSave = async () => {
-        if (!groupCode || !players.length) {
-            setError('No group code or players to save');
+        if (!groupCode) {
+            setError('Please enter a group code');
             return;
         }
 
@@ -75,23 +74,24 @@ export default function Home() {
             setLoading(true);
             setError(null);
 
-            const updatePromises = players.map(player =>
-                fetch('/api/players', {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        id: player.id,
-                        firstName: player.first_name,
-                        lastName: player.last_name,
-                        skill: player.skill,
-                        defense: player.is_defense,
-                        attending: player.is_attending,
-                        groupCode: groupCode
+            if (players.length > 0) {
+                const updatePromises = players.map(player =>
+                    fetch('/api/players', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            id: player.id,
+                            firstName: player.first_name,
+                            lastName: player.last_name,
+                            skill: player.skill,
+                            defense: player.is_defense,
+                            attending: player.is_attending,
+                            groupCode: groupCode
+                        })
                     })
-                })
-            );
-
-            await Promise.all(updatePromises);
+                );
+                await Promise.all(updatePromises);
+            }
             localStorage.setItem('groupCode', groupCode);
             await fetchPlayers(groupCode);
         } catch (err) {
