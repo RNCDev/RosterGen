@@ -17,13 +17,52 @@ export default function GroupSelector({
     const [groupInput, setGroupInput] = useState(currentGroup);
     const [isDeleting, setIsDeleting] = useState(false);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    const handleDelete = async () => {
+        if (onGroupDelete) {
+            try {
+                console.log('Starting group deletion for:', currentGroup);
+                setIsDeleting(true);
+                setError(null);
+
+                // Make the API call directly here for better control
+                const response = await fetch('/api/groups', {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ groupCode: currentGroup }),
+                });
+
+                const data = await response.json();
+                console.log('Delete response:', data);
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to delete group');
+                }
+
+                // Reset to default group after successful deletion
+                console.log('Group deleted successfully, resetting to default');
+                onGroupChange('default');
+                setShowDeleteDialog(false);
+            } catch (error) {
+                console.error('Error deleting group:', error);
+                setError(error instanceof Error ? error.message : 'Failed to delete group');
+            } finally {
+                setIsDeleting(false);
+            }
+        }
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         const trimmedGroup = groupInput.trim().toLowerCase();
         if (trimmedGroup) {
             try {
-                // Make an API call to update the group name
+                setError(null);
+                console.log('Updating group from', currentGroup, 'to', trimmedGroup);
+
                 const response = await fetch('/api/groups', {
                     method: 'PUT',
                     headers: {
@@ -35,31 +74,18 @@ export default function GroupSelector({
                     }),
                 });
 
+                const data = await response.json();
+                console.log('Update response:', data);
+
                 if (!response.ok) {
-                    throw new Error('Failed to update group');
+                    throw new Error(data.error || 'Failed to update group');
                 }
 
                 onGroupChange(trimmedGroup);
                 setIsEditing(false);
             } catch (error) {
                 console.error('Error updating group:', error);
-                // You might want to show an error message to the user here
-            }
-        }
-    };
-
-    const handleDelete = async () => {
-        if (onGroupDelete) {
-            try {
-                setIsDeleting(true);
-                await onGroupDelete();
-                // Reset to default group after deletion
-                onGroupChange('default');
-            } catch (error) {
-                console.error('Error deleting group:', error);
-                // You might want to show an error message to the user here
-            } finally {
-                setIsDeleting(false);
+                setError(error instanceof Error ? error.message : 'Failed to update group');
             }
         }
     };
@@ -85,6 +111,12 @@ export default function GroupSelector({
                         </button>
                     )}
                 </div>
+
+                {error && (
+                    <div className="mt-2 text-sm text-red-600">
+                        {error}
+                    </div>
+                )}
 
                 <Dialog
                     isOpen={showDeleteDialog}
