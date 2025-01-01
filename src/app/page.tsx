@@ -30,21 +30,57 @@ export default function Home() {
         fetchPlayers();
     }, [groupCode]); // Refetch when group code changes
 
-    const handleGroupCodeChange = (newGroupCode: string) => {
-        setGroupCode(newGroupCode);
-        localStorage.setItem('groupCode', newGroupCode);
-    };
-
-    const fetchPlayers = async () => {
+    const handleGroupCodeChange = async (newGroupCode: string) => {
         try {
             setLoading(true);
-            const response = await fetch(`/api/players?groupCode=${groupCode}`);
-            if (!response.ok) throw new Error('Failed to fetch players');
-            const data = await response.json();
-            setPlayers(data);
+            setError(null);
+
+            // Store the new group code
+            setGroupCode(newGroupCode);
+            localStorage.setItem('groupCode', newGroupCode);
+
+            // Refetch players for the new group
+            await fetchPlayers();
         } catch (err) {
-            setError('Failed to load players');
+            setError('Failed to change group');
             console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleGroupDelete = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+
+            const response = await fetch('/api/groups', {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ groupCode }),
+            });
+
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || 'Failed to delete group');
+            }
+
+            // Reset to default group and clear teams
+            setGroupCode('default');
+            localStorage.setItem('groupCode', 'default');
+            setTeams({
+                red: { forwards: [], defensemen: [] },
+                white: { forwards: [], defensemen: [] },
+            });
+
+            // Fetch players for the default group
+            await fetchPlayers();
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to delete group');
+            console.error(err);
+            throw err;
         } finally {
             setLoading(false);
         }
