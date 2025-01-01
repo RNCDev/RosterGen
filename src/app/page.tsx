@@ -12,7 +12,7 @@ export default function Home() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<'players' | 'roster'>('players');
-    const [groupCode, setGroupCode] = useState<string>('default');
+    const [groupCode, setGroupCode] = useState<string>('');
     const [teams, setTeams] = useState<Teams>({
         red: { forwards: [], defensemen: [] },
         white: { forwards: [], defensemen: [] },
@@ -23,17 +23,17 @@ export default function Home() {
         const savedGroupCode = localStorage.getItem('groupCode');
         if (savedGroupCode) {
             setGroupCode(savedGroupCode);
+            fetchPlayers(savedGroupCode);
         }
-    }, []);
+    }, []); // Only run on initial mount
 
-    useEffect(() => {
-        fetchPlayers();
-    }, [groupCode]); // Refetch when group code changes
+    const fetchPlayers = async (code: string) => {
+        if (!code) return; // Don't fetch if no group code
 
-    const fetchPlayers = async () => {
         try {
             setLoading(true);
-            const response = await fetch(`/api/players?groupCode=${groupCode}`);
+            setError(null);
+            const response = await fetch(`/api/players?groupCode=${code}`);
             if (!response.ok) throw new Error('Failed to fetch players');
             const data = await response.json();
             setPlayers(data);
@@ -54,10 +54,30 @@ export default function Home() {
             setGroupCode(newGroupCode);
             localStorage.setItem('groupCode', newGroupCode);
 
-            // Refetch players for the new group
-            await fetchPlayers();
+            // Create new group with copied players
+            const response = await fetch('/api/groups', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    groupCode: newGroupCode,
+                    players: players.map(p => ({
+                        ...p,
+                        id: undefined // Remove IDs so new records are created
+                    }))
+                }),
+            });
+
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || 'Failed to create group');
+            }
+
+            // Fetch the new group's players
+            await fetchPlayers(newGroupCode);
         } catch (err) {
-            setError('Failed to change group');
+            setError(err instanceof Error ? err.message : 'Failed to change group');
             console.error(err);
         } finally {
             setLoading(false);

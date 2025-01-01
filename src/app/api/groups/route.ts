@@ -96,3 +96,67 @@ export async function DELETE(
         );
     }
 }
+
+// POST - Create a new group with copied players
+export async function POST(
+    request: NextRequest
+): Promise<NextResponse<{ success: boolean } | { error: string }>> {
+    try {
+        const { groupCode, players } = await request.json();
+        console.log('Creating new group:', groupCode, 'with players:', players.length);
+
+        if (!groupCode || !players) {
+            return NextResponse.json(
+                { error: 'Missing required fields' },
+                { status: 400 }
+            );
+        }
+
+        // Start a transaction
+        await sql`BEGIN`;
+
+        try {
+            // Insert all players with the new group code
+            const insertedPlayers = await Promise.all(
+                players.map(async (player: PlayerInput) => {
+                    const { rows } = await sql`
+                        INSERT INTO players (
+                            first_name,
+                            last_name,
+                            skill,
+                            is_defense,
+                            is_attending,
+                            group_code
+                        ) VALUES (
+                            ${player.first_name},
+                            ${player.last_name},
+                            ${player.skill},
+                            ${player.is_defense},
+                            ${player.is_attending},
+                            ${groupCode}
+                        )
+                        RETURNING id
+                    `;
+                    return rows[0];
+                })
+            );
+
+            await sql`COMMIT`;
+            console.log('Successfully created new group with players');
+            return NextResponse.json({
+                success: true,
+                insertedCount: insertedPlayers.length
+            });
+        } catch (error) {
+            console.error('Error during group creation, rolling back:', error);
+            await sql`ROLLBACK`;
+            throw error;
+        }
+    } catch (error) {
+        console.error('Error creating group:', error);
+        return NextResponse.json(
+            { error: error instanceof Error ? error.message : 'Failed to create group' },
+            { status: 500 }
+        );
+    }
+}
