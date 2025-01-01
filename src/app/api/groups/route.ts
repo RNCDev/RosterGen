@@ -37,7 +37,7 @@ export async function DELETE(
 
             // Delete player_team_assignments first (due to foreign key)
             if (teams.length > 0) {
-                const teamIds = teams.map(team => team.id);
+                const teamIds = teams.map((team: TeamRow) => team.id);
                 const { rowCount: assignmentsDeleted } = await sql`
                     DELETE FROM player_team_assignments
                     WHERE team_id = ANY(${teamIds}::int[])
@@ -78,7 +78,7 @@ export async function DELETE(
             return NextResponse.json({
                 success: true,
                 deleted: {
-                    assignments: teamsDeleted > 0, // We only care if they were deleted
+                    assignments: teamsDeleted > 0,
                     teams: teamsDeleted,
                     players: playersDeleted
                 }
