@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { sql } from '@vercel/postgres';
+import { PlayerInput } from '@/lib/db';
 
 interface CreateGroupRequest {
     groupCode: string;
