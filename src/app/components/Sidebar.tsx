@@ -32,8 +32,10 @@ export default function Sidebar({
             <div className="p-6">
                 <h1 className="text-2xl font-bold text-gray-900">Hockey Roster</h1>
                 {groupCode !== 'default' && (
-                    <div className="mt-4 text-sm text-gray-600">
-                        Group: {groupCode}
+                    <div className="mt-4 px-4 py-2 bg-gray-50 rounded-lg">
+                        <span className="text-sm text-gray-600">
+                            Group: {groupCode}
+                        </span>
                     </div>
                 )}
                 <nav className="mt-6 space-y-2">

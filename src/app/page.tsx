@@ -237,7 +237,6 @@ export default function Home() {
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
                 groupCode={groupCode}
-                onGroupCodeChange={handleGroupCodeChange}
             />
 
             <main className="flex-1 p-8 overflow-auto">
