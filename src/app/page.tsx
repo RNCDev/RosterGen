@@ -6,6 +6,7 @@ import Sidebar from '@/components/Sidebar';
 import PlayersView from '@/components/PlayersView';
 import TeamsView from '@/components/TeamsView';
 import ErrorAlert from '@/components/ErrorAlert';
+import { deleteGroup } from '@/lib/db';
 
 export default function Home() {
     const [players, setPlayers] = useState<Player[]>([]);
@@ -61,23 +62,34 @@ export default function Home() {
         }
     };
 
+    const handleGroupSave = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+
+            // Save the current group code
+            localStorage.setItem('groupCode', groupCode);
+            await fetchPlayers(groupCode);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to save group');
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleGroupCancel = () => {
+        // Revert the group code to the last saved value
+        const savedGroupCode = localStorage.getItem('groupCode') || 'default';
+        setGroupCode(savedGroupCode);
+    };
+
     const handleGroupDelete = async () => {
         try {
             setLoading(true);
             setError(null);
 
-            const response = await fetch('/api/groups', {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ groupCode }),
-            });
-
-            if (!response.ok) {
-                const data = await response.json();
-                throw new Error(data.error || 'Failed to delete group');
-            }
+            await deleteGroup(groupCode);
 
             // Reset to default group and clear teams
             setGroupCode('default');
@@ -235,6 +247,9 @@ export default function Home() {
                 setActiveTab={setActiveTab}
                 groupCode={groupCode}
                 onGroupCodeChange={handleGroupCodeChange}
+                onSaveGroupCode={handleGroupSave}
+                onCancelGroupCode={handleGroupCancel}
+                onDeleteGroup={handleGroupDelete}
             />
 
             <main className="flex-1 p-8 overflow-auto">

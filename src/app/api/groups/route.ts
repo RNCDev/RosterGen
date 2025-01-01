@@ -1,24 +1,12 @@
-// src/app/api/groups/route.ts
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { sql } from '@vercel/postgres';
-
-// Define interface for incoming player data
-interface PlayerInput {
-    first_name: string;
-    last_name: string;
-    skill: number;
-    is_defense: boolean;
-    is_attending: boolean;
-    group_code?: string;
-}
 
 interface CreateGroupRequest {
     groupCode: string;
     players: PlayerInput[];
 }
 
-// POST - Create a new group with copied players
 export async function POST(
     request: NextRequest
 ): Promise<NextResponse<{ success: boolean } | { error: string }>> {
@@ -49,11 +37,11 @@ export async function POST(
                             is_attending,
                             group_code
                         ) VALUES (
-                            ${player.first_name},
-                            ${player.last_name},
+                            ${player.firstName},
+                            ${player.lastName},
                             ${player.skill},
-                            ${player.is_defense},
-                            ${player.is_attending},
+                            ${player.defense},
+                            ${player.attending},
                             ${groupCode}
                         )
                         RETURNING id
@@ -82,7 +70,6 @@ export async function POST(
     }
 }
 
-// DELETE - Delete group and all associated data
 export async function DELETE(
     request: NextRequest
 ): Promise<NextResponse<{ success: boolean } | { error: string }>> {

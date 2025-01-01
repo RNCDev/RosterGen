@@ -8,13 +8,19 @@ interface SidebarProps {
     setActiveTab: (tab: 'players' | 'roster') => void;
     groupCode: string;
     onGroupCodeChange: (groupCode: string) => void;
+    onSaveGroupCode: () => Promise<void>;
+    onCancelGroupCode: () => void;
+    onDeleteGroup: () => Promise<void>;
 }
 
 export default function Sidebar({
     activeTab,
     setActiveTab,
     groupCode,
-    onGroupCodeChange
+    onGroupCodeChange,
+    onSaveGroupCode,
+    onCancelGroupCode,
+    onDeleteGroup
 }: SidebarProps) {
     const navItems = [
         {
@@ -35,13 +41,29 @@ export default function Sidebar({
                 <h1 className="text-2xl font-bold text-gray-900">Hockey Roster</h1>
                 {groupCode !== 'default' && (
                     <div className="mt-4 px-4 py-2 bg-gray-50 rounded-lg">
-                        <button
-                            className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-800"
-                            onClick={() => onGroupCodeChange('default')}
-                        >
+                        <div className="flex items-center justify-between">
                             <span>Group: {groupCode}</span>
-                            <Users className="h-5 w-5" />
-                        </button>
+                            <div className="flex gap-2">
+                                <button
+                                    className="text-sm text-blue-500 hover:text-blue-700"
+                                    onClick={onSaveGroupCode}
+                                >
+                                    Save
+                                </button>
+                                <button
+                                    className="text-sm text-gray-500 hover:text-gray-700"
+                                    onClick={onCancelGroupCode}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    className="text-sm text-red-500 hover:text-red-700"
+                                    onClick={onDeleteGroup}
+                                >
+                                    Delete Group
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 )}
                 <nav className="mt-6 space-y-2">

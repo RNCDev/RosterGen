@@ -142,6 +142,55 @@ export async function deletePlayer(id: number, groupCode: string): Promise<boole
     }
 }
 
+export async function deleteGroup(groupCode: string): Promise<boolean> {
+    try {
+        // Start a transaction
+        await sql`BEGIN`;
+
+        try {
+            // First, get all team IDs for this group
+            const { rows: teams } = await sql<{ id: number }>`
+                SELECT id FROM teams WHERE group_code = ${groupCode}
+            `;
+
+            // Delete player_team_assignments first (due to foreign key)
+            if (teams.length > 0) {
+                const teamIds = teams.map((team: { id: number }) => team.id);
+                const { rowCount: assignmentsDeleted } = await sql`
+                    DELETE FROM player_team_assignments
+                    WHERE team_id = ANY(${teamIds}::int[])
+                `;
+                console.log('Deleted assignments count:', assignmentsDeleted);
+            }
+
+            // Delete teams
+            const { rowCount: teamsDeleted } = await sql`
+                DELETE FROM teams 
+                WHERE group_code = ${groupCode}
+                RETURNING id
+            `;
+            console.log('Deleted teams count:', teamsDeleted);
+
+            // Delete players
+            const { rowCount: playersDeleted } = await sql`
+                DELETE FROM players 
+                WHERE group_code = ${groupCode}
+                RETURNING id
+            `;
+            console.log('Deleted players count:', playersDeleted);
+
+            await sql`COMMIT`;
+            return true;
+        } catch (error) {
+            await sql`ROLLBACK`;
+            throw error;
+        }
+    } catch (error) {
+        console.error('Database error in deleteGroup:', error);
+        throw new Error('Failed to delete group');
+    }
+}
+
 export async function saveTeamAssignments(
     redTeam: TeamAssignment,
     whiteTeam: TeamAssignment,
