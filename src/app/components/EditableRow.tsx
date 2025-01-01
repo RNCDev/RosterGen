@@ -19,7 +19,12 @@ const EditableRow = ({ player, onSave, onDelete }: EditableRowProps) => {
 
     const handleSave = async () => {
         try {
-            await onSave(editedPlayer);
+            // Preserve the group code when saving
+            const playerToSave = {
+                ...editedPlayer,
+                group_code: player.group_code // Ensure we keep the original group code
+            };
+            await onSave(playerToSave);
             setIsEditing(false);
             setError(null);
         } catch (err) {

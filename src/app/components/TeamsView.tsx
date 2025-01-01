@@ -1,3 +1,4 @@
+//sidebar.tsx
 'use client';
 
 import { type Teams, type Player } from '@/types/PlayerTypes';
@@ -6,6 +7,7 @@ import { ListChecks } from 'lucide-react';
 interface TeamsViewProps {
     teams: Teams;
     hasPlayers: boolean;
+    groupCode: string;
 }
 
 interface TeamSectionProps {
@@ -21,7 +23,7 @@ interface TeamSectionProps {
     };
 }
 
-export default function TeamsView({ teams, hasPlayers }: TeamsViewProps) {
+export default function TeamsView({ teams, hasPlayers, groupCode }: TeamsViewProps) {
     const TeamSection = ({ teamName, players, colorScheme }: TeamSectionProps) => {
         const { bg, text, card } = colorScheme;
         const allPlayers = [...players.forwards, ...players.defensemen];
@@ -93,7 +95,14 @@ export default function TeamsView({ teams, hasPlayers }: TeamsViewProps) {
 
     return (
         <div className="space-y-6">
-            <h2 className="text-xl font-semibold text-gray-900 border-b pb-4">Team Rosters</h2>
+            <div className="flex justify-between items-center border-b pb-4">
+                <h2 className="text-xl font-semibold text-gray-900">Team Rosters</h2>
+                {groupCode !== 'default' && (
+                    <span className="text-sm text-gray-500">
+                        Group: {groupCode}
+                    </span>
+                )}
+            </div>
 
             {teams.red.forwards.length > 0 ? (
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">

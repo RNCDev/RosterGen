@@ -1,6 +1,5 @@
 import { sql } from '@vercel/postgres';
 
-// Database row types - export these for use in other files
 export interface DbPlayer {
     id: number;
     first_name: string;
@@ -8,6 +7,7 @@ export interface DbPlayer {
     skill: number;
     is_defense: boolean;
     is_attending: boolean;
+    group_code: string;
     created_at?: Date;
     updated_at?: Date;
 }
@@ -15,6 +15,7 @@ export interface DbPlayer {
 export interface DbTeam {
     id: number;
     name: string;
+    group_code: string;
     created_at?: Date;
 }
 
@@ -26,13 +27,13 @@ export interface DbPlayerTeamAssignment {
     created_at?: Date;
 }
 
-// Input types for function parameters
 export interface PlayerInput {
     firstName: string;
     lastName: string;
     skill: number;
     defense: boolean;
     attending: boolean;
+    groupCode: string;
 }
 
 export interface TeamAssignment {
@@ -40,10 +41,11 @@ export interface TeamAssignment {
     defensemen: DbPlayer[];
 }
 
-export async function getAllPlayers(): Promise<DbPlayer[]> {
+export async function getAllPlayers(groupCode: string): Promise<DbPlayer[]> {
     try {
         const { rows } = await sql<DbPlayer>`
             SELECT * FROM players 
+            WHERE group_code = ${groupCode}
             ORDER BY last_name, first_name
         `;
         return rows;
@@ -55,21 +57,23 @@ export async function getAllPlayers(): Promise<DbPlayer[]> {
 
 export async function addPlayer(input: PlayerInput): Promise<DbPlayer> {
     try {
-        const { firstName, lastName, skill, defense, attending } = input;
+        const { firstName, lastName, skill, defense, attending, groupCode } = input;
         const { rows } = await sql<DbPlayer>`
             INSERT INTO players (
                 first_name, 
                 last_name, 
                 skill, 
                 is_defense, 
-                is_attending
+                is_attending,
+                group_code
             )
             VALUES (
                 ${firstName}, 
                 ${lastName}, 
                 ${skill}, 
                 ${defense}, 
-                ${attending}
+                ${attending},
+                ${groupCode}
             )
             RETURNING *
         `;
@@ -90,7 +94,7 @@ export async function updatePlayer(
     input: PlayerInput
 ): Promise<DbPlayer> {
     try {
-        const { firstName, lastName, skill, defense, attending } = input;
+        const { firstName, lastName, skill, defense, attending, groupCode } = input;
 
         // Validate skill is within constraints
         if (skill < 1 || skill > 10) {
@@ -103,8 +107,10 @@ export async function updatePlayer(
                 last_name = ${lastName},
                 skill = ${skill},
                 is_defense = ${defense},
-                is_attending = ${attending}
+                is_attending = ${attending},
+                group_code = ${groupCode}
             WHERE id = ${id}
+            AND group_code = ${groupCode}
             RETURNING *
         `;
 
@@ -115,23 +121,19 @@ export async function updatePlayer(
         return rows[0];
     } catch (error) {
         console.error('Database error in updatePlayer:', error);
-        console.error('Query parameters:', { id, ...input });
-
-        // Enhanced error handling
-        if (error instanceof Error) {
-            if (error.message.includes('players_skill_check')) {
-                throw new Error('Skill must be between 1 and 10');
-            }
+        if (error instanceof Error && error.message.includes('players_skill_check')) {
+            throw new Error('Skill must be between 1 and 10');
         }
         throw new Error('Failed to update player');
     }
 }
 
-export async function deletePlayer(id: number): Promise<boolean> {
+export async function deletePlayer(id: number, groupCode: string): Promise<boolean> {
     try {
         const result = await sql`
             DELETE FROM players 
-            WHERE id = ${id}
+            WHERE id = ${id} 
+            AND group_code = ${groupCode}
         `;
         return result.rowCount > 0;
     } catch (error) {
@@ -140,26 +142,73 @@ export async function deletePlayer(id: number): Promise<boolean> {
     }
 }
 
-export async function saveTeamAssignments(
-    redTeam: TeamAssignment,
-    whiteTeam: TeamAssignment,
-    sessionDate: Date
-): Promise<boolean> {
+export async function deleteGroup(groupCode: string): Promise<boolean> {
     try {
         // Start a transaction
         await sql`BEGIN`;
 
         try {
-            // Create team entries
+            // First, get all team IDs for this group
+            const { rows: teams } = await sql<{ id: number }>`
+                SELECT id FROM teams WHERE group_code = ${groupCode}
+            `;
+
+            // Delete player_team_assignments first (due to foreign key)
+            if (teams.length > 0) {
+                const teamIds = teams.map((team: { id: number }) => team.id);
+                const { rowCount: assignmentsDeleted } = await sql`
+                    DELETE FROM player_team_assignments
+                    WHERE team_id = ANY(${teamIds}::int[])
+                `;
+                console.log('Deleted assignments count:', assignmentsDeleted);
+            }
+
+            // Delete teams
+            const { rowCount: teamsDeleted } = await sql`
+                DELETE FROM teams 
+                WHERE group_code = ${groupCode}
+                RETURNING id
+            `;
+            console.log('Deleted teams count:', teamsDeleted);
+
+            // Delete players
+            const { rowCount: playersDeleted } = await sql`
+                DELETE FROM players 
+                WHERE group_code = ${groupCode}
+                RETURNING id
+            `;
+            console.log('Deleted players count:', playersDeleted);
+
+            await sql`COMMIT`;
+            return true;
+        } catch (error) {
+            await sql`ROLLBACK`;
+            throw error;
+        }
+    } catch (error) {
+        console.error('Database error in deleteGroup:', error);
+        throw new Error('Failed to delete group');
+    }
+}
+
+export async function saveTeamAssignments(
+    redTeam: TeamAssignment,
+    whiteTeam: TeamAssignment,
+    sessionDate: Date,
+    groupCode: string
+): Promise<boolean> {
+    try {
+        await sql`BEGIN`;
+        try {
             const { rows: [redTeamRow] } = await sql<DbTeam>`
-                INSERT INTO teams (name) 
-                VALUES ('Red')
+                INSERT INTO teams (name, group_code) 
+                VALUES ('Red', ${groupCode})
                 RETURNING id
             `;
 
             const { rows: [whiteTeamRow] } = await sql<DbTeam>`
-                INSERT INTO teams (name) 
-                VALUES ('White')
+                INSERT INTO teams (name, group_code) 
+                VALUES ('White', ${groupCode})
                 RETURNING id
             `;
 

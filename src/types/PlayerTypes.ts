@@ -5,11 +5,13 @@ export type Player = {
     skill: number;
     is_defense: boolean;
     is_attending: boolean;
+    group_code: string;
 };
 
 export type Team = {
     forwards: Player[];
     defensemen: Player[];
+    group_code?: string;
 };
 
 export type Teams = {
@@ -17,42 +19,51 @@ export type Teams = {
     white: Team;
 };
 
-// components/PlayersView.js props
 export type PlayersViewProps = {
     players: Player[];
     loading: boolean;
+    groupCode: string;
+    onGroupCodeChange: (groupCode: string) => void;
     handleFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
-    handleDeletePlayer?: (id: number) => Promise<void>;  // Updated to Promise<void>
+    handleDeletePlayer?: (id: number) => Promise<void>;
     onTeamsGenerated?: (teams: Teams) => void;
     onUpdatePlayer?: (player: Player) => Promise<void>;
 };
 
-// components/TeamsView.js props
 export type TeamsViewProps = {
     teams: Teams;
     hasPlayers: boolean;
+    groupCode: string;
 };
 
-// components/EditableRow.js props
 export type EditableRowProps = {
     player: Player;
     onSave: (updatedPlayer: Player) => Promise<void>;
     onDelete?: (id: number) => Promise<void>;
 };
 
-// components/Sidebar.js props
 export type SidebarProps = {
     activeTab: 'players' | 'roster';
     setActiveTab: (tab: 'players' | 'roster') => void;
+    groupCode: string;
+    onGroupCodeChange: (groupCode: string) => void;
+    onRetrieveGroupCode: () => Promise<void>;
+    onSaveGroupCode: () => Promise<void>;
+    onCancelGroupCode: () => void;
+    onDeleteGroup: () => Promise<void>;
 };
 
-// components/ErrorAlert.js props
 export type ErrorAlertProps = {
     message: string | null;
 };
 
-// components/TeamGenerator.js props
 export type TeamGeneratorProps = {
     players: Player[];
+    groupCode: string;
     onTeamsGenerated: (teams: Teams) => void;
 };
+
+export type GroupSelectorProps = {
+    currentGroup: string;
+    onGroupChange: (groupCode: string) => void;
+}

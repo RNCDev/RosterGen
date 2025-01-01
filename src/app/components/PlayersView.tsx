@@ -1,17 +1,18 @@
 // PlayersView.tsx
-'use client';
-
 import { useState } from 'react';
 import { type Player } from '@/types/PlayerTypes';
 import { ArrowUpFromLine, Users, Plus } from 'lucide-react';
 import TeamGenerator from './TeamGenerator';
 import EditableRow from './EditableRow';
+import GroupSelector from './GroupSelector';
 
 interface PlayersViewProps {
     players: Player[];
     loading: boolean;
+    groupCode: string;
+    onGroupCodeChange: (groupCode: string) => void;
     handleFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
-    handleDeletePlayer?: (id: number) => Promise<void>;  // Updated to Promise<void>
+    handleDeletePlayer?: (id: number) => Promise<void>;
     onTeamsGenerated?: (teams: any) => void;
     onUpdatePlayer?: (player: Player) => Promise<void>;
 }
@@ -27,10 +28,12 @@ interface NewPlayer {
 export default function PlayersView({
     players,
     loading,
+    groupCode,
+    onGroupCodeChange,
     handleFileUpload,
     handleDeletePlayer,
     onTeamsGenerated,
-    onUpdatePlayer
+    onUpdatePlayer,
 }: PlayersViewProps) {
     const [showAddForm, setShowAddForm] = useState(false);
     const [newPlayer, setNewPlayer] = useState<NewPlayer>({
@@ -59,7 +62,8 @@ export default function PlayersView({
                     lastName: newPlayer.last_name,
                     skill: Number(newPlayer.skill),
                     defense: newPlayer.is_defense,
-                    attending: newPlayer.is_attending
+                    attending: newPlayer.is_attending,
+                    groupCode: groupCode
                 }),
             });
 
@@ -85,7 +89,13 @@ export default function PlayersView({
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center border-b pb-4">
-                <h2 className="text-xl font-semibold text-gray-900">Players</h2>
+                <div className="flex items-center gap-4">
+                    <h2 className="text-xl font-semibold text-gray-900">Players</h2>
+                    <GroupSelector
+                        currentGroup={groupCode}
+                        onGroupChange={onGroupCodeChange}
+                    />
+                </div>
                 <div className="flex items-center gap-4">
                     <button
                         onClick={() => setShowAddForm(!showAddForm)}
@@ -109,6 +119,7 @@ export default function PlayersView({
                     {onTeamsGenerated && (
                         <TeamGenerator
                             players={players}
+                            groupCode={groupCode}
                             onTeamsGenerated={onTeamsGenerated}
                         />
                     )}
