@@ -1,9 +1,6 @@
-// GroupSelector.tsx
-'use client';
-
 import { useState } from 'react';
 import { Users, Trash2 } from 'lucide-react';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import Dialog from './Dialog';
 
 interface GroupSelectorProps {
     currentGroup: string;
@@ -19,6 +16,7 @@ export default function GroupSelector({
     const [isEditing, setIsEditing] = useState(false);
     const [groupInput, setGroupInput] = useState(currentGroup);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -68,44 +66,36 @@ export default function GroupSelector({
 
     if (!isEditing) {
         return (
-            <div className="flex items-center gap-2">
-                <button
-                    onClick={() => setIsEditing(true)}
-                    className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-600 rounded hover:bg-gray-100"
-                >
-                    <Users className="h-5 w-5" />
-                    <span>Group: {currentGroup}</span>
-                </button>
-                {currentGroup !== 'default' && (
-                    <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                            <button
-                                className="p-1.5 text-red-600 rounded hover:bg-red-50"
-                                disabled={isDeleting}
-                            >
-                                <Trash2 className="h-5 w-5" />
-                            </button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                            <AlertDialogHeader>
-                                <AlertDialogTitle>Delete Group</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                    This will permanently delete the group "{currentGroup}" and all associated players and team history. This action cannot be undone.
-                                </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction
-                                    onClick={handleDelete}
-                                    className="bg-red-600 text-white hover:bg-red-700"
-                                >
-                                    Delete Group
-                                </AlertDialogAction>
-                            </AlertDialogFooter>
-                        </AlertDialogContent>
-                    </AlertDialog>
-                )}
-            </div>
+            <>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => setIsEditing(true)}
+                        className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-600 rounded hover:bg-gray-100"
+                    >
+                        <Users className="h-5 w-5" />
+                        <span>Group: {currentGroup}</span>
+                    </button>
+                    {currentGroup !== 'default' && (
+                        <button
+                            onClick={() => setShowDeleteDialog(true)}
+                            className="p-1.5 text-red-600 rounded hover:bg-red-50"
+                            disabled={isDeleting}
+                        >
+                            <Trash2 className="h-5 w-5" />
+                        </button>
+                    )}
+                </div>
+
+                <Dialog
+                    isOpen={showDeleteDialog}
+                    onClose={() => setShowDeleteDialog(false)}
+                    onConfirm={handleDelete}
+                    title="Delete Group"
+                    description={`This will permanently delete the group "${currentGroup}" and all associated players and team history. This action cannot be undone.`}
+                    confirmLabel="Delete Group"
+                    cancelLabel="Cancel"
+                />
+            </>
         );
     }
 
