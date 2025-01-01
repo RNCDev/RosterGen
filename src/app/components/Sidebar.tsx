@@ -2,13 +2,21 @@
 'use client';
 
 import { Users, ListChecks } from 'lucide-react';
+import GroupSelector from './GroupSelector';
 
 interface SidebarProps {
     activeTab: 'players' | 'roster';
     setActiveTab: (tab: 'players' | 'roster') => void;
+    groupCode: string;
+    onGroupCodeChange: (groupCode: string) => void;
 }
 
-export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
+export default function Sidebar({
+    activeTab,
+    setActiveTab,
+    groupCode,
+    onGroupCodeChange
+}: SidebarProps) {
     const navItems = [
         {
             id: 'players' as const,
@@ -26,6 +34,12 @@ export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
         <aside className="w-64 bg-white shadow-lg">
             <div className="p-6">
                 <h1 className="text-2xl font-bold text-gray-900">Hockey Roster</h1>
+                <div className="mt-4">
+                    <GroupSelector
+                        currentGroup={groupCode}
+                        onGroupChange={onGroupCodeChange}
+                    />
+                </div>
                 <nav className="mt-6 space-y-2">
                     {navItems.map((item) => {
                         const Icon = item.icon;

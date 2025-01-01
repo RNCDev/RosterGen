@@ -1,3 +1,4 @@
+//sidebar.tsx
 'use client';
 
 import { type Teams, type Player } from '@/types/PlayerTypes';
