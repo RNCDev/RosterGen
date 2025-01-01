@@ -30,6 +30,21 @@ export default function Home() {
         fetchPlayers();
     }, [groupCode]); // Refetch when group code changes
 
+    const fetchPlayers = async () => {
+        try {
+            setLoading(true);
+            const response = await fetch(`/api/players?groupCode=${groupCode}`);
+            if (!response.ok) throw new Error('Failed to fetch players');
+            const data = await response.json();
+            setPlayers(data);
+        } catch (err) {
+            setError('Failed to load players');
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const handleGroupCodeChange = async (newGroupCode: string) => {
         try {
             setLoading(true);
@@ -221,6 +236,8 @@ export default function Home() {
             <Sidebar
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
+                groupCode={groupCode}
+                onGroupCodeChange={handleGroupCodeChange}
             />
 
             <main className="flex-1 p-8 overflow-auto">
