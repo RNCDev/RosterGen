@@ -84,8 +84,15 @@ export default function PlayersView({
 
     return (
         <div className="space-y-6">
+            {/* Replace this entire div block */}
             <div className="flex justify-between items-center border-b pb-4">
-                <h2 className="text-xl font-semibold text-gray-900">Players</h2>
+                <div className="flex items-center gap-4">
+                    <h2 className="text-xl font-semibold text-gray-900">Players</h2>
+                    <GroupSelector
+                        currentGroup={groupCode}
+                        onGroupChange={onGroupCodeChange}
+                    />
+                </div>
                 <div className="flex items-center gap-4">
                     <button
                         onClick={() => setShowAddForm(!showAddForm)}

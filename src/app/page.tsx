@@ -5,7 +5,6 @@ import { type Player, type Teams } from '@/types/PlayerTypes';
 import Sidebar from '@/components/Sidebar';
 import PlayersView from '@/components/PlayersView';
 import TeamsView from '@/components/TeamsView';
-import TeamGenerator from '@/components/TeamGenerator';
 import ErrorAlert from '@/components/ErrorAlert';
 
 export default function Home() {
@@ -13,19 +12,33 @@ export default function Home() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<'players' | 'roster'>('players');
+    const [groupCode, setGroupCode] = useState<string>('default');
     const [teams, setTeams] = useState<Teams>({
         red: { forwards: [], defensemen: [] },
         white: { forwards: [], defensemen: [] },
     });
 
     useEffect(() => {
-        fetchPlayers();
+        // Try to load saved group code from localStorage
+        const savedGroupCode = localStorage.getItem('groupCode');
+        if (savedGroupCode) {
+            setGroupCode(savedGroupCode);
+        }
     }, []);
+
+    useEffect(() => {
+        fetchPlayers();
+    }, [groupCode]); // Refetch when group code changes
+
+    const handleGroupCodeChange = (newGroupCode: string) => {
+        setGroupCode(newGroupCode);
+        localStorage.setItem('groupCode', newGroupCode);
+    };
 
     const fetchPlayers = async () => {
         try {
             setLoading(true);
-            const response = await fetch('/api/players');
+            const response = await fetch(`/api/players?groupCode=${groupCode}`);
             if (!response.ok) throw new Error('Failed to fetch players');
             const data = await response.json();
             setPlayers(data);
@@ -47,6 +60,7 @@ export default function Home() {
         try {
             const formData = new FormData();
             formData.append('file', file);
+            formData.append('groupCode', groupCode);
             const response = await fetch('/api/players', {
                 method: 'POST',
                 body: formData,
@@ -75,7 +89,7 @@ export default function Home() {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ id: playerId }),
+                body: JSON.stringify({ id: playerId, groupCode }),
             });
 
             if (!response.ok) {
@@ -92,13 +106,10 @@ export default function Home() {
         }
     };
 
-    // Add this function to your page.tsx component
     const handlePlayerUpdate = async (updatedPlayer: Player) => {
         try {
             setLoading(true);
             setError(null);
-
-            console.log('Original player data:', updatedPlayer);
 
             const payload = {
                 id: updatedPlayer.id,
@@ -106,10 +117,9 @@ export default function Home() {
                 lastName: updatedPlayer.last_name,
                 skill: Number(updatedPlayer.skill),
                 defense: Boolean(updatedPlayer.is_defense),
-                attending: Boolean(updatedPlayer.is_attending)
+                attending: Boolean(updatedPlayer.is_attending),
+                groupCode
             };
-
-            console.log('Sending update payload:', payload);
 
             const response = await fetch('/api/players', {
                 method: 'PUT',
@@ -120,13 +130,11 @@ export default function Home() {
             });
 
             const responseData = await response.json();
-            console.log('Response from server:', responseData);
 
             if (!response.ok) {
                 throw new Error(responseData.error || 'Failed to update player');
             }
 
-            // Refresh the players list
             await fetchPlayers();
         } catch (err) {
             console.error('Update error:', err);
@@ -144,14 +152,13 @@ export default function Home() {
             setTeams(newTeams);
             setActiveTab('roster');
 
-            // Transform teams object for API
             const teamAssignmentData = {
                 redTeam: newTeams.red,
                 whiteTeam: newTeams.white,
-                sessionDate: new Date().toISOString()
+                sessionDate: new Date().toISOString(),
+                groupCode
             };
 
-            // Save teams to the backend
             const response = await fetch('/api/teams', {
                 method: 'POST',
                 headers: {
@@ -165,7 +172,6 @@ export default function Home() {
                 console.error('API Error:', errorData);
                 throw new Error(errorData.error || 'Failed to save teams');
             }
-
         } catch (err) {
             console.error('Error in handleTeamsGenerated:', err);
             setError(err instanceof Error ? err.message : 'Failed to save teams');
@@ -191,6 +197,8 @@ export default function Home() {
                                 <PlayersView
                                     players={players}
                                     loading={loading}
+                                    groupCode={groupCode}
+                                    onGroupCodeChange={handleGroupCodeChange}
                                     handleFileUpload={handleFileUpload}
                                     handleDeletePlayer={handleDeletePlayer}
                                     onTeamsGenerated={handleTeamsGenerated}
@@ -201,6 +209,7 @@ export default function Home() {
                             <TeamsView
                                 teams={teams}
                                 hasPlayers={players.length > 0}
+                                groupCode={groupCode}
                             />
                         )}
                     </div>

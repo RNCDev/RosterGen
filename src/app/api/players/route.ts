@@ -1,3 +1,5 @@
+//players route
+
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getAllPlayers, addPlayer, updatePlayer, deletePlayer } from '@/lib/db';
@@ -9,23 +11,28 @@ interface PlayerInput {
     skill: number;
     defense: boolean;
     attending: boolean;
+    groupCode: string;
 }
 
-interface UpdatePlayerInput extends PlayerInput {
-    id: number;
-}
-
-export async function GET(): Promise<NextResponse<DbPlayer[] | { error: string }>> {
+export async function GET(
+    request: NextRequest
+): Promise<NextResponse<DbPlayer[] | { error: string }>> {
     try {
-        const players = await getAllPlayers();
+        // Get groupCode from query parameters
+        const { searchParams } = new URL(request.url);
+        const groupCode = searchParams.get('groupCode') || 'default';
+
+        const players = await getAllPlayers(groupCode);
         return NextResponse.json(players);
     } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         return NextResponse.json({ error: errorMessage }, { status: 500 });
     }
 }
 
-export async function POST(request: NextRequest): Promise<NextResponse<DbPlayer[] | DbPlayer | { error: string }>> {
+export async function POST(
+    request: NextRequest
+): Promise<NextResponse<DbPlayer[] | DbPlayer | { error: string }>> {
     try {
         const contentType = request.headers.get('content-type');
 
@@ -33,6 +40,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<DbPlayer[
             // Handle file upload
             const formData = await request.formData();
             const file = formData.get('file') as File;
+            const groupCode = formData.get('groupCode') as string || 'default';
 
             if (!file) {
                 return NextResponse.json(
@@ -64,8 +72,9 @@ export async function POST(request: NextRequest): Promise<NextResponse<DbPlayer[
                     firstName: values[0],
                     lastName: values[1],
                     skill: parseInt(values[2], 10),
-                    defense: Boolean(parseInt(values[3], 10)),  // Convert "0"/"1" to boolean
-                    attending: Boolean(parseInt(values[4], 10)) // Convert "0"/"1" to boolean
+                    defense: Boolean(parseInt(values[3], 10)),
+                    attending: Boolean(parseInt(values[4], 10)),
+                    groupCode
                 };
             });
 
@@ -119,58 +128,46 @@ export async function PUT(
 ): Promise<NextResponse<DbPlayer | { error: string }>> {
     try {
         const data = await request.json();
-        console.log('Received update request data:', data);
 
         // Map the incoming data to match our PlayerInput interface
         const playerInput: PlayerInput = {
             firstName: data.firstName,
             lastName: data.lastName,
-            skill: Number(data.skill), // Ensure number type
-            defense: Boolean(data.defense),    // Ensure boolean
-            attending: Boolean(data.attending)  // Ensure boolean
+            skill: Number(data.skill),
+            defense: Boolean(data.defense),
+            attending: Boolean(data.attending),
+            groupCode: data.groupCode || 'default'
         };
-
-        console.log('Transformed player input:', playerInput);
 
         // Validate required fields
         if (!data.id || !playerInput.firstName || !playerInput.lastName || typeof playerInput.skill !== 'number') {
-            console.log('Validation failed:', {
-                hasId: !!data.id,
-                hasFirstName: !!playerInput.firstName,
-                hasLastName: !!playerInput.lastName,
-                skillIsNumber: typeof playerInput.skill === 'number'
-            });
             return NextResponse.json(
                 { error: 'Missing required fields' },
                 { status: 400 }
             );
         }
 
-        console.log('Calling updatePlayer with:', { id: data.id, ...playerInput });
         const player = await updatePlayer(data.id, playerInput);
 
         if (!player) {
-            console.log('No player returned from update');
             return NextResponse.json(
                 { error: 'Player not found' },
                 { status: 404 }
             );
         }
 
-        console.log('Update successful:', player);
         return NextResponse.json(player);
     } catch (error) {
-        console.error('Database error:', error);
         const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
         return NextResponse.json({ error: errorMessage }, { status: 500 });
     }
-} // Added missing closing brace for PUT function
+}
 
 export async function DELETE(
     request: NextRequest
 ): Promise<NextResponse<{ success: boolean } | { error: string }>> {
     try {
-        const { id } = await request.json();
+        const { id, groupCode } = await request.json();
 
         // Validate id
         if (!id || typeof id !== 'number') {
@@ -180,7 +177,7 @@ export async function DELETE(
             );
         }
 
-        const deleted = await deletePlayer(id);
+        const deleted = await deletePlayer(id, groupCode);
 
         if (!deleted) {
             return NextResponse.json(
