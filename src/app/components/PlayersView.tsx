@@ -1,5 +1,4 @@
-'use client';
-
+// PlayersView.tsx
 import { useState } from 'react';
 import { type Player } from '@/types/PlayerTypes';
 import { ArrowUpFromLine, Users, Plus } from 'lucide-react';
