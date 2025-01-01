@@ -7,12 +7,14 @@ interface SidebarProps {
     activeTab: 'players' | 'roster';
     setActiveTab: (tab: 'players' | 'roster') => void;
     groupCode: string;
+    onGroupCodeChange: (groupCode: string) => void;
 }
 
 export default function Sidebar({
     activeTab,
     setActiveTab,
-    groupCode
+    groupCode,
+    onGroupCodeChange
 }: SidebarProps) {
     const navItems = [
         {
@@ -33,9 +35,13 @@ export default function Sidebar({
                 <h1 className="text-2xl font-bold text-gray-900">Hockey Roster</h1>
                 {groupCode !== 'default' && (
                     <div className="mt-4 px-4 py-2 bg-gray-50 rounded-lg">
-                        <span className="text-sm text-gray-600">
-                            Group: {groupCode}
-                        </span>
+                        <button
+                            className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-800"
+                            onClick={() => onGroupCodeChange('default')}
+                        >
+                            <span>Group: {groupCode}</span>
+                            <Users className="h-5 w-5" />
+                        </button>
                     </div>
                 )}
                 <nav className="mt-6 space-y-2">

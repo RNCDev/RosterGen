@@ -12,7 +12,7 @@ export default function Home() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<'players' | 'roster'>('players');
-    const [groupCode, setGroupCode] = useState<string>('');
+    const [groupCode, setGroupCode] = useState<string>('default');
     const [teams, setTeams] = useState<Teams>({
         red: { forwards: [], defensemen: [] },
         white: { forwards: [], defensemen: [] },
@@ -25,22 +25,22 @@ export default function Home() {
             setGroupCode(savedGroupCode);
             fetchPlayers(savedGroupCode);
         }
-    }, []); // Only run on initial mount
+    }, []);
 
- const fetchPlayers = async (groupCode?: string) => {
-    try {
-        setLoading(true);
-        const response = await fetch(`/api/players?groupCode=${groupCode || 'default'}`);
-        if (!response.ok) throw new Error('Failed to fetch players');
-        const data = await response.json();
-        setPlayers(data);
-    } catch (err) {
-        setError('Failed to load players');
-        console.error(err);
-    } finally {
-        setLoading(false);
-    }
-};
+    const fetchPlayers = async (groupCode?: string) => {
+        try {
+            setLoading(true);
+            const response = await fetch(`/api/players?groupCode=${groupCode || 'default'}`);
+            if (!response.ok) throw new Error('Failed to fetch players');
+            const data = await response.json();
+            setPlayers(data);
+        } catch (err) {
+            setError('Failed to load players');
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleGroupCodeChange = async (newGroupCode: string) => {
         try {
@@ -50,26 +50,6 @@ export default function Home() {
             // Store the new group code
             setGroupCode(newGroupCode);
             localStorage.setItem('groupCode', newGroupCode);
-
-            // Create new group with copied players
-            const response = await fetch('/api/groups', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    groupCode: newGroupCode,
-                    players: players.map(p => ({
-                        ...p,
-                        id: undefined // Remove IDs so new records are created
-                    }))
-                }),
-            });
-
-            if (!response.ok) {
-                const data = await response.json();
-                throw new Error(data.error || 'Failed to create group');
-            }
 
             // Fetch the new group's players
             await fetchPlayers(newGroupCode);
@@ -108,7 +88,7 @@ export default function Home() {
             });
 
             // Fetch players for the default group
-            await fetchPlayers('default');  // Pass 'default' explicitly
+            await fetchPlayers('default');
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to delete group');
             console.error(err);
@@ -254,6 +234,7 @@ export default function Home() {
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
                 groupCode={groupCode}
+                onGroupCodeChange={handleGroupCodeChange}
             />
 
             <main className="flex-1 p-8 overflow-auto">
