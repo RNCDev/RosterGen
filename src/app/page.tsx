@@ -13,7 +13,7 @@ export default function Home() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<'players' | 'roster'>('players');
-    const [groupCode, setGroupCode] = useState<string>('default');
+    const [groupCode, setGroupCode] = useState<string>('');
     const [teams, setTeams] = useState<Teams>({
         red: { forwards: [], defensemen: [] },
         white: { forwards: [], defensemen: [] },

@@ -47,6 +47,10 @@ export type SidebarProps = {
     setActiveTab: (tab: 'players' | 'roster') => void;
     groupCode: string;
     onGroupCodeChange: (groupCode: string) => void;
+    onRetrieveGroupCode: () => Promise<void>;
+    onSaveGroupCode: () => Promise<void>;
+    onCancelGroupCode: () => void;
+    onDeleteGroup: () => Promise<void>;
 };
 
 export type ErrorAlertProps = {
