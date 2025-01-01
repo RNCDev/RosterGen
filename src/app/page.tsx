@@ -74,24 +74,26 @@ export default function Home() {
             setLoading(true);
             setError(null);
 
-            if (players.length > 0) {
-                const updatePromises = players.map(player =>
-                    fetch('/api/players', {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            id: player.id,
-                            firstName: player.first_name,
-                            lastName: player.last_name,
-                            skill: player.skill,
-                            defense: player.is_defense,
-                            attending: player.is_attending,
-                            groupCode: groupCode
-                        })
-                    })
-                );
-                await Promise.all(updatePromises);
+            // Create new group with existing players
+            const response = await fetch('/api/groups', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    groupCode,
+                    players: players.map(p => ({
+                        firstName: p.first_name,
+                        lastName: p.last_name,
+                        skill: p.skill,
+                        defense: p.is_defense,
+                        attending: p.is_attending
+                    }))
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to create group');
             }
+
             localStorage.setItem('groupCode', groupCode);
             await fetchPlayers(groupCode);
         } catch (err) {
