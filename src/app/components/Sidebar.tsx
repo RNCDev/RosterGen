@@ -37,61 +37,65 @@ export default function Sidebar({
     ];
 
     return (
-        <aside className="w-64 bg-white shadow-lg">
+        <aside className="w-64 bg-white shadow-lg min-h-screen">
             <div className="p-6">
-                <h1 className="text-2xl font-bold text-gray-900">Hockey Roster</h1>
-                <div className="mt-4 px-4 py-2 bg-gray-50 rounded-lg">
+                <h1 className="text-2xl font-bold text-gray-900 mb-6">Hockey Roster</h1>
+
+                <div className="bg-gray-50 rounded-lg p-4 mb-6">
                     <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium">Group Code:</span>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Group Code:
+                            </label>
                             <input
                                 type="text"
                                 value={groupCode}
                                 onChange={(e) => onGroupCodeChange(e.target.value)}
-                                className="ml-2 px-2 py-1 text-sm border rounded"
+                                className="w-full px-3 py-2 text-sm border rounded-md"
                                 placeholder="Enter group code"
                             />
                         </div>
-                        <div className="flex gap-2">
+                        <div className="grid grid-cols-2 gap-2">
                             <button
-                                className="flex-1 text-sm px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+                                className="w-full h-9 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
                                 onClick={onRetrieveGroupCode}
                             >
                                 Retrieve
                             </button>
                             <button
-                                className="flex-1 text-sm px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600"
+                                className="w-full h-9 text-sm bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors disabled:opacity-50"
                                 onClick={onSaveGroupCode}
                                 disabled={!groupCode}
                             >
                                 Save
                             </button>
                         </div>
-                        <div className="flex gap-2">
+                        <div className="grid grid-cols-2 gap-2">
                             <button
-                                className="flex-1 text-sm px-2 py-1 bg-gray-500 text-white rounded hover:bg-gray-600"
+                                className="w-full h-9 text-sm bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors"
                                 onClick={onCancelGroupCode}
                             >
                                 Cancel
                             </button>
                             <button
-                                className="flex-1 text-sm px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                                className="w-full h-9 text-sm bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors disabled:opacity-50"
                                 onClick={onDeleteGroup}
                                 disabled={!groupCode}
                             >
-                                Delete Group
+                                Delete
                             </button>
                         </div>
                     </div>
                 </div>
-                <nav className="mt-6 space-y-2">
+
+                <nav className="space-y-2">
                     {navItems.map((item) => {
                         const Icon = item.icon;
                         return (
                             <button
                                 key={item.id}
                                 onClick={() => setActiveTab(item.id)}
-                                className={`w-full flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg ${activeTab === item.id
+                                className={`w-full flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${activeTab === item.id
                                         ? 'bg-blue-500 text-white'
                                         : 'text-gray-700 hover:bg-gray-100'
                                     }`}
