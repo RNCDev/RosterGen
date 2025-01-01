@@ -167,28 +167,56 @@ export async function DELETE(
     request: NextRequest
 ): Promise<NextResponse<{ success: boolean } | { error: string }>> {
     try {
-        const { id, groupCode } = await request.json();
+        const { groupCode } = await request.json();
 
-        // Validate id
-        if (!id || typeof id !== 'number') {
+        if (!groupCode) {
             return NextResponse.json(
-                { error: 'Invalid player ID' },
+                { error: 'Invalid group code' },
                 { status: 400 }
             );
         }
 
-        const deleted = await deletePlayer(id, groupCode);
+        // Start a transaction
+        await sql`BEGIN`;
 
-        if (!deleted) {
-            return NextResponse.json(
-                { error: 'Player not found' },
-                { status: 404 }
-            );
+        try {
+            // First, get all team IDs for this group
+            const { rows: teams } = await sql<{ id: number }>`
+                SELECT id FROM teams WHERE group_code = ${groupCode}
+            `;
+
+            // Delete player_team_assignments first (due to foreign key)
+            if (teams.length > 0) {
+                const teamIds = teams.map(team => team.id);
+                await sql`
+                    DELETE FROM player_team_assignments
+                    WHERE team_id = ANY(${teamIds}::int[])
+                `;
+            }
+
+            // Delete teams
+            await sql`
+                DELETE FROM teams 
+                WHERE group_code = ${groupCode}
+            `;
+
+            // Delete players
+            await sql`
+                DELETE FROM players 
+                WHERE group_code = ${groupCode}
+            `;
+
+            await sql`COMMIT`;
+            return NextResponse.json({ success: true });
+        } catch (error) {
+            await sql`ROLLBACK`;
+            throw error;
         }
-
-        return NextResponse.json({ success: true });
     } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-        return NextResponse.json({ error: errorMessage }, { status: 500 });
+        console.error('Error deleting group:', error);
+        return NextResponse.json(
+            { error: error instanceof Error ? error.message : 'Failed to delete group' },
+            { status: 500 }
+        );
     }
 }
