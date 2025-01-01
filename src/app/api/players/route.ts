@@ -18,12 +18,15 @@ export async function GET(
     request: NextRequest
 ): Promise<NextResponse<DbPlayer[] | { error: string }>> {
     try {
-        // Get groupCode from query parameters
         const { searchParams } = new URL(request.url);
         const groupCode = searchParams.get('groupCode') || 'default';
 
-        const players = await getAllPlayers(groupCode);
-        return NextResponse.json(players);
+        const { rows } = await sql<DbPlayer>`
+            SELECT * FROM players 
+            WHERE group_code = ${groupCode}
+            ORDER BY last_name, first_name
+        `;
+        return NextResponse.json(rows);
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         return NextResponse.json({ error: errorMessage }, { status: 500 });

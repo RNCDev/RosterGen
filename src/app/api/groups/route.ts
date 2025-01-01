@@ -1,3 +1,4 @@
+// route.ts (groups)
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { sql } from '@vercel/postgres';
@@ -22,11 +23,9 @@ export async function POST(
             );
         }
 
-        // Start a transaction
         await sql`BEGIN`;
 
         try {
-            // Insert all players with the new group code
             const insertedPlayers = await Promise.all(
                 players.map(async (player: PlayerInput) => {
                     const { rows } = await sql`
@@ -52,18 +51,15 @@ export async function POST(
             );
 
             await sql`COMMIT`;
-            console.log('Successfully created new group with players');
             return NextResponse.json({
                 success: true,
                 insertedCount: insertedPlayers.length
             });
         } catch (error) {
-            console.error('Error during group creation, rolling back:', error);
             await sql`ROLLBACK`;
             throw error;
         }
     } catch (error) {
-        console.error('Error creating group:', error);
         return NextResponse.json(
             { error: error instanceof Error ? error.message : 'Failed to create group' },
             { status: 500 }
@@ -79,42 +75,16 @@ export async function DELETE(
         console.log('Attempting to delete group:', groupCode);
 
         if (!groupCode || groupCode === 'default') {
-            console.log('Invalid group code detected:', groupCode);
             return NextResponse.json(
                 { error: 'Invalid group code' },
                 { status: 400 }
             );
         }
 
-        // Start a transaction
         await sql`BEGIN`;
 
         try {
-            // First, get all team IDs for this group
-            const { rows: teams } = await sql<{ id: number }>`
-                SELECT id FROM teams WHERE group_code = ${groupCode}
-            `;
-            console.log('Found teams:', teams);
-
-            // Delete player_team_assignments first (due to foreign key)
-            if (teams.length > 0) {
-                const teamIds = teams.map((team: { id: number }) => team.id);
-                const { rowCount: assignmentsDeleted } = await sql`
-                    DELETE FROM player_team_assignments
-                    WHERE team_id = ANY(${teamIds}::int[])
-                `;
-                console.log('Deleted assignments count:', assignmentsDeleted);
-            }
-
-            // Delete teams
-            const { rowCount: teamsDeleted } = await sql`
-                DELETE FROM teams 
-                WHERE group_code = ${groupCode}
-                RETURNING id
-            `;
-            console.log('Deleted teams count:', teamsDeleted);
-
-            // Delete players
+            // Delete players directly
             const { rowCount: playersDeleted } = await sql`
                 DELETE FROM players 
                 WHERE group_code = ${groupCode}
@@ -123,17 +93,13 @@ export async function DELETE(
             console.log('Deleted players count:', playersDeleted);
 
             await sql`COMMIT`;
-            console.log('Successfully deleted group and all associated data');
             return NextResponse.json({
                 success: true,
                 deleted: {
-                    assignments: teamsDeleted > 0,
-                    teams: teamsDeleted,
                     players: playersDeleted
                 }
             });
         } catch (error) {
-            console.error('Error during deletion, rolling back:', error);
             await sql`ROLLBACK`;
             throw error;
         }
