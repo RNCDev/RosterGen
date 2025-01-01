@@ -1,19 +1,7 @@
-//players route
-
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { getAllPlayers, addPlayer, updatePlayer, deletePlayer } from '@/lib/db';
-import type { DbPlayer } from '@/lib/db';
 import { sql } from '@vercel/postgres';
-
-interface PlayerInput {
-    firstName: string;
-    lastName: string;
-    skill: number;
-    defense: boolean;
-    attending: boolean;
-    groupCode: string;
-}
+import { PlayerInput, type DbPlayer } from '@/lib/db';
 
 export async function GET(
     request: NextRequest
@@ -99,18 +87,40 @@ export async function POST(
             }
 
             // Add players to the database
-            const addedPlayers = [];
-            for (const playerData of players) {
-                const player = await addPlayer(playerData);
-                addedPlayers.push(player);
+            await sql`BEGIN`;
+            try {
+                const addedPlayers = [];
+                for (const playerData of players) {
+                    const { rows } = await sql<DbPlayer>`
+                        INSERT INTO players (
+                            first_name,
+                            last_name,
+                            skill,
+                            is_defense,
+                            is_attending,
+                            group_code
+                        )
+                        VALUES (
+                            ${playerData.firstName},
+                            ${playerData.lastName},
+                            ${playerData.skill},
+                            ${playerData.defense},
+                            ${playerData.attending},
+                            ${playerData.groupCode}
+                        )
+                        RETURNING *
+                    `;
+                    addedPlayers.push(rows[0]);
+                }
+                await sql`COMMIT`;
+                return NextResponse.json(addedPlayers);
+            } catch (error) {
+                await sql`ROLLBACK`;
+                throw error;
             }
-
-            return NextResponse.json(addedPlayers);
         } else {
             // Handle JSON input for single player
             const data = await request.json() as PlayerInput;
-
-            // Validate required fields
             if (!data.firstName || !data.lastName || typeof data.skill !== 'number') {
                 return NextResponse.json(
                     { error: 'Missing required fields' },
@@ -118,8 +128,27 @@ export async function POST(
                 );
             }
 
-            const player = await addPlayer(data);
-            return NextResponse.json(player);
+            const { rows } = await sql<DbPlayer>`
+                INSERT INTO players (
+                    first_name,
+                    last_name,
+                    skill,
+                    is_defense,
+                    is_attending,
+                    group_code
+                )
+                VALUES (
+                    ${data.firstName},
+                    ${data.lastName},
+                    ${data.skill},
+                    ${data.defense},
+                    ${data.attending},
+                    ${data.groupCode || 'default'}
+                )
+                RETURNING *
+            `;
+
+            return NextResponse.json(rows[0]);
         }
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
@@ -133,34 +162,27 @@ export async function PUT(
     try {
         const data = await request.json();
 
-        // Map the incoming data to match our PlayerInput interface
-        const playerInput: PlayerInput = {
-            firstName: data.firstName,
-            lastName: data.lastName,
-            skill: Number(data.skill),
-            defense: Boolean(data.defense),
-            attending: Boolean(data.attending),
-            groupCode: data.groupCode || 'default'
-        };
+        const { rows } = await sql<DbPlayer>`
+            UPDATE players
+            SET
+                first_name = ${data.firstName},
+                last_name = ${data.lastName},
+                skill = ${Number(data.skill)},
+                is_defense = ${Boolean(data.defense)},
+                is_attending = ${Boolean(data.attending)},
+                group_code = ${data.groupCode || 'default'}
+            WHERE id = ${data.id}
+            RETURNING *
+        `;
 
-        // Validate required fields
-        if (!data.id || !playerInput.firstName || !playerInput.lastName || typeof playerInput.skill !== 'number') {
-            return NextResponse.json(
-                { error: 'Missing required fields' },
-                { status: 400 }
-            );
-        }
-
-        const player = await updatePlayer(data.id, playerInput);
-
-        if (!player) {
+        if (rows.length === 0) {
             return NextResponse.json(
                 { error: 'Player not found' },
                 { status: 404 }
             );
         }
 
-        return NextResponse.json(player);
+        return NextResponse.json(rows[0]);
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
         return NextResponse.json({ error: errorMessage }, { status: 500 });
@@ -171,56 +193,31 @@ export async function DELETE(
     request: NextRequest
 ): Promise<NextResponse<{ success: boolean } | { error: string }>> {
     try {
-        const { groupCode } = await request.json();
+        const { id, groupCode } = await request.json();
 
-        if (!groupCode) {
+        if (!id || typeof id !== 'number') {
             return NextResponse.json(
-                { error: 'Invalid group code' },
+                { error: 'Invalid player ID' },
                 { status: 400 }
             );
         }
 
-        // Start a transaction
-        await sql`BEGIN`;
+        const { rowCount } = await sql`
+            DELETE FROM players 
+            WHERE id = ${id}
+            AND group_code = ${groupCode}
+        `;
 
-        try {
-            // First, get all team IDs for this group
-            const { rows: teams } = await sql<{ id: number }>`
-                SELECT id FROM teams WHERE group_code = ${groupCode}
-            `;
-
-            // Delete player_team_assignments first (due to foreign key)
-            if (teams.length > 0) {
-                const teamIds = teams.map(team => team.id);
-                await sql`
-                    DELETE FROM player_team_assignments
-                    WHERE team_id = ANY(${teamIds}::int[])
-                `;
-            }
-
-            // Delete teams
-            await sql`
-                DELETE FROM teams 
-                WHERE group_code = ${groupCode}
-            `;
-
-            // Delete players
-            await sql`
-                DELETE FROM players 
-                WHERE group_code = ${groupCode}
-            `;
-
-            await sql`COMMIT`;
-            return NextResponse.json({ success: true });
-        } catch (error) {
-            await sql`ROLLBACK`;
-            throw error;
+        if (rowCount === 0) {
+            return NextResponse.json(
+                { error: 'Player not found' },
+                { status: 404 }
+            );
         }
+
+        return NextResponse.json({ success: true });
     } catch (error) {
-        console.error('Error deleting group:', error);
-        return NextResponse.json(
-            { error: error instanceof Error ? error.message : 'Failed to delete group' },
-            { status: 500 }
-        );
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        return NextResponse.json({ error: errorMessage }, { status: 500 });
     }
 }
