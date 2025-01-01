@@ -3,6 +3,10 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { sql } from '@vercel/postgres';
 
+interface TeamRow {
+    id: number;
+}
+
 // DELETE - Delete group and all associated data
 export async function DELETE(
     request: NextRequest
@@ -26,14 +30,14 @@ export async function DELETE(
             console.log('Starting deletion process for group:', groupCode);
 
             // First, get all team IDs for this group
-            const { rows: teams } = await sql`
+            const { rows: teams } = await sql<TeamRow>`
                 SELECT id FROM teams WHERE group_code = ${groupCode}
             `;
             console.log('Found teams:', teams);
 
             // Delete player_team_assignments first (due to foreign key)
             if (teams.length > 0) {
-                const teamIds = teams.map(t => t.id);
+                const teamIds = teams.map(team => team.id);
                 const { rowCount: assignmentsDeleted } = await sql`
                     DELETE FROM player_team_assignments
                     WHERE team_id = ANY(${teamIds}::int[])
@@ -58,7 +62,7 @@ export async function DELETE(
             console.log('Deleted players count:', playersDeleted);
 
             // Verify deletion
-            const { rows: finalCounts } = await sql`
+            const { rows: finalCounts } = await sql<{ remaining_players: number; remaining_teams: number }>`
                 SELECT 
                     (SELECT COUNT(*) FROM players WHERE group_code = ${groupCode}) as remaining_players,
                     (SELECT COUNT(*) FROM teams WHERE group_code = ${groupCode}) as remaining_teams
