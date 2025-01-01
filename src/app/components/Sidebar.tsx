@@ -1,6 +1,5 @@
 // Sidebar.tsx
 'use client';
-
 import { Users, ListChecks } from 'lucide-react';
 
 interface SidebarProps {
@@ -8,6 +7,7 @@ interface SidebarProps {
     setActiveTab: (tab: 'players' | 'roster') => void;
     groupCode: string;
     onGroupCodeChange: (groupCode: string) => void;
+    onRetrieveGroupCode: () => Promise<void>;
     onSaveGroupCode: () => Promise<void>;
     onCancelGroupCode: () => void;
     onDeleteGroup: () => Promise<void>;
@@ -18,6 +18,7 @@ export default function Sidebar({
     setActiveTab,
     groupCode,
     onGroupCodeChange,
+    onRetrieveGroupCode,
     onSaveGroupCode,
     onCancelGroupCode,
     onDeleteGroup
@@ -83,6 +84,24 @@ export default function Sidebar({
                         </div>
                     </div>
                 </div>
+                <nav className="mt-6 space-y-2">
+                    {navItems.map((item) => {
+                        const Icon = item.icon;
+                        return (
+                            <button
+                                key={item.id}
+                                onClick={() => setActiveTab(item.id)}
+                                className={`w-full flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg ${activeTab === item.id
+                                        ? 'bg-blue-500 text-white'
+                                        : 'text-gray-700 hover:bg-gray-100'
+                                    }`}
+                            >
+                                <Icon className="h-5 w-5" />
+                                {item.label}
+                            </button>
+                        );
+                    })}
+                </nav>
             </div>
         </aside>
     );

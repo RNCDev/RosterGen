@@ -1,3 +1,4 @@
+//page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -20,7 +21,6 @@ export default function Home() {
     });
 
     useEffect(() => {
-        // Try to load saved group code from localStorage
         const savedGroupCode = localStorage.getItem('groupCode');
         if (savedGroupCode) {
             setGroupCode(savedGroupCode);
@@ -31,7 +31,7 @@ export default function Home() {
     const fetchPlayers = async (groupCode?: string) => {
         try {
             setLoading(true);
-            const response = await fetch(`/api/players?groupCode=${groupCode || 'default'}`);
+            const response = await fetch(`/api/players?groupCode=${groupCode || ''}`);
             if (!response.ok) throw new Error('Failed to fetch players');
             const data = await response.json();
             setPlayers(data);
@@ -43,19 +43,22 @@ export default function Home() {
         }
     };
 
-    const handleGroupCodeChange = async (newGroupCode: string) => {
+    const handleGroupCodeChange = (newGroupCode: string) => {
+        setGroupCode(newGroupCode);
+    };
+
+    const handleRetrieveGroupCode = async () => {
+        if (!groupCode) {
+            setError('Please enter a group code');
+            return;
+        }
+
         try {
             setLoading(true);
             setError(null);
-
-            // Store the new group code
-            setGroupCode(newGroupCode);
-            localStorage.setItem('groupCode', newGroupCode);
-
-            // Fetch the new group's players
-            await fetchPlayers(newGroupCode);
+            await fetchPlayers(groupCode);
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to change group');
+            setError(err instanceof Error ? err.message : 'Failed to retrieve group');
             console.error(err);
         } finally {
             setLoading(false);
@@ -63,11 +66,32 @@ export default function Home() {
     };
 
     const handleGroupSave = async () => {
+        if (!groupCode || !players.length) {
+            setError('No group code or players to save');
+            return;
+        }
+
         try {
             setLoading(true);
             setError(null);
 
-            // Save the current group code
+            const updatePromises = players.map(player =>
+                fetch('/api/players', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        id: player.id,
+                        firstName: player.first_name,
+                        lastName: player.last_name,
+                        skill: player.skill,
+                        defense: player.is_defense,
+                        attending: player.is_attending,
+                        groupCode: groupCode
+                    })
+                })
+            );
+
+            await Promise.all(updatePromises);
             localStorage.setItem('groupCode', groupCode);
             await fetchPlayers(groupCode);
         } catch (err) {
@@ -79,9 +103,13 @@ export default function Home() {
     };
 
     const handleGroupCancel = () => {
-        // Revert the group code to the last saved value
-        const savedGroupCode = localStorage.getItem('groupCode') || 'default';
+        const savedGroupCode = localStorage.getItem('groupCode') || '';
         setGroupCode(savedGroupCode);
+        if (savedGroupCode) {
+            fetchPlayers(savedGroupCode);
+        } else {
+            setPlayers([]);
+        }
     };
 
     const handleGroupDelete = async () => {
@@ -90,17 +118,13 @@ export default function Home() {
             setError(null);
 
             await deleteGroup(groupCode);
-
-            // Reset to default group and clear teams
-            setGroupCode('default');
-            localStorage.setItem('groupCode', 'default');
+            setGroupCode('');
+            localStorage.removeItem('groupCode');
             setTeams({
                 red: { forwards: [], defensemen: [] },
                 white: { forwards: [], defensemen: [] },
             });
-
-            // Fetch players for the default group
-            await fetchPlayers('default');
+            setPlayers([]);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to delete group');
             console.error(err);
@@ -130,7 +154,7 @@ export default function Home() {
                 throw new Error('Upload failed');
             }
 
-            await fetchPlayers();
+            await fetchPlayers(groupCode);
         } catch (err) {
             setError('Failed to upload file');
             console.error(err);
@@ -157,7 +181,7 @@ export default function Home() {
                 throw new Error(errorData.error || 'Failed to delete player');
             }
 
-            await fetchPlayers();
+            await fetchPlayers(groupCode);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to delete player');
             console.error(err);
@@ -195,7 +219,7 @@ export default function Home() {
                 throw new Error(responseData.error || 'Failed to update player');
             }
 
-            await fetchPlayers();
+            await fetchPlayers(groupCode);
         } catch (err) {
             console.error('Update error:', err);
             setError(err instanceof Error ? err.message : 'Failed to update player');
@@ -247,6 +271,7 @@ export default function Home() {
                 setActiveTab={setActiveTab}
                 groupCode={groupCode}
                 onGroupCodeChange={handleGroupCodeChange}
+                onRetrieveGroupCode={handleRetrieveGroupCode}
                 onSaveGroupCode={handleGroupSave}
                 onCancelGroupCode={handleGroupCancel}
                 onDeleteGroup={handleGroupDelete}
