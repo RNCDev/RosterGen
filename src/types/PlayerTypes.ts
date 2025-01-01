@@ -58,3 +58,8 @@ export type TeamGeneratorProps = {
     groupCode: string;
     onTeamsGenerated: (teams: Teams) => void;
 };
+
+export type GroupSelectorProps = {
+    currentGroup: string;
+    onGroupChange: (groupCode: string) => void;
+};

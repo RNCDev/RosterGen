@@ -34,7 +34,7 @@ export default function PlayersView({
     handleFileUpload,
     handleDeletePlayer,
     onTeamsGenerated,
-    onUpdatePlayer
+    onUpdatePlayer,
 }: PlayersViewProps) {
     const [showAddForm, setShowAddForm] = useState(false);
     const [newPlayer, setNewPlayer] = useState<NewPlayer>({
