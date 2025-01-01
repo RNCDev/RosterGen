@@ -115,22 +115,38 @@ export default function Home() {
     };
 
     const handleGroupDelete = async () => {
+        if (!groupCode) {
+            setError('No group code selected');
+            return;
+        }
+
         try {
             setLoading(true);
             setError(null);
 
-            await deleteGroup(groupCode);
+            const response = await fetch('/api/groups', {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ groupCode })
+            });
+
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || 'Failed to delete group');
+            }
+
             setGroupCode('');
             localStorage.removeItem('groupCode');
             setTeams({
                 red: { forwards: [], defensemen: [] },
-                white: { forwards: [], defensemen: [] },
+                white: { forwards: [], defensemen: [] }
             });
             setPlayers([]);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to delete group');
             console.error(err);
-            throw err;
         } finally {
             setLoading(false);
         }
