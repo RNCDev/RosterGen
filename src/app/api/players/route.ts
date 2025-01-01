@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getAllPlayers, addPlayer, updatePlayer, deletePlayer } from '@/lib/db';
 import type { DbPlayer } from '@/lib/db';
+import { sql } from '@vercel/postgres';
 
 interface PlayerInput {
     firstName: string;
