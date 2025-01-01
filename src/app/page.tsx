@@ -27,23 +27,20 @@ export default function Home() {
         }
     }, []); // Only run on initial mount
 
-    const fetchPlayers = async (code: string) => {
-        if (!code) return; // Don't fetch if no group code
-
-        try {
-            setLoading(true);
-            setError(null);
-            const response = await fetch(`/api/players?groupCode=${code}`);
-            if (!response.ok) throw new Error('Failed to fetch players');
-            const data = await response.json();
-            setPlayers(data);
-        } catch (err) {
-            setError('Failed to load players');
-            console.error(err);
-        } finally {
-            setLoading(false);
-        }
-    };
+ const fetchPlayers = async (groupCode?: string) => {
+    try {
+        setLoading(true);
+        const response = await fetch(`/api/players?groupCode=${groupCode || 'default'}`);
+        if (!response.ok) throw new Error('Failed to fetch players');
+        const data = await response.json();
+        setPlayers(data);
+    } catch (err) {
+        setError('Failed to load players');
+        console.error(err);
+    } finally {
+        setLoading(false);
+    }
+};
 
     const handleGroupCodeChange = async (newGroupCode: string) => {
         try {
@@ -111,7 +108,7 @@ export default function Home() {
             });
 
             // Fetch players for the default group
-            await fetchPlayers();
+            await fetchPlayers('default');  // Pass 'default' explicitly
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to delete group');
             console.error(err);
