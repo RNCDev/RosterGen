@@ -8,6 +8,7 @@ import PlayersView from '@/components/PlayersView';
 import TeamsView from '@/components/TeamsView';
 import ErrorAlert from '@/components/ErrorAlert';
 import Dialog from '@/components/Dialog';
+import AddPlayerDialog from '@/components/AddPlayerDialog';
 
 export default function Home() {
     const [players, setPlayers] = useState<Player[]>([]);
@@ -16,6 +17,7 @@ export default function Home() {
     const [activeTab, setActiveTab] = useState<'players' | 'roster'>('players');
     const [groupCode, setGroupCode] = useState<string>('');
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [showAddPlayer, setShowAddPlayer] = useState(false);
     const [teams, setTeams] = useState<Teams>({
         red: { forwards: [], defensemen: [] },
         white: { forwards: [], defensemen: [] },
@@ -154,31 +156,34 @@ export default function Home() {
         }
     };
 
-    const handleAddPlayer = async () => {
+    const handleAddPlayer = () => {
         if (!groupCode) {
             setError('Please select a group before adding players');
             return;
         }
+        setShowAddPlayer(true);
+    };
 
+    const handleAddPlayerSubmit = async (playerData: {
+        firstName: string;
+        lastName: string;
+        skill: number;
+        defense: boolean;
+        attending: boolean;
+    }) => {
         try {
             setLoading(true);
             setError(null);
             
-            const newPlayer = {
-                firstName: 'New',
-                lastName: 'Player',
-                skill: 5,
-                defense: false,
-                attending: true,
-                groupCode: groupCode
-            };
-
             const response = await fetch('/api/players', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(newPlayer),
+                body: JSON.stringify({
+                    ...playerData,
+                    groupCode
+                }),
             });
 
             if (!response.ok) {
@@ -186,6 +191,7 @@ export default function Home() {
             }
 
             await fetchPlayers(groupCode);
+            setShowAddPlayer(false);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to add player');
             console.error(err);
@@ -382,6 +388,11 @@ export default function Home() {
                 accept=".csv"
                 onChange={handleFileUpload}
                 className="hidden"
+            />
+            <AddPlayerDialog
+                isOpen={showAddPlayer}
+                onClose={() => setShowAddPlayer(false)}
+                onSubmit={handleAddPlayerSubmit}
             />
         </div>
     );
