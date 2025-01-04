@@ -1,4 +1,4 @@
-//sidebar.tsx
+// TeamsView.tsx
 'use client';
 
 import { type Teams, type Player } from '@/types/PlayerTypes';
@@ -95,7 +95,7 @@ export default function TeamsView({ teams, hasPlayers, groupCode }: TeamsViewPro
 
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-center border-b pb-4">
+            <div className="flex justify-between items-center pb-4">
                 <h2 className="text-xl font-semibold text-gray-900">Team Rosters</h2>
                 {groupCode !== 'default' && (
                     <span className="text-sm text-gray-500">
@@ -123,7 +123,8 @@ export default function TeamsView({ teams, hasPlayers, groupCode }: TeamsViewPro
             ) : (
                 <div className="text-center py-12">
                     <ListChecks className="mx-auto h-12 w-12 text-gray-400" />
-                    <p className="mt-4 text-sm text-gray-500">
+                    <h3 className="mt-2 text-sm font-medium text-gray-900">No Teams Generated</h3>
+                    <p className="mt-1 text-sm text-gray-500">
                         {hasPlayers
                             ? "Use the Generate Teams button in the Players tab to create teams."
                             : "Add players before generating teams."}

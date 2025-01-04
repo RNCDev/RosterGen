@@ -1,3 +1,4 @@
+// types/PlayerTypes.ts
 export type Player = {
     id: number;
     first_name: string;
@@ -19,15 +20,13 @@ export type Teams = {
     white: Team;
 };
 
+// Component Props
 export type PlayersViewProps = {
     players: Player[];
     loading: boolean;
     groupCode: string;
-    onGroupCodeChange: (groupCode: string) => void;
-    handleFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
-    handleDeletePlayer?: (id: number) => Promise<void>;
-    onTeamsGenerated?: (teams: Teams) => void;
     onUpdatePlayer?: (player: Player) => Promise<void>;
+    handleDeletePlayer?: (id: number) => Promise<void>;
 };
 
 export type TeamsViewProps = {
@@ -42,7 +41,7 @@ export type EditableRowProps = {
     onDelete?: (id: number) => Promise<void>;
 };
 
-export type SidebarProps = {
+export type HeaderProps = {
     activeTab: 'players' | 'roster';
     setActiveTab: (tab: 'players' | 'roster') => void;
     groupCode: string;
@@ -53,17 +52,24 @@ export type SidebarProps = {
     onDeleteGroup: () => Promise<void>;
 };
 
+export type ActionBarProps = {
+    onAddPlayer: () => void;
+    onUploadClick: () => void;
+    onGenerateTeams?: () => void;
+    showGenerateTeams?: boolean;
+    disabled?: boolean;
+};
+
+export type DialogProps = {
+    isOpen: boolean;
+    onClose: () => void;
+    onConfirm: () => void;
+    title: string;
+    description: string;
+    confirmLabel?: string;
+    cancelLabel?: string;
+};
+
 export type ErrorAlertProps = {
     message: string | null;
 };
-
-export type TeamGeneratorProps = {
-    players: Player[];
-    groupCode: string;
-    onTeamsGenerated: (teams: Teams) => void;
-};
-
-export type GroupSelectorProps = {
-    currentGroup: string;
-    onGroupChange: (groupCode: string) => void;
-}
