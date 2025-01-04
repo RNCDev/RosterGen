@@ -255,9 +255,8 @@ export default function Home() {
                                 players={players}
                                 loading={loading}
                                 groupCode={groupCode}
-                                onGroupCodeChange={handleGroupCodeChange}
-                                handleFileUpload={handleFileUpload}
-                                onTeamsGenerated={handleTeamsGenerated}
+                                onUpdatePlayer={handlePlayerUpdate}
+                                handleDeletePlayer={handleDeletePlayer}
                             />
                         ) : (
                             <TeamsView

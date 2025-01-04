@@ -54,7 +54,7 @@ export type HeaderProps = {
 
 export type ActionBarProps = {
     onAddPlayer: () => void;
-    onFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
+    onUploadClick: () => void;
     onGenerateTeams?: () => void;
     showGenerateTeams?: boolean;
     disabled?: boolean;

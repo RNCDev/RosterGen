@@ -1,18 +1,9 @@
 // PlayersView.tsx
 'use client';
 
-import { useState } from 'react';
-import { type Player } from '@/types/PlayerTypes';
+import { type Player, type PlayersViewProps } from '@/types/PlayerTypes';
 import { Users } from 'lucide-react';
 import EditableRow from './EditableRow';
-
-interface PlayersViewProps {
-    players: Player[];
-    loading: boolean;
-    groupCode: string;
-    onUpdatePlayer?: (player: Player) => Promise<void>;
-    handleDeletePlayer?: (id: number) => Promise<void>;
-}
 
 export default function PlayersView({
     players,
