@@ -9,6 +9,8 @@ import TeamsView from '@/components/TeamsView';
 import ErrorAlert from '@/components/ErrorAlert';
 import Dialog from '@/components/Dialog';
 import AddPlayerDialog from '@/components/AddPlayerDialog';
+import _ from 'lodash';
+import { generateTeams } from '@/lib/teamGenerator';
 
 export default function Home() {
     const [players, setPlayers] = useState<Player[]>([]);
@@ -292,10 +294,12 @@ export default function Home() {
         }
     };
 
-    const handleTeamsGenerated = async (newTeams: Teams) => {
+    const handleTeamsGenerated = async () => {
         try {
             setLoading(true);
             setError(null);
+
+            const newTeams = generateTeams(players, groupCode);
             setTeams(newTeams);
             setActiveTab('roster');
 
@@ -342,9 +346,7 @@ export default function Home() {
             <ActionBar 
                 onAddPlayer={handleAddPlayer}
                 onUploadClick={() => document.getElementById('file-upload')?.click()}
-                onGenerateTeams={
-                    players.length > 0 ? () => handleTeamsGenerated(teams) : undefined
-                }
+                onGenerateTeams={players.length > 0 ? handleTeamsGenerated : undefined}
                 showGenerateTeams={activeTab === 'players'}
                 disabled={loading}
             />
