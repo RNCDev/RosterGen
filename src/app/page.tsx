@@ -188,6 +188,69 @@ export default function Home() {
         }
     };
 
+    const handlePlayerUpdate = async (updatedPlayer: Player) => {
+        try {
+            setLoading(true);
+            setError(null);
+
+            const response = await fetch('/api/players', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    id: updatedPlayer.id,
+                    firstName: updatedPlayer.first_name,
+                    lastName: updatedPlayer.last_name,
+                    skill: updatedPlayer.skill,
+                    defense: updatedPlayer.is_defense,
+                    attending: updatedPlayer.is_attending,
+                    groupCode: updatedPlayer.group_code
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to update player');
+            }
+
+            await fetchPlayers(groupCode);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to update player');
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleDeletePlayer = async (playerId: number) => {
+        try {
+            setLoading(true);
+            setError(null);
+
+            const response = await fetch('/api/players', {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    id: playerId,
+                    groupCode
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to delete player');
+            }
+
+            await fetchPlayers(groupCode);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to delete player');
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const handleTeamsGenerated = async (newTeams: Teams) => {
         try {
             setLoading(true);
@@ -277,6 +340,13 @@ export default function Home() {
                 description="Are you sure you want to delete this group? This action cannot be undone."
                 confirmLabel="Delete"
                 cancelLabel="Cancel"
+            />
+            <input
+                id="file-upload"
+                type="file"
+                accept=".csv"
+                onChange={handleFileUpload}
+                className="hidden"
             />
         </div>
     );
