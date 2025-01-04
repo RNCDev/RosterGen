@@ -10,18 +10,16 @@ interface PlayersViewProps {
     players: Player[];
     loading: boolean;
     groupCode: string;
-    onGroupCodeChange: (groupCode: string) => void;
-    handleFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
-    handleDeletePlayer?: (id: number) => Promise<void>;
-    onTeamsGenerated?: (teams: any) => void;
     onUpdatePlayer?: (player: Player) => Promise<void>;
+    handleDeletePlayer?: (id: number) => Promise<void>;
 }
 
 export default function PlayersView({
     players,
     loading,
     groupCode,
-    onUpdatePlayer
+    onUpdatePlayer,
+    handleDeletePlayer
 }: PlayersViewProps) {
     const handleSave = async (updatedPlayer: Player) => {
         if (onUpdatePlayer) {
@@ -58,6 +56,7 @@ export default function PlayersView({
                                     key={player.id}
                                     player={player}
                                     onSave={handleSave}
+                                    onDelete={handleDeletePlayer}
                                 />
                             ))}
                         </tbody>

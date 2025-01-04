@@ -1,4 +1,4 @@
-//PLayerTypes
+// types/PlayerTypes.ts
 export type Player = {
     id: number;
     first_name: string;
@@ -20,14 +20,13 @@ export type Teams = {
     white: Team;
 };
 
+// Component Props
 export type PlayersViewProps = {
     players: Player[];
     loading: boolean;
     groupCode: string;
-    onGroupCodeChange: (groupCode: string) => void;
-    handleFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
-    onTeamsGenerated?: (teams: Teams) => void;
     onUpdatePlayer?: (player: Player) => Promise<void>;
+    handleDeletePlayer?: (id: number) => Promise<void>;
 };
 
 export type TeamsViewProps = {
@@ -39,6 +38,7 @@ export type TeamsViewProps = {
 export type EditableRowProps = {
     player: Player;
     onSave: (updatedPlayer: Player) => Promise<void>;
+    onDelete?: (id: number) => Promise<void>;
 };
 
 export type HeaderProps = {
@@ -54,14 +54,10 @@ export type HeaderProps = {
 
 export type ActionBarProps = {
     onAddPlayer: () => void;
-    onUploadClick: () => void;
+    onFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
     onGenerateTeams?: () => void;
     showGenerateTeams?: boolean;
     disabled?: boolean;
-};
-
-export type ErrorAlertProps = {
-    message: string | null;
 };
 
 export type DialogProps = {
@@ -72,4 +68,8 @@ export type DialogProps = {
     description: string;
     confirmLabel?: string;
     cancelLabel?: string;
+};
+
+export type ErrorAlertProps = {
+    message: string | null;
 };
