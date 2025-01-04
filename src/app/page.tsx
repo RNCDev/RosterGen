@@ -154,9 +154,44 @@ export default function Home() {
         }
     };
 
-    const handleAddPlayer = () => {
-        setError(null);
-        // This will be handled by the PlayersView component
+    const handleAddPlayer = async () => {
+        if (!groupCode) {
+            setError('Please select a group before adding players');
+            return;
+        }
+
+        try {
+            setLoading(true);
+            setError(null);
+            
+            const newPlayer = {
+                firstName: 'New',
+                lastName: 'Player',
+                skill: 5,
+                defense: false,
+                attending: true,
+                groupCode: groupCode
+            };
+
+            const response = await fetch('/api/players', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(newPlayer),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to add player');
+            }
+
+            await fetchPlayers(groupCode);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to add player');
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
