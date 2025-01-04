@@ -1,16 +1,16 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { sql } from '@vercel/postgres';
-import { PlayerInput, type DbPlayer, deletePlayer } from '@/lib/db';
+import { type FormPlayer, type PlayerDB, type PlayerInput, toDatabase } from '@/types/PlayerTypes';
 
 export async function GET(
     request: NextRequest
-): Promise<NextResponse<DbPlayer[] | { error: string }>> {
+): Promise<NextResponse<PlayerDB[] | { error: string }>> {
     try {
         const { searchParams } = new URL(request.url);
         const groupCode = searchParams.get('groupCode') || 'default';
 
-        const { rows } = await sql<DbPlayer>`
+        const { rows } = await sql<PlayerDB>`
             SELECT * FROM players 
             WHERE group_code = ${groupCode}
             ORDER BY last_name, first_name
@@ -24,7 +24,7 @@ export async function GET(
 
 export async function POST(
     request: NextRequest
-): Promise<NextResponse<DbPlayer[] | DbPlayer | { error: string }>> {
+): Promise<NextResponse<PlayerDB[] | PlayerDB | { error: string }>> {
     try {
         const contentType = request.headers.get('content-type');
 
@@ -60,7 +60,7 @@ export async function POST(
 
             const players = csvRows.slice(1).map(row => {
                 const values = row.split(',').map(value => value.trim());
-                return {
+                const formPlayer: FormPlayer = {
                     firstName: values[0],
                     lastName: values[1],
                     skill: parseInt(values[2], 10),
@@ -68,15 +68,16 @@ export async function POST(
                     attending: Boolean(parseInt(values[4], 10)),
                     groupCode
                 };
+                return toDatabase(formPlayer);
             });
 
             // Validate all players have required fields
             const invalidPlayers = players.filter(
-                player => !player.firstName ||
-                    !player.lastName ||
+                player => !player.first_name ||
+                    !player.last_name ||
                     isNaN(player.skill) ||
-                    typeof player.defense !== 'boolean' ||
-                    typeof player.attending !== 'boolean'
+                    typeof player.is_defense !== 'boolean' ||
+                    typeof player.is_attending !== 'boolean'
             );
 
             if (invalidPlayers.length > 0) {
@@ -90,8 +91,8 @@ export async function POST(
             await sql`BEGIN`;
             try {
                 const addedPlayers = [];
-                for (const playerData of players) {
-                    const { rows } = await sql<DbPlayer>`
+                for (const player of players) {
+                    const { rows } = await sql<PlayerDB>`
                         INSERT INTO players (
                             first_name,
                             last_name,
@@ -101,12 +102,12 @@ export async function POST(
                             group_code
                         )
                         VALUES (
-                            ${playerData.firstName},
-                            ${playerData.lastName},
-                            ${playerData.skill},
-                            ${playerData.defense},
-                            ${playerData.attending},
-                            ${playerData.groupCode}
+                            ${player.first_name},
+                            ${player.last_name},
+                            ${player.skill},
+                            ${player.is_defense},
+                            ${player.is_attending},
+                            ${player.group_code}
                         )
                         RETURNING *
                     `;
@@ -120,15 +121,17 @@ export async function POST(
             }
         } else {
             // Handle JSON input for single player
-            const data = await request.json() as PlayerInput;
-            if (!data.firstName || !data.lastName || typeof data.skill !== 'number') {
+            const formData = await request.json() as FormPlayer;
+            if (!formData.firstName || !formData.lastName || typeof formData.skill !== 'number') {
                 return NextResponse.json(
                     { error: 'Missing required fields' },
                     { status: 400 }
                 );
             }
 
-            const { rows } = await sql<DbPlayer>`
+            const player = toDatabase(formData);
+
+            const { rows } = await sql<PlayerDB>`
                 INSERT INTO players (
                     first_name,
                     last_name,
@@ -138,12 +141,12 @@ export async function POST(
                     group_code
                 )
                 VALUES (
-                    ${data.firstName},
-                    ${data.lastName},
-                    ${data.skill},
-                    ${data.defense},
-                    ${data.attending},
-                    ${data.groupCode || 'default'}
+                    ${player.first_name},
+                    ${player.last_name},
+                    ${player.skill},
+                    ${player.is_defense},
+                    ${player.is_attending},
+                    ${player.group_code}
                 )
                 RETURNING *
             `;
@@ -160,40 +163,29 @@ export async function PUT(
     request: NextRequest
 ): Promise<NextResponse<PlayerDB | { error: string }>> {
     try {
-        const data = await request.json();
-        console.log('Received update data:', data);
+        const formData = await request.json() as FormPlayer & { id: number };
+        console.log('Received update data:', formData);
 
         // Validate required fields
-        if (!data.id || !data.first_name || !data.last_name) {
+        if (!formData.id || !formData.firstName || !formData.lastName) {
             return NextResponse.json(
                 { error: 'Missing required fields' },
                 { status: 400 }
             );
         }
 
-        // Convert and validate all fields
-        const updateData = {
-            id: Number(data.id),
-            first_name: String(data.first_name).trim(),
-            last_name: String(data.last_name).trim(),
-            skill: Number(data.skill || 1),
-            is_defense: Boolean(data.is_defense),
-            is_attending: Boolean(data.is_attending),
-            group_code: data.group_code
-        };
-
-        console.log('Sanitized update data:', updateData);
+        const player = toDatabase(formData);
 
         const { rows } = await sql<PlayerDB>`
             UPDATE players
             SET
-                first_name = ${updateData.first_name},
-                last_name = ${updateData.last_name},
-                skill = ${updateData.skill},
-                is_defense = ${updateData.is_defense},
-                is_attending = ${updateData.is_attending}
-            WHERE id = ${updateData.id} 
-            AND group_code = ${updateData.group_code}
+                first_name = ${player.first_name},
+                last_name = ${player.last_name},
+                skill = ${player.skill},
+                is_defense = ${player.is_defense},
+                is_attending = ${player.is_attending}
+            WHERE id = ${formData.id} 
+            AND group_code = ${player.group_code}
             RETURNING *
         `;
 
@@ -230,9 +222,13 @@ export async function DELETE(
             );
         }
 
-        const success = await deletePlayer(parseInt(id), groupCode);
+        const { rowCount } = await sql`
+            DELETE FROM players 
+            WHERE id = ${parseInt(id)} 
+            AND group_code = ${groupCode}
+        `;
 
-        if (!success) {
+        if (rowCount === 0) {
             return NextResponse.json(
                 { error: 'Player not found or already deleted' },
                 { status: 404 }

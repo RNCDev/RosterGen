@@ -1,15 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { sql } from '@vercel/postgres';
-import { toInputFromForm, type PlayerInput } from '@/types/PlayerTypes';
-
-interface FormPlayer {
-    firstName: string;
-    lastName: string;
-    skill: number;
-    defense: boolean;
-    attending: boolean;
-}
+import { type FormPlayer, type PlayerDB, toDatabase } from '@/types/PlayerTypes';
 
 interface CreateGroupRequest {
     groupCode: string;
@@ -42,17 +34,21 @@ export async function POST(
             // Insert each player
             const insertedPlayers = await Promise.all(
                 players.map(async (formPlayer) => {
-                    const player = toInputFromForm({
+                    // Add groupCode to formPlayer data
+                    const playerWithGroup = {
                         ...formPlayer,
                         groupCode
-                    });
+                    };
+
+                    // Convert to database format
+                    const dbPlayer = toDatabase(playerWithGroup);
 
                     // Validate required fields
-                    if (!player.first_name || !player.last_name) {
+                    if (!dbPlayer.first_name || !dbPlayer.last_name) {
                         throw new Error('First name and last name are required for all players');
                     }
 
-                    const { rows } = await sql`
+                    const { rows } = await sql<PlayerDB>`
                         INSERT INTO players (
                             first_name,
                             last_name,
@@ -61,14 +57,14 @@ export async function POST(
                             is_attending,
                             group_code
                         ) VALUES (
-                            ${player.first_name},
-                            ${player.last_name},
-                            ${player.skill},
-                            ${player.is_defense},
-                            ${player.is_attending},
-                            ${player.group_code}
+                            ${dbPlayer.first_name},
+                            ${dbPlayer.last_name},
+                            ${dbPlayer.skill},
+                            ${dbPlayer.is_defense},
+                            ${dbPlayer.is_attending},
+                            ${dbPlayer.group_code}
                         )
-                        RETURNING id
+                        RETURNING *
                     `;
                     return rows[0];
                 })
@@ -111,7 +107,7 @@ export async function DELETE(
         await sql`BEGIN`;
 
         try {
-            // Delete players directly
+            // Delete all players in the group
             const { rowCount: playersDeleted } = await sql`
                 DELETE FROM players 
                 WHERE group_code = ${groupCode}

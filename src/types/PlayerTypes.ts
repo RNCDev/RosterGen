@@ -21,6 +21,15 @@ export interface PlayerInput {
     group_code: string;
 }
 
+export interface FormPlayer {
+    firstName: string;
+    lastName: string;
+    skill: number;
+    defense: boolean;
+    attending: boolean;
+    groupCode: string;
+}
+
 // Type aliases for clarity
 export type Player = PlayerDB; // Use the database format in components
 export type Team = {
@@ -35,18 +44,20 @@ export type Teams = {
 };
 
 // Transformation functions
-export const toInputFromForm = (formData: {
-    firstName: string;
-    lastName: string;
-    skill: number;
-    defense: boolean;
-    attending: boolean;
-    groupCode: string;
-}): PlayerInput => ({
+export const toDatabase = (formData: FormPlayer): PlayerInput => ({
     first_name: formData.firstName,
     last_name: formData.lastName,
     skill: formData.skill,
     is_defense: formData.defense,
     is_attending: formData.attending,
     group_code: formData.groupCode
+});
+
+export const fromDatabase = (player: PlayerDB): FormPlayer => ({
+    firstName: player.first_name,
+    lastName: player.last_name,
+    skill: player.skill,
+    defense: player.is_defense,
+    attending: player.is_attending,
+    groupCode: player.group_code
 });
