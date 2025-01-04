@@ -2,12 +2,14 @@
 'use client';
 
 import { type Teams, type Player } from '@/types/PlayerTypes';
-import { ListChecks } from 'lucide-react';
+import { ListChecks, User, Shield } from 'lucide-react';
+import { Button } from './button';
 
 interface TeamsViewProps {
     teams: Teams;
     hasPlayers: boolean;
     groupCode: string;
+    onRegenerateTeams?: () => void;
 }
 
 interface TeamSectionProps {
@@ -20,61 +22,62 @@ interface TeamSectionProps {
         bg: string;
         text: string;
         card: string;
+        border: string;
     };
 }
 
-export default function TeamsView({ teams, hasPlayers, groupCode }: TeamsViewProps) {
+export default function TeamsView({ teams, hasPlayers, groupCode, onRegenerateTeams }: TeamsViewProps) {
     const TeamSection = ({ teamName, players, colorScheme }: TeamSectionProps) => {
-        const { bg, text, card } = colorScheme;
+        const { bg, text, card, border } = colorScheme;
         const allPlayers = [...players.forwards, ...players.defensemen];
         const totalSkill = allPlayers.reduce((sum, player) => sum + player.skill, 0);
         const averageSkill = allPlayers.length > 0
             ? (totalSkill / allPlayers.length).toFixed(2)
-            : '0.00';
+            : '0';
+
+        const PlayerList = ({ players, type }: { players: Player[], type: 'forwards' | 'defensemen' }) => (
+            <div className="space-y-2">
+                <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">
+                    {type === 'forwards' ? 'Forwards' : 'Defense'}
+                </h4>
+                <div className="space-y-1">
+                    {players.map((player) => (
+                        <div 
+                            key={player.id} 
+                            className={`flex items-center justify-between p-2 rounded-lg ${card} border ${border} transition-colors`}
+                        >
+                            <div className="flex items-center gap-2">
+                                {type === 'forwards' ? (
+                                    <User className="h-4 w-4 text-gray-400" />
+                                ) : (
+                                    <Shield className="h-4 w-4 text-gray-400" />
+                                )}
+                                <span className="text-sm font-medium">
+                                    {player.first_name} {player.last_name}
+                                </span>
+                            </div>
+                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${bg} ${text}`}>
+                                {player.skill}
+                            </span>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
 
         return (
-            <div className={`rounded-lg ${bg} p-6`}>
-                <h3 className={`text-lg font-medium ${text}`}>{teamName} Team</h3>
-                <div className="mt-4 space-y-4">
-                    {/* Forwards Section */}
-                    <div>
-                        <h4 className={`font-medium ${text}`}>Forwards</h4>
-                        <div className="mt-2 space-y-2">
-                            {players.forwards.map((player, idx) => (
-                                <div key={idx} className={`rounded-md ${card} px-3 py-2 text-sm`}>
-                                    <span className="font-medium">{player.first_name} {player.last_name}</span>
-                                    <span className={`ml-2 ${text}`}>Skill: {player.skill}</span>
-                                </div>
-                            ))}
-                        </div>
+            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                <div className={`px-4 py-3 ${bg} ${text} border-b ${border}`}>
+                    <div className="flex justify-between items-center">
+                        <h3 className="text-lg font-semibold">{teamName} Team</h3>
+                        <span className="text-sm">
+                            Avg Skill: {averageSkill}
+                        </span>
                     </div>
-
-                    {/* Defense Section */}
-                    <div>
-                        <h4 className={`font-medium ${text}`}>Defense</h4>
-                        <div className="mt-2 space-y-2">
-                            {players.defensemen.map((player, idx) => (
-                                <div key={idx} className={`rounded-md ${card} px-3 py-2 text-sm`}>
-                                    <span className="font-medium">{player.first_name} {player.last_name}</span>
-                                    <span className={`ml-2 ${text}`}>Skill: {player.skill}</span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Team Stats Section */}
-                    <div className={`mt-4 ${card} rounded-lg p-4`}>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <h4 className={`text-sm font-medium ${text}`}>Total Skill</h4>
-                                <p className={`text-lg font-semibold ${text}`}>{totalSkill}</p>
-                            </div>
-                            <div>
-                                <h4 className={`text-sm font-medium ${text}`}>Average Skill</h4>
-                                <p className={`text-lg font-semibold ${text}`}>{averageSkill}</p>
-                            </div>
-                        </div>
-                    </div>
+                </div>
+                <div className="p-4 space-y-6">
+                    <PlayerList players={players.forwards} type="forwards" />
+                    <PlayerList players={players.defensemen} type="defensemen" />
                 </div>
             </div>
         );
@@ -83,22 +86,34 @@ export default function TeamsView({ teams, hasPlayers, groupCode }: TeamsViewPro
     const colorSchemes = {
         red: {
             bg: 'bg-red-50',
-            text: 'text-red-900',
-            card: 'bg-red-100'
+            text: 'text-red-700',
+            card: 'hover:bg-red-50/50',
+            border: 'border-red-100'
         },
         white: {
-            bg: 'bg-gray-50',
-            text: 'text-gray-900',
-            card: 'bg-gray-100'
+            bg: 'bg-blue-50',
+            text: 'text-blue-700',
+            card: 'hover:bg-blue-50/50',
+            border: 'border-blue-100'
         }
     };
 
     return (
-        <div className="space-y-6">
-            <div className="flex justify-between items-center pb-4">
-                <h2 className="text-xl font-semibold text-gray-900">Team Rosters</h2>
-                {groupCode !== 'default' && (
-                    <span className="text-sm text-gray-500">
+        <div className="space-y-8">
+            <div className="flex justify-between items-center px-6 py-4">
+                <div className="flex items-center gap-4">
+                    <h2 className="text-xl font-semibold text-gray-900">Generated Teams</h2>
+                    <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={onRegenerateTeams}
+                        disabled={!hasPlayers}
+                    >
+                        Regenerate
+                    </Button>
+                </div>
+                {groupCode && (
+                    <span className="text-sm px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full font-medium">
                         Group: {groupCode}
                     </span>
                 )}
@@ -106,14 +121,11 @@ export default function TeamsView({ teams, hasPlayers, groupCode }: TeamsViewPro
 
             {teams.red.forwards.length > 0 ? (
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                    {/* Red Team */}
                     <TeamSection
                         teamName="Red"
                         players={teams.red}
                         colorScheme={colorSchemes.red}
                     />
-
-                    {/* White Team */}
                     <TeamSection
                         teamName="White"
                         players={teams.white}
@@ -121,7 +133,7 @@ export default function TeamsView({ teams, hasPlayers, groupCode }: TeamsViewPro
                     />
                 </div>
             ) : (
-                <div className="text-center py-12">
+                <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
                     <ListChecks className="mx-auto h-12 w-12 text-gray-400" />
                     <h3 className="mt-2 text-sm font-medium text-gray-900">No Teams Generated</h3>
                     <p className="mt-1 text-sm text-gray-500">

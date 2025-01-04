@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { sql } from '@vercel/postgres';
-import { PlayerInput, type DbPlayer } from '@/lib/db';
+import { PlayerInput, type DbPlayer, deletePlayer } from '@/lib/db';
 
 export async function GET(
     request: NextRequest
@@ -158,20 +158,42 @@ export async function POST(
 
 export async function PUT(
     request: NextRequest
-): Promise<NextResponse<DbPlayer | { error: string }>> {
+): Promise<NextResponse<PlayerDB | { error: string }>> {
     try {
         const data = await request.json();
+        console.log('Received update data:', data);
 
-        const { rows } = await sql<DbPlayer>`
+        // Validate required fields
+        if (!data.id || !data.first_name || !data.last_name) {
+            return NextResponse.json(
+                { error: 'Missing required fields' },
+                { status: 400 }
+            );
+        }
+
+        // Convert and validate all fields
+        const updateData = {
+            id: Number(data.id),
+            first_name: String(data.first_name).trim(),
+            last_name: String(data.last_name).trim(),
+            skill: Number(data.skill || 1),
+            is_defense: Boolean(data.is_defense),
+            is_attending: Boolean(data.is_attending),
+            group_code: data.group_code
+        };
+
+        console.log('Sanitized update data:', updateData);
+
+        const { rows } = await sql<PlayerDB>`
             UPDATE players
             SET
-                first_name = ${data.firstName},
-                last_name = ${data.lastName},
-                skill = ${Number(data.skill)},
-                is_defense = ${Boolean(data.defense)},
-                is_attending = ${Boolean(data.attending)},
-                group_code = ${data.groupCode || 'default'}
-            WHERE id = ${data.id}
+                first_name = ${updateData.first_name},
+                last_name = ${updateData.last_name},
+                skill = ${updateData.skill},
+                is_defense = ${updateData.is_defense},
+                is_attending = ${updateData.is_attending}
+            WHERE id = ${updateData.id} 
+            AND group_code = ${updateData.group_code}
             RETURNING *
         `;
 
@@ -182,10 +204,14 @@ export async function PUT(
             );
         }
 
+        console.log('Updated player:', rows[0]);
         return NextResponse.json(rows[0]);
     } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-        return NextResponse.json({ error: errorMessage }, { status: 500 });
+        console.error('Error updating player:', error);
+        return NextResponse.json(
+            { error: error instanceof Error ? error.message : 'Failed to update player' },
+            { status: 400 }
+        );
     }
 }
 
@@ -193,31 +219,33 @@ export async function DELETE(
     request: NextRequest
 ): Promise<NextResponse<{ success: boolean } | { error: string }>> {
     try {
-        const { id, groupCode } = await request.json();
+        const { searchParams } = new URL(request.url);
+        const id = searchParams.get('id');
+        const groupCode = searchParams.get('groupCode');
 
-        if (!id || typeof id !== 'number') {
+        if (!id || !groupCode) {
             return NextResponse.json(
-                { error: 'Invalid player ID' },
+                { error: 'Missing id or groupCode' },
                 { status: 400 }
             );
         }
 
-        const { rowCount } = await sql`
-            DELETE FROM players 
-            WHERE id = ${id}
-            AND group_code = ${groupCode}
-        `;
+        const success = await deletePlayer(parseInt(id), groupCode);
 
-        if (rowCount === 0) {
+        if (!success) {
             return NextResponse.json(
-                { error: 'Player not found' },
+                { error: 'Player not found or already deleted' },
                 { status: 404 }
             );
         }
 
         return NextResponse.json({ success: true });
+
     } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-        return NextResponse.json({ error: errorMessage }, { status: 500 });
+        console.error('Error deleting player:', error);
+        return NextResponse.json(
+            { error: error instanceof Error ? error.message : 'Failed to delete player' },
+            { status: 500 }
+        );
     }
 }

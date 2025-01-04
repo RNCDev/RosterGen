@@ -1,5 +1,6 @@
 // types/PlayerTypes.ts
-export type Player = {
+// Base interfaces for database and frontend
+export interface PlayerDB {
     id: number;
     first_name: string;
     last_name: string;
@@ -7,18 +8,49 @@ export type Player = {
     is_defense: boolean;
     is_attending: boolean;
     group_code: string;
-};
+    created_at?: Date;
+    updated_at?: Date;
+}
 
+export interface PlayerInput {
+    firstName: string;
+    lastName: string;
+    skill: number;
+    isDefense: boolean;
+    isAttending: boolean;
+    groupCode: string;
+}
+
+// Type aliases for clarity
+export type Player = PlayerDB; // Use the database format in components
 export type Team = {
     forwards: Player[];
     defensemen: Player[];
-    group_code?: string;
 };
 
 export type Teams = {
     red: Team;
     white: Team;
 };
+
+// Transformation functions
+export const toDatabase = (player: PlayerInput): Omit<PlayerDB, 'id' | 'created_at' | 'updated_at'> => ({
+    first_name: player.firstName,
+    last_name: player.lastName,
+    skill: player.skill,
+    is_defense: player.isDefense,
+    is_attending: player.isAttending,
+    group_code: player.groupCode
+});
+
+export const fromDatabase = (player: PlayerDB): PlayerInput => ({
+    firstName: player.first_name,
+    lastName: player.last_name,
+    skill: player.skill,
+    isDefense: player.is_defense,
+    isAttending: player.is_attending,
+    groupCode: player.group_code
+});
 
 // Component Props
 export type PlayersViewProps = {

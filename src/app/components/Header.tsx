@@ -2,6 +2,7 @@
 'use client';
 
 import React from 'react';
+import { Users, ListChecks } from 'lucide-react';
 
 interface HeaderProps {
     activeTab: 'players' | 'roster';
@@ -24,43 +25,53 @@ export default function Header({
     onCancelGroupCode,
     onDeleteGroup
 }: HeaderProps) {
+    const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            onRetrieveGroupCode();
+        }
+    };
+
     return (
-        <div className="w-full bg-white border-b shadow-sm">
+        <div className="w-full bg-white border-b shadow-sm sticky top-0 z-50">
             <div className="max-w-7xl mx-auto">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 gap-4">
-                    {/* Group Code Management */}
-                    <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-                        <input 
-                            type="text"
-                            value={groupCode}
-                            onChange={(e) => onGroupCodeChange(e.target.value)}
-                            className="px-3 py-2 border rounded-md text-sm w-full sm:w-32"
-                            placeholder="Group Code"
-                        />
-                        <div className="flex gap-2 flex-wrap">
-                            <button 
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto">
+                        <div className="flex items-center gap-2 w-full sm:w-auto">
+                            <input
+                                type="text"
+                                value={groupCode}
+                                onChange={(e) => onGroupCodeChange(e.target.value)}
+                                onKeyPress={handleKeyPress}
+                                placeholder="Enter group code"
+                                className="block w-full sm:w-44 rounded-md border border-gray-300 px-3 py-2 text-sm 
+                                         focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                            />
+                            <button
                                 onClick={onRetrieveGroupCode}
-                                className="px-3 py-2 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors flex-1 sm:flex-none"
+                                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 
+                                         transition-colors text-sm font-medium shadow-sm"
                             >
                                 Load
                             </button>
-                            <button 
+                            <button
                                 onClick={onSaveGroupCode}
-                                disabled={!groupCode}
-                                className="px-3 py-2 text-sm bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-1 sm:flex-none"
+                                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 
+                                         transition-colors text-sm font-medium shadow-sm"
                             >
                                 Save
                             </button>
-                            <button 
+                            <button
                                 onClick={onCancelGroupCode}
-                                className="px-3 py-2 text-sm bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors flex-1 sm:flex-none"
+                                className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 
+                                         transition-colors text-sm font-medium shadow-sm"
                             >
                                 Clear
                             </button>
-                            <button 
+                            <button
                                 onClick={onDeleteGroup}
-                                disabled={!groupCode}
-                                className="px-3 py-2 text-sm bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-1 sm:flex-none"
+                                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 
+                                         transition-colors text-sm font-medium shadow-sm"
                             >
                                 Delete
                             </button>
@@ -68,26 +79,26 @@ export default function Header({
                     </div>
 
                     {/* Tab Navigation */}
-                    <div className="flex gap-4 w-full sm:w-auto justify-center sm:justify-end">
+                    <div className="flex gap-2 w-full sm:w-auto justify-center sm:justify-end bg-slate-100 p-1 rounded-lg">
                         <button 
                             onClick={() => setActiveTab('players')}
-                            className={`py-2 px-4 rounded-md transition-colors flex-1 sm:flex-none ${
-                                activeTab === 'players' 
-                                    ? 'bg-blue-50 text-blue-600' 
-                                    : 'text-gray-600 hover:bg-gray-50'
-                            }`}
+                            className={`py-2 px-4 rounded-lg transition-all duration-200 flex items-center gap-2
+                                ${activeTab === 'players' 
+                                    ? 'bg-white text-blue-600 shadow-sm' 
+                                    : 'text-slate-600 hover:bg-white/50'}`}
                         >
-                            Players
+                            <Users size={18} />
+                            <span className="font-medium">Players</span>
                         </button>
                         <button 
                             onClick={() => setActiveTab('roster')}
-                            className={`py-2 px-4 rounded-md transition-colors flex-1 sm:flex-none ${
-                                activeTab === 'roster' 
-                                    ? 'bg-blue-50 text-blue-600' 
-                                    : 'text-gray-600 hover:bg-gray-50'
-                            }`}
+                            className={`py-2 px-4 rounded-lg transition-all duration-200 flex items-center gap-2
+                                ${activeTab === 'roster' 
+                                    ? 'bg-white text-blue-600 shadow-sm' 
+                                    : 'text-slate-600 hover:bg-white/50'}`}
                         >
-                            Teams
+                            <ListChecks size={18} />
+                            <span className="font-medium">Teams</span>
                         </button>
                     </div>
                 </div>

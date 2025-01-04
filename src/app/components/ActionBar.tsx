@@ -2,11 +2,11 @@
 'use client';
 
 import React from 'react';
-import { Upload, Users, ArrowLeftRight } from 'lucide-react';
+import { Upload, UserPlus, ArrowLeftRight } from 'lucide-react';
 
 interface ActionBarProps {
     onAddPlayer: () => void;
-    onUploadClick: () => void;
+    onUploadClick: (event: React.ChangeEvent<HTMLInputElement>) => void;
     onGenerateTeams?: () => void;
     showGenerateTeams?: boolean;
     disabled?: boolean;
@@ -19,40 +19,44 @@ export default function ActionBar({
     showGenerateTeams = true,
     disabled = false
 }: ActionBarProps) {
+    const handleUploadClick = () => {
+        const fileInput = document.getElementById('file-upload') as HTMLInputElement;
+        fileInput?.click();
+    };
+
     return (
-        <div className="px-4 py-3 bg-white flex flex-wrap gap-2">
-            <button 
-                onClick={onAddPlayer}
-                disabled={disabled}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium flex-1 sm:flex-none justify-center"
-            >
-                <Users size={18} />
-                Add Player
-            </button>
-            
-            <label className={`inline-flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors text-sm font-medium flex-1 sm:flex-none justify-center ${
-                disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
-            }`}>
-                <Upload size={18} />
-                Upload CSV
-                <input
-                    type="file"
-                    onChange={(e) => {
-                        if (!disabled && e.target.files && e.target.files.length > 0) {
-                            onUploadClick();
-                        }
-                    }}
-                    accept=".csv"
-                    className="hidden"
+        <div className="flex flex-wrap gap-3 my-6 px-1">
+            <div className="flex gap-3 flex-1 sm:flex-none">
+                <button
+                    onClick={onAddPlayer}
                     disabled={disabled}
-                />
-            </label>
+                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg 
+                             hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed 
+                             text-sm font-medium shadow-sm"
+                >
+                    <UserPlus size={18} />
+                    Add Player
+                </button>
+
+                <button
+                    onClick={handleUploadClick}
+                    disabled={disabled}
+                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-lg 
+                             hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed 
+                             text-sm font-medium shadow-sm"
+                >
+                    <Upload size={18} />
+                    Upload CSV
+                </button>
+            </div>
 
             {showGenerateTeams && onGenerateTeams && (
-                <button 
+                <button
                     onClick={onGenerateTeams}
                     disabled={disabled}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium flex-1 sm:flex-none justify-center"
+                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-purple-600 text-white rounded-lg 
+                             hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed 
+                             text-sm font-medium shadow-sm ml-auto"
                 >
                     <ArrowLeftRight size={18} />
                     Generate Teams

@@ -13,11 +13,11 @@ export async function POST(
 ): Promise<NextResponse<{ success: boolean } | { error: string }>> {
     try {
         const { groupCode, players } = await request.json() as CreateGroupRequest;
-        console.log('Creating new group:', groupCode, 'with players:', players.length);
+        console.log('Creating new group:', groupCode, 'with players:', players);
 
-        if (!groupCode || !players) {
+        if (!groupCode || !Array.isArray(players)) {
             return NextResponse.json(
-                { error: 'Missing required fields' },
+                { error: 'Missing required fields or invalid data' },
                 { status: 400 }
             );
         }
@@ -25,8 +25,30 @@ export async function POST(
         await sql`BEGIN`;
 
         try {
+            // First, delete any existing players in this group
+            await sql`
+                DELETE FROM players 
+                WHERE group_code = ${groupCode}
+            `;
+
+            // Insert each player
             const insertedPlayers = await Promise.all(
-                players.map(async (player: PlayerInput) => {
+                players.map(async (player) => {
+                    // Sanitize and validate player data
+                    const sanitizedPlayer = {
+                        first_name: String(player.firstName || '').trim(),
+                        last_name: String(player.lastName || '').trim(),
+                        skill: Number(player.skill || 1),
+                        is_defense: Boolean(player.defense),
+                        is_attending: Boolean(player.attending),
+                        group_code: groupCode
+                    };
+
+                    // Validate required fields
+                    if (!sanitizedPlayer.first_name || !sanitizedPlayer.last_name) {
+                        throw new Error('First name and last name are required for all players');
+                    }
+
                     const { rows } = await sql`
                         INSERT INTO players (
                             first_name,
@@ -36,12 +58,12 @@ export async function POST(
                             is_attending,
                             group_code
                         ) VALUES (
-                            ${player.firstName},
-                            ${player.lastName},
-                            ${player.skill},
-                            ${player.defense},
-                            ${player.attending},
-                            ${groupCode}
+                            ${sanitizedPlayer.first_name},
+                            ${sanitizedPlayer.last_name},
+                            ${sanitizedPlayer.skill},
+                            ${sanitizedPlayer.is_defense},
+                            ${sanitizedPlayer.is_attending},
+                            ${sanitizedPlayer.group_code}
                         )
                         RETURNING id
                     `;
@@ -50,15 +72,18 @@ export async function POST(
             );
 
             await sql`COMMIT`;
+            console.log('Successfully created group with players:', insertedPlayers);
             return NextResponse.json({
                 success: true,
                 insertedCount: insertedPlayers.length
             });
         } catch (error) {
             await sql`ROLLBACK`;
+            console.error('Error in transaction:', error);
             throw error;
         }
     } catch (error) {
+        console.error('Error creating group:', error);
         return NextResponse.json(
             { error: error instanceof Error ? error.message : 'Failed to create group' },
             { status: 500 }

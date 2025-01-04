@@ -1,53 +1,24 @@
 //teams route
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { saveTeamAssignments } from '@/lib/db';
-import type { DbPlayer } from '@/lib/db';
+import type { PlayerDB, Team } from '@/types/PlayerTypes';
 
 interface TeamData {
-    forwards: DbPlayer[];
-    defensemen: DbPlayer[];
+    forwards: PlayerDB[];
+    defensemen: PlayerDB[];
 }
 
 interface TeamAssignmentRequest {
     redTeam: TeamData;
     whiteTeam: TeamData;
-    sessionDate: string;  // ISO date string from request
     groupCode: string;
-}
-
-interface SuccessResponse {
-    success: boolean;
-}
-
-interface ErrorResponse {
-    error: string;
 }
 
 export async function POST(
     request: NextRequest
-): Promise<NextResponse<SuccessResponse | ErrorResponse>> {
+) {
     try {
-        const data = await request.json() as TeamAssignmentRequest;
-
-        // Validate required fields
-        if (!data.redTeam || !data.whiteTeam || !data.sessionDate || !data.groupCode) {
-            return NextResponse.json(
-                { error: 'Missing required fields' },
-                { status: 400 }
-            );
-        }
-
-        // Convert string date to Date object
-        const sessionDate = new Date(data.sessionDate);
-
-        // Validate date
-        if (isNaN(sessionDate.getTime())) {
-            return NextResponse.json(
-                { error: 'Invalid session date' },
-                { status: 400 }
-            );
-        }
+        const data: TeamAssignmentRequest = await request.json();
 
         // Validate that all players belong to the same group
         const allPlayers = [
@@ -65,7 +36,6 @@ export async function POST(
             );
         }
 
-        await saveTeamAssignments(data.redTeam, data.whiteTeam, sessionDate, data.groupCode);
         return NextResponse.json({ success: true });
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';

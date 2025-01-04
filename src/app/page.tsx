@@ -243,17 +243,18 @@ export default function Home() {
                 },
                 body: JSON.stringify({
                     id: updatedPlayer.id,
-                    firstName: updatedPlayer.first_name,
-                    lastName: updatedPlayer.last_name,
+                    first_name: updatedPlayer.first_name,
+                    last_name: updatedPlayer.last_name,
                     skill: updatedPlayer.skill,
-                    defense: updatedPlayer.is_defense,
-                    attending: updatedPlayer.is_attending,
-                    groupCode: updatedPlayer.group_code
+                    is_defense: updatedPlayer.is_defense,
+                    is_attending: updatedPlayer.is_attending,
+                    group_code: updatedPlayer.group_code
                 }),
             });
 
             if (!response.ok) {
-                throw new Error('Failed to update player');
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to update player');
             }
 
             await fetchPlayers(groupCode);
@@ -265,32 +266,22 @@ export default function Home() {
         }
     };
 
-    const handleDeletePlayer = async (playerId: number) => {
+    const handleDeletePlayer = async (id: number) => {
         try {
-            setLoading(true);
-            setError(null);
-
-            const response = await fetch('/api/players', {
+            const response = await fetch(`/api/players?id=${id}&groupCode=${groupCode}`, {
                 method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    id: playerId,
-                    groupCode
-                }),
             });
 
             if (!response.ok) {
-                throw new Error('Failed to delete player');
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to delete player');
             }
 
+            // Refresh the players list after successful deletion
             await fetchPlayers(groupCode);
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to delete player');
-            console.error(err);
-        } finally {
-            setLoading(false);
+        } catch (error) {
+            console.error('Error deleting player:', error);
+            setError(error instanceof Error ? error.message : 'Failed to delete player');
         }
     };
 
@@ -299,14 +290,22 @@ export default function Home() {
             setLoading(true);
             setError(null);
 
-            const newTeams = generateTeams(players, groupCode);
-            setTeams(newTeams);
-            setActiveTab('roster');
+            // Get only attending players
+            const attendingPlayers = players.filter(p => p.is_attending);
+            
+            if (attendingPlayers.length < 2) {
+                setError('Need at least 2 attending players to generate teams');
+                return;
+            }
 
+            // Generate teams using your team generator with groupCode
+            const newTeams = generateTeams(attendingPlayers, groupCode);
+            setTeams(newTeams);
+
+            // Save teams to backend
             const teamAssignmentData = {
                 redTeam: newTeams.red,
                 whiteTeam: newTeams.white,
-                sessionDate: new Date().toISOString(),
                 groupCode
             };
 
@@ -322,8 +321,11 @@ export default function Home() {
                 const errorData = await response.json();
                 throw new Error(errorData.error || 'Failed to save teams');
             }
+
+            // Switch to the roster view to show the generated teams
+            setActiveTab('roster');
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to save teams');
+            setError(err instanceof Error ? err.message : 'Failed to generate teams');
             console.error(err);
         } finally {
             setLoading(false);
@@ -373,6 +375,7 @@ export default function Home() {
                                 teams={teams}
                                 hasPlayers={players.length > 0}
                                 groupCode={groupCode}
+                                onRegenerateTeams={handleTeamsGenerated}
                             />
                         )}
                     </div>
