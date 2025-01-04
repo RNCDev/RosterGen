@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { type Player, type Teams } from '@/types/PlayerTypes';
-import Sidebar from '@/components/Sidebar';
+import Header from '@/components/Header';
+import ActionBar from '@/components/ActionBar';
 import PlayersView from '@/components/PlayersView';
 import TeamsView from '@/components/TeamsView';
 import ErrorAlert from '@/components/ErrorAlert';
-import { deleteGroup } from '@/lib/db';
+import Dialog from '@/components/Dialog';
 
 export default function Home() {
     const [players, setPlayers] = useState<Player[]>([]);
@@ -14,6 +15,7 @@ export default function Home() {
     const [error, setError] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<'players' | 'roster'>('players');
     const [groupCode, setGroupCode] = useState<string>('');
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [teams, setTeams] = useState<Teams>({
         red: { forwards: [], defensemen: [] },
         white: { forwards: [], defensemen: [] },
@@ -115,11 +117,10 @@ export default function Home() {
     };
 
     const handleGroupDelete = async () => {
-        if (!groupCode) {
-            setError('No group code selected');
-            return;
-        }
+        setShowDeleteConfirm(true);
+    };
 
+    const confirmGroupDelete = async () => {
         try {
             setLoading(true);
             setError(null);
@@ -144,12 +145,18 @@ export default function Home() {
                 white: { forwards: [], defensemen: [] }
             });
             setPlayers([]);
+            setShowDeleteConfirm(false);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to delete group');
             console.error(err);
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleAddPlayer = () => {
+        setError(null);
+        // This will be handled by the PlayersView component
     };
 
     const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -181,72 +188,6 @@ export default function Home() {
         }
     };
 
-    const handleDeletePlayer = async (playerId: number) => {
-        try {
-            setLoading(true);
-            setError(null);
-
-            const response = await fetch('/api/players', {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ id: playerId, groupCode }),
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to delete player');
-            }
-
-            await fetchPlayers(groupCode);
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to delete player');
-            console.error(err);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handlePlayerUpdate = async (updatedPlayer: Player) => {
-        try {
-            setLoading(true);
-            setError(null);
-
-            const payload = {
-                id: updatedPlayer.id,
-                firstName: updatedPlayer.first_name,
-                lastName: updatedPlayer.last_name,
-                skill: Number(updatedPlayer.skill),
-                defense: Boolean(updatedPlayer.is_defense),
-                attending: Boolean(updatedPlayer.is_attending),
-                groupCode
-            };
-
-            const response = await fetch('/api/players', {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(payload),
-            });
-
-            const responseData = await response.json();
-
-            if (!response.ok) {
-                throw new Error(responseData.error || 'Failed to update player');
-            }
-
-            await fetchPlayers(groupCode);
-        } catch (err) {
-            console.error('Update error:', err);
-            setError(err instanceof Error ? err.message : 'Failed to update player');
-            throw err;
-        } finally {
-            setLoading(false);
-        }
-    };
-
     const handleTeamsGenerated = async (newTeams: Teams) => {
         try {
             setLoading(true);
@@ -271,20 +212,19 @@ export default function Home() {
 
             if (!response.ok) {
                 const errorData = await response.json();
-                console.error('API Error:', errorData);
                 throw new Error(errorData.error || 'Failed to save teams');
             }
         } catch (err) {
-            console.error('Error in handleTeamsGenerated:', err);
             setError(err instanceof Error ? err.message : 'Failed to save teams');
+            console.error(err);
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="h-screen flex bg-gray-50">
-            <Sidebar
+        <div className="min-h-screen bg-gray-50">
+            <Header 
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
                 groupCode={groupCode}
@@ -295,24 +235,30 @@ export default function Home() {
                 onDeleteGroup={handleGroupDelete}
             />
 
-            <main className="flex-1 p-8 overflow-auto">
+            <ActionBar 
+                onAddPlayer={handleAddPlayer}
+                onUploadClick={() => document.getElementById('file-upload')?.click()}
+                onGenerateTeams={
+                    players.length > 0 ? () => handleTeamsGenerated(teams) : undefined
+                }
+                showGenerateTeams={activeTab === 'players'}
+                disabled={loading}
+            />
+
+            <main className="p-8">
                 <div className="max-w-6xl mx-auto">
                     <ErrorAlert message={error} />
 
-                    <div className="bg-white rounded-lg shadow-lg p-6">
+                    <div className="bg-white rounded-lg shadow-lg overflow-hidden">
                         {activeTab === 'players' ? (
-                            <div className="space-y-6">
-                                <PlayersView
-                                    players={players}
-                                    loading={loading}
-                                    groupCode={groupCode}
-                                    onGroupCodeChange={handleGroupCodeChange}
-                                    handleFileUpload={handleFileUpload}
-                                    handleDeletePlayer={handleDeletePlayer}
-                                    onTeamsGenerated={handleTeamsGenerated}
-                                    onUpdatePlayer={handlePlayerUpdate}
-                                />
-                            </div>
+                            <PlayersView
+                                players={players}
+                                loading={loading}
+                                groupCode={groupCode}
+                                onGroupCodeChange={handleGroupCodeChange}
+                                handleFileUpload={handleFileUpload}
+                                onTeamsGenerated={handleTeamsGenerated}
+                            />
                         ) : (
                             <TeamsView
                                 teams={teams}
@@ -323,6 +269,16 @@ export default function Home() {
                     </div>
                 </div>
             </main>
+
+            <Dialog
+                isOpen={showDeleteConfirm}
+                onClose={() => setShowDeleteConfirm(false)}
+                onConfirm={confirmGroupDelete}
+                title="Delete Group"
+                description="Are you sure you want to delete this group? This action cannot be undone."
+                confirmLabel="Delete"
+                cancelLabel="Cancel"
+            />
         </div>
     );
 }
