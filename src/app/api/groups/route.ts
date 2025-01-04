@@ -1,11 +1,19 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { sql } from '@vercel/postgres';
-import { PlayerInput } from '@/lib/db';
+import { toInputFromForm, type PlayerInput } from '@/types/PlayerTypes';
+
+interface FormPlayer {
+    firstName: string;
+    lastName: string;
+    skill: number;
+    defense: boolean;
+    attending: boolean;
+}
 
 interface CreateGroupRequest {
     groupCode: string;
-    players: PlayerInput[];
+    players: FormPlayer[];
 }
 
 export async function POST(
@@ -33,19 +41,14 @@ export async function POST(
 
             // Insert each player
             const insertedPlayers = await Promise.all(
-                players.map(async (player) => {
-                    // Sanitize and validate player data
-                    const sanitizedPlayer = {
-                        first_name: String(player.firstName || '').trim(),
-                        last_name: String(player.lastName || '').trim(),
-                        skill: Number(player.skill || 1),
-                        is_defense: Boolean(player.defense),
-                        is_attending: Boolean(player.attending),
-                        group_code: groupCode
-                    };
+                players.map(async (formPlayer) => {
+                    const player = toInputFromForm({
+                        ...formPlayer,
+                        groupCode
+                    });
 
                     // Validate required fields
-                    if (!sanitizedPlayer.first_name || !sanitizedPlayer.last_name) {
+                    if (!player.first_name || !player.last_name) {
                         throw new Error('First name and last name are required for all players');
                     }
 
@@ -58,12 +61,12 @@ export async function POST(
                             is_attending,
                             group_code
                         ) VALUES (
-                            ${sanitizedPlayer.first_name},
-                            ${sanitizedPlayer.last_name},
-                            ${sanitizedPlayer.skill},
-                            ${sanitizedPlayer.is_defense},
-                            ${sanitizedPlayer.is_attending},
-                            ${sanitizedPlayer.group_code}
+                            ${player.first_name},
+                            ${player.last_name},
+                            ${player.skill},
+                            ${player.is_defense},
+                            ${player.is_attending},
+                            ${player.group_code}
                         )
                         RETURNING id
                     `;
