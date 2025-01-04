@@ -343,19 +343,23 @@ export default function Home() {
                 onDeleteGroup={handleGroupDelete}
             />
 
-            <ActionBar 
-                onAddPlayer={handleAddPlayer}
-                onUploadClick={() => document.getElementById('file-upload')?.click()}
-                onGenerateTeams={players.length > 0 ? handleTeamsGenerated : undefined}
-                showGenerateTeams={activeTab === 'players'}
-                disabled={loading}
-            />
+            <div className="sticky top-0 z-10 bg-white border-b shadow-sm">
+                <div className="max-w-7xl mx-auto">
+                    <ActionBar 
+                        onAddPlayer={handleAddPlayer}
+                        onUploadClick={() => document.getElementById('file-upload')?.click()}
+                        onGenerateTeams={players.length > 0 ? handleTeamsGenerated : undefined}
+                        showGenerateTeams={activeTab === 'players'}
+                        disabled={loading}
+                    />
+                </div>
+            </div>
 
-            <main className="p-8">
-                <div className="max-w-6xl mx-auto">
+            <main className="px-4 py-6 sm:px-6 lg:px-8">
+                <div className="max-w-7xl mx-auto">
                     <ErrorAlert message={error} />
 
-                    <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+                    <div className="bg-white rounded-lg shadow-sm border">
                         {activeTab === 'players' ? (
                             <PlayersView
                                 players={players}

@@ -20,17 +20,17 @@ export default function ActionBar({
     disabled = false
 }: ActionBarProps) {
     return (
-        <div className="px-4 py-2 border-b bg-white flex gap-2">
+        <div className="px-4 py-3 bg-white flex flex-wrap gap-2">
             <button 
                 onClick={onAddPlayer}
                 disabled={disabled}
-                className="inline-flex items-center gap-2 px-3 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium flex-1 sm:flex-none justify-center"
             >
                 <Users size={18} />
                 Add Player
             </button>
             
-            <label className={`inline-flex items-center gap-2 px-3 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors ${
+            <label className={`inline-flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors text-sm font-medium flex-1 sm:flex-none justify-center ${
                 disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
             }`}>
                 <Upload size={18} />
@@ -52,7 +52,7 @@ export default function ActionBar({
                 <button 
                     onClick={onGenerateTeams}
                     disabled={disabled}
-                    className="inline-flex items-center gap-2 px-3 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium flex-1 sm:flex-none justify-center"
                 >
                     <ArrowLeftRight size={18} />
                     Generate Teams

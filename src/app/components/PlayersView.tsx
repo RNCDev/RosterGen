@@ -19,21 +19,23 @@ export default function PlayersView({
     };
 
     return (
-        <div className="space-y-6">
-            <div className="flex justify-between items-center pb-4">
-                <h2 className="text-xl font-semibold text-gray-900">Players</h2>
-                {groupCode && (
-                    <span className="text-sm text-gray-500">
-                        Group: {groupCode}
-                    </span>
-                )}
+        <div className="overflow-hidden">
+            <div className="px-6 py-4 border-b">
+                <div className="flex justify-between items-center">
+                    <h2 className="text-xl font-semibold text-gray-900">Players</h2>
+                    {groupCode && (
+                        <span className="text-sm text-gray-500">
+                            Group: {groupCode}
+                        </span>
+                    )}
+                </div>
             </div>
 
             {players.length > 0 ? (
                 <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                            <tr>
+                        <thead>
+                            <tr className="bg-gray-50">
                                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-2/5">Name</th>
                                 <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Skill</th>
                                 <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-32">Position</th>
@@ -46,7 +48,7 @@ export default function PlayersView({
                                 <EditableRow
                                     key={player.id}
                                     player={player}
-                                    onSave={handleSave}
+                                    onSave={onUpdatePlayer}
                                     onDelete={handleDeletePlayer}
                                 />
                             ))}
@@ -62,7 +64,7 @@ export default function PlayersView({
             )}
 
             {loading && (
-                <div className="absolute inset-0 bg-white bg-opacity-50 flex items-center justify-center">
+                <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
                 </div>
             )}
