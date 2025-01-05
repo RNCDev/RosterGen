@@ -3,6 +3,8 @@ import type { NextRequest } from 'next/server';
 import { sql } from '@vercel/postgres';
 import { type FormPlayer, type PlayerDB, type PlayerInput, toDatabase } from '@/types/PlayerTypes';
 
+const TEMP_GROUP_CODE = 'TEMPCODE';
+
 export async function GET(
     request: NextRequest
 ): Promise<NextResponse<PlayerDB[] | { error: string }>> {
@@ -32,7 +34,9 @@ export async function POST(
             // Handle file upload
             const formData = await request.formData();
             const file = formData.get('file') as File;
-            const groupCode = formData.get('groupCode') as string || 'default';
+            
+            // Always use TEMP_GROUP_CODE for CSV uploads
+            const groupCode = TEMP_GROUP_CODE;
 
             if (!file) {
                 return NextResponse.json(

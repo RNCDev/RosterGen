@@ -218,7 +218,7 @@ export default function Home() {
         try {
             const formData = new FormData();
             formData.append('file', file);
-            formData.append('groupCode', groupCode);
+            
             const response = await fetch('/api/players', {
                 method: 'POST',
                 body: formData,
@@ -228,7 +228,9 @@ export default function Home() {
                 throw new Error('Upload failed');
             }
 
-            await fetchPlayers(groupCode);
+            // Set the group code to TEMPCODE after successful upload
+            setGroupCode('TEMPCODE');
+            await fetchPlayers('TEMPCODE');
         } catch (err) {
             setError('Failed to upload file');
             console.error(err);
