@@ -111,18 +111,21 @@ export default function Home() {
     };
 
     const handleGroupCancel = () => {
-        const savedGroupCode = localStorage.getItem('groupCode') || '';
-        setGroupCode(savedGroupCode);
-        // Clear teams state
+        // Clear group code
+        setGroupCode('');
+        localStorage.removeItem('groupCode');
+        
+        // Clear players
+        setPlayers([]);
+        
+        // Clear teams
         setTeams({
             red: { forwards: [], defensemen: [] },
             white: { forwards: [], defensemen: [] }
         });
-        if (savedGroupCode) {
-            fetchPlayers(savedGroupCode);
-        } else {
-            setPlayers([]);
-        }
+        
+        // Clear any errors
+        setError(null);
     };
 
 
