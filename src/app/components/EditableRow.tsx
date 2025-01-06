@@ -21,6 +21,7 @@ const EditableRow = ({ player, onSave, onDelete }: EditableRowProps) => {
         try {
             const playerToSave = {
                 ...editedPlayer,
+                id: player.id,
                 group_code: player.group_code
             };
             await onSave(playerToSave);

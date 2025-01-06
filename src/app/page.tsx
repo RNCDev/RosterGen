@@ -2,13 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { type Player, type Teams } from '@/types/PlayerTypes';
-import Header from '@/components/Header';
-import ActionBar from '@/components/ActionBar';
-import PlayersView from '@/components/PlayersView';
-import TeamsView from '@/components/TeamsView';
-import ErrorAlert from '@/components/ErrorAlert';
-import Dialog from '@/components/Dialog';
-import AddPlayerDialog from '@/components/AddPlayerDialog';
+import Header from '@/app/components/Header';
+import ActionBar from '@/app/components/ActionBar';
+import PlayersView from '@/app/components/PlayersView';
+import TeamsView from '@/app/components/TeamsView';
+import ErrorAlert from '@/app/components/ErrorAlert';
+import Dialog from '@/app/components/Dialog';
+import AddPlayerDialog from '@/app/components/AddPlayerDialog';
 import _ from 'lodash';
 import { generateTeams } from '@/lib/teamGenerator';
 
@@ -251,12 +251,12 @@ export default function Home() {
                 },
                 body: JSON.stringify({
                     id: updatedPlayer.id,
-                    first_name: updatedPlayer.first_name,
-                    last_name: updatedPlayer.last_name,
+                    firstName: updatedPlayer.first_name,
+                    lastName: updatedPlayer.last_name,
                     skill: updatedPlayer.skill,
-                    is_defense: updatedPlayer.is_defense,
-                    is_attending: updatedPlayer.is_attending,
-                    group_code: updatedPlayer.group_code
+                    defense: updatedPlayer.is_defense,
+                    attending: updatedPlayer.is_attending,
+                    groupCode: updatedPlayer.group_code
                 }),
             });
 
