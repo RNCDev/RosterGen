@@ -4,6 +4,7 @@
 import { type Player } from '@/types/PlayerTypes';
 import { Users } from 'lucide-react';
 import EditableRow from './EditableRow';
+import _ from 'lodash';
 
 interface PlayersViewProps {
     players: Player[];
@@ -20,6 +21,9 @@ export default function PlayersView({
     onUpdatePlayer,
     handleDeletePlayer
 }: PlayersViewProps) {
+    // Sort players by last name, then first name
+    const sortedPlayers = _.orderBy(players, ['last_name', 'first_name'], ['asc', 'asc']);
+
     const handleSave = async (updatedPlayer: Player) => {
         if (onUpdatePlayer) {
             await onUpdatePlayer(updatedPlayer);
@@ -60,7 +64,7 @@ export default function PlayersView({
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
-                            {players.map((player) => (
+                            {sortedPlayers.map((player) => (
                                 <EditableRow
                                     key={player.id}
                                     player={player}

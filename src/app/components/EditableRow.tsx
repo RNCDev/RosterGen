@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { type Player } from '@/types/PlayerTypes';
 import { Check, X, Trash2, Edit2 } from 'lucide-react';
+import Dialog from './Dialog';
 
 interface EditableRowProps {
     player: Player;
@@ -12,6 +13,7 @@ const EditableRow = ({ player, onSave, onDelete }: EditableRowProps) => {
     const [isEditing, setIsEditing] = useState(false);
     const [editedPlayer, setEditedPlayer] = useState<Player>(player);
     const [error, setError] = useState<string | null>(null);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
     const handleEdit = () => {
         setIsEditing(true);
@@ -32,10 +34,15 @@ const EditableRow = ({ player, onSave, onDelete }: EditableRowProps) => {
         }
     };
 
-    const handleDelete = async () => {
+    const handleDelete = () => {
+        setShowDeleteConfirm(true);
+    };
+
+    const handleConfirmDelete = async () => {
         if (onDelete) {
             try {
                 await onDelete(player.id);
+                setShowDeleteConfirm(false);
             } catch (err) {
                 setError(err instanceof Error ? err.message : 'Failed to delete player');
             }
@@ -50,58 +57,70 @@ const EditableRow = ({ player, onSave, onDelete }: EditableRowProps) => {
 
     if (!isEditing) {
         return (
-            <tr className="hover:bg-gray-50 transition-colors">
-                <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                        <div className="text-sm font-medium text-gray-900">
-                            {player.first_name} {player.last_name}
+            <>
+                <tr className="hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                            <div className="text-sm font-medium text-gray-900">
+                                {player.first_name} {player.last_name}
+                            </div>
                         </div>
-                    </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-center">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
-                        {player.skill}
-                    </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-center">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        player.is_defense 
-                            ? 'bg-purple-50 text-purple-700'
-                            : 'bg-green-50 text-green-700'
-                    }`}>
-                        {player.is_defense ? 'Defense' : 'Forward'}
-                    </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-center">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        player.is_attending
-                            ? 'bg-green-50 text-green-700'
-                            : 'bg-red-50 text-red-700'
-                    }`}>
-                        {player.is_attending ? 'Yes' : 'No'}
-                    </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-center">
-                    <div className="flex justify-center gap-3">
-                        <button
-                            onClick={handleEdit}
-                            className="text-blue-600 hover:text-blue-800 p-1 rounded hover:bg-blue-50 transition-colors"
-                            title="Edit"
-                        >
-                            <Edit2 className="h-4 w-4" />
-                        </button>
-                        {onDelete && (
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
+                            {player.skill}
+                        </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            player.is_defense 
+                                ? 'bg-purple-50 text-purple-700'
+                                : 'bg-green-50 text-green-700'
+                        }`}>
+                            {player.is_defense ? 'Defense' : 'Forward'}
+                        </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            player.is_attending
+                                ? 'bg-green-50 text-green-700'
+                                : 'bg-red-50 text-red-700'
+                        }`}>
+                            {player.is_attending ? 'Yes' : 'No'}
+                        </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <div className="flex justify-center gap-3">
                             <button
-                                onClick={handleDelete}
-                                className="text-red-600 hover:text-red-800 p-1 rounded hover:bg-red-50 transition-colors"
-                                title="Delete"
+                                onClick={handleEdit}
+                                className="text-blue-600 hover:text-blue-800 p-1 rounded hover:bg-blue-50 transition-colors"
+                                title="Edit"
                             >
-                                <Trash2 className="h-4 w-4" />
+                                <Edit2 className="h-4 w-4" />
                             </button>
-                        )}
-                    </div>
-                </td>
-            </tr>
+                            {onDelete && (
+                                <button
+                                    onClick={handleDelete}
+                                    className="text-red-600 hover:text-red-800 p-1 rounded hover:bg-red-50 transition-colors"
+                                    title="Delete"
+                                >
+                                    <Trash2 className="h-4 w-4" />
+                                </button>
+                            )}
+                        </div>
+                    </td>
+                </tr>
+
+                <Dialog
+                    isOpen={showDeleteConfirm}
+                    onClose={() => setShowDeleteConfirm(false)}
+                    onConfirm={handleConfirmDelete}
+                    title="Delete Player"
+                    description={`Are you sure you want to delete ${player.first_name} ${player.last_name}? This action cannot be undone.`}
+                    confirmLabel="Delete"
+                    cancelLabel="Cancel"
+                />
+            </>
         );
     }
 
