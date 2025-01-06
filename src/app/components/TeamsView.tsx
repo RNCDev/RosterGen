@@ -12,6 +12,14 @@ interface TeamsViewProps {
     onRegenerateTeams?: () => void;
 }
 
+interface TeamStats {
+    forwardCount: number;
+    defenseCount: number;
+    totalPlayers: number;
+    totalSkill: number;
+    averageSkill: string;
+}
+
 interface TeamSectionProps {
     teamName: string;
     players: {
@@ -24,16 +32,12 @@ interface TeamSectionProps {
         card: string;
         border: string;
     };
+    stats: TeamStats;
 }
 
 export default function TeamsView({ teams, hasPlayers, groupCode, onRegenerateTeams }: TeamsViewProps) {
-    const TeamSection = ({ teamName, players, colorScheme }: TeamSectionProps) => {
+    const TeamSection = ({ teamName, players, colorScheme, stats }: TeamSectionProps) => {
         const { bg, text, card, border } = colorScheme;
-        const allPlayers = [...players.forwards, ...players.defensemen];
-        const totalSkill = allPlayers.reduce((sum, player) => sum + player.skill, 0);
-        const averageSkill = allPlayers.length > 0
-            ? (totalSkill / allPlayers.length).toFixed(2)
-            : '0';
 
         const PlayerList = ({ players, type }: { players: Player[], type: 'forwards' | 'defensemen' }) => (
             <div className="space-y-2">
@@ -71,7 +75,7 @@ export default function TeamsView({ teams, hasPlayers, groupCode, onRegenerateTe
                     <div className="flex justify-between items-center">
                         <h3 className="text-lg font-semibold">{teamName} Team</h3>
                         <span className="text-sm">
-                            Avg Skill: {averageSkill}
+                            Avg Skill: {stats.averageSkill}
                         </span>
                     </div>
                 </div>
@@ -79,8 +83,42 @@ export default function TeamsView({ teams, hasPlayers, groupCode, onRegenerateTe
                     <PlayerList players={players.forwards} type="forwards" />
                     <PlayerList players={players.defensemen} type="defensemen" />
                 </div>
+                <div className={`px-4 py-3 ${bg} border-t ${border}`}>
+                    <div className="grid grid-cols-4 gap-4 text-xs">
+                        <div>
+                            <span className="block text-gray-500">Forwards</span>
+                            <span className={`font-medium ${text}`}>{stats.forwardCount}</span>
+                        </div>
+                        <div>
+                            <span className="block text-gray-500">Defense</span>
+                            <span className={`font-medium ${text}`}>{stats.defenseCount}</span>
+                        </div>
+                        <div>
+                            <span className="block text-gray-500">Total Players</span>
+                            <span className={`font-medium ${text}`}>{stats.totalPlayers}</span>
+                        </div>
+                        <div>
+                            <span className="block text-gray-500">Total Skill</span>
+                            <span className={`font-medium ${text}`}>{stats.totalSkill}</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         );
+    };
+
+    const calculateTeamStats = (players: { forwards: Player[], defensemen: Player[] }): TeamStats => {
+        const allPlayers = [...players.forwards, ...players.defensemen];
+        const totalSkill = allPlayers.reduce((sum, player) => sum + player.skill, 0);
+        return {
+            forwardCount: players.forwards.length,
+            defenseCount: players.defensemen.length,
+            totalPlayers: allPlayers.length,
+            totalSkill: totalSkill,
+            averageSkill: allPlayers.length > 0 
+                ? (totalSkill / allPlayers.length).toFixed(2)
+                : '0'
+        };
     };
 
     const colorSchemes = {
@@ -125,11 +163,13 @@ export default function TeamsView({ teams, hasPlayers, groupCode, onRegenerateTe
                         teamName="Red"
                         players={teams.red}
                         colorScheme={colorSchemes.red}
+                        stats={calculateTeamStats(teams.red)}
                     />
                     <TeamSection
                         teamName="White"
                         players={teams.white}
                         colorScheme={colorSchemes.white}
+                        stats={calculateTeamStats(teams.white)}
                     />
                 </div>
             ) : (
