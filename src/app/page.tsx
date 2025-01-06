@@ -2,13 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { type Player, type Teams } from '@/types/PlayerTypes';
-import Header from '@/components/Header';
-import ActionBar from '@/components/ActionBar';
-import PlayersView from '@/components/PlayersView';
-import TeamsView from '@/components/TeamsView';
-import ErrorAlert from '@/components/ErrorAlert';
-import Dialog from '@/components/Dialog';
-import AddPlayerDialog from '@/components/AddPlayerDialog';
+import Header from './components/Header';
+import ActionBar from './components/ActionBar';
+import PlayersView from './components/PlayersView';
+import TeamsView from './components/TeamsView';
+import ErrorAlert from './components/ErrorAlert';
+import Dialog from './components/Dialog';
+import AddPlayerDialog from './components/AddPlayerDialog';
 import _ from 'lodash';
 import { generateTeams } from '@/lib/teamGenerator';
 
@@ -239,7 +239,7 @@ export default function Home() {
         }
     };
 
-    const handlePlayerUpdate = async (updatedPlayer: Player) => {
+    const handlePlayerUpdate = async (updatedPlayer: FormPlayer & { id: number }) => {
         try {
             setLoading(true);
             setError(null);
@@ -249,15 +249,7 @@ export default function Home() {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    id: updatedPlayer.id,
-                    first_name: updatedPlayer.first_name,
-                    last_name: updatedPlayer.last_name,
-                    skill: updatedPlayer.skill,
-                    is_defense: updatedPlayer.is_defense,
-                    is_attending: updatedPlayer.is_attending,
-                    group_code: updatedPlayer.group_code
-                }),
+                body: JSON.stringify(updatedPlayer),
             });
 
             if (!response.ok) {

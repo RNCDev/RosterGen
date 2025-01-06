@@ -20,10 +20,15 @@ const EditableRow = ({ player, onSave, onDelete }: EditableRowProps) => {
     const handleSave = async () => {
         try {
             const playerToSave = {
-                ...editedPlayer,
-                group_code: player.group_code
+                id: editedPlayer.id,
+                firstName: editedPlayer.first_name,
+                lastName: editedPlayer.last_name,
+                skill: editedPlayer.skill,
+                defense: editedPlayer.is_defense,
+                attending: editedPlayer.is_attending,
+                groupCode: editedPlayer.group_code
             };
-            await onSave(playerToSave);
+            await onSave(playerToSave as any);
             setIsEditing(false);
             setError(null);
         } catch (err) {
