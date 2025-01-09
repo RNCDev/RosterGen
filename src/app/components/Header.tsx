@@ -35,8 +35,30 @@ export default function Header({
     return (
         <div className="w-full bg-slate-50/80 backdrop-blur-sm border-b sticky top-0 z-50">
             <div className="max-w-7xl mx-auto">
+                {/* Tab Navigation - Now First */}
+                <div className="flex justify-center p-6 border-b">
+                    <nav className="flex gap-1 p-1.5 card-neo">
+                        <button 
+                            onClick={() => setActiveTab('players')}
+                            className={`tab-neo flex items-center gap-2 px-6
+                                ${activeTab === 'players' ? 'active' : 'text-slate-600'}`}
+                        >
+                            <Users size={18} />
+                            <span className="font-medium">Players</span>
+                        </button>
+                        <button 
+                            onClick={() => setActiveTab('roster')}
+                            className={`tab-neo flex items-center gap-2 px-6
+                                ${activeTab === 'roster' ? 'active' : 'text-slate-600'}`}
+                        >
+                            <ListChecks size={18} />
+                            <span className="font-medium">Teams</span>
+                        </button>
+                    </nav>
+                </div>
+
+                {/* Group Code Controls - Now Second */}
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-6 gap-4">
-                    {/* Group Code Input Section */}
                     <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
                         <input
                             type="text"
@@ -65,26 +87,6 @@ export default function Header({
                             </button>
                         </div>
                     </div>
-
-                    {/* Tab Navigation */}
-                    <nav className="flex gap-1 p-1.5 card-neo">
-                        <button 
-                            onClick={() => setActiveTab('players')}
-                            className={`tab-neo flex items-center gap-2
-                                ${activeTab === 'players' ? 'active' : 'text-slate-600'}`}
-                        >
-                            <Users size={18} />
-                            <span className="font-medium">Players</span>
-                        </button>
-                        <button 
-                            onClick={() => setActiveTab('roster')}
-                            className={`tab-neo flex items-center gap-2
-                                ${activeTab === 'roster' ? 'active' : 'text-slate-600'}`}
-                        >
-                            <ListChecks size={18} />
-                            <span className="font-medium">Teams</span>
-                        </button>
-                    </nav>
                 </div>
             </div>
         </div>
