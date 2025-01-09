@@ -94,41 +94,54 @@ export default function PlayersView({
             </div>
 
             {players.length > 0 ? (
-                <div className="hidden md:block overflow-x-auto">
-                    <div className="table-neo min-w-full">
-                        <table className="min-w-full divide-y divide-slate-200">
-                            <thead>
-                                <tr className="bg-gradient-to-b from-slate-50 to-white">
-                                    <th scope="col" className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
-                                        <SortButton field="name" label="Name" />
-                                    </th>
-                                    <th scope="col" className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
-                                        <SortButton field="skill" label="Skill" />
-                                    </th>
-                                    <th scope="col" className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
-                                        <SortButton field="position" label="Position" />
-                                    </th>
-                                    <th scope="col" className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
-                                        <SortButton field="attendance" label="Attending" />
-                                    </th>
-                                    <th scope="col" className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
-                                        Actions
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody className="bg-white divide-y divide-slate-200">
-                                {sortedPlayers.map((player) => (
-                                    <EditableRow
-                                        key={player.id}
-                                        player={player}
-                                        onSave={onUpdatePlayer}
-                                        onDelete={handleDeletePlayer}
-                                    />
-                                ))}
-                            </tbody>
-                        </table>
+                <>
+                    <div className="hidden md:block overflow-x-auto">
+                        <div className="table-neo min-w-full">
+                            <table className="min-w-full divide-y divide-slate-200">
+                                <thead>
+                                    <tr className="bg-gradient-to-b from-slate-50 to-white">
+                                        <th scope="col" className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                                            <SortButton field="name" label="Name" />
+                                        </th>
+                                        <th scope="col" className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                                            <SortButton field="skill" label="Skill" />
+                                        </th>
+                                        <th scope="col" className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                                            <SortButton field="position" label="Position" />
+                                        </th>
+                                        <th scope="col" className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                                            <SortButton field="attendance" label="Attending" />
+                                        </th>
+                                        <th scope="col" className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                                            Actions
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody className="bg-white divide-y divide-slate-200">
+                                    {sortedPlayers.map((player) => (
+                                        <EditableRow
+                                            key={player.id}
+                                            player={player}
+                                            onSave={onUpdatePlayer}
+                                            onDelete={handleDeletePlayer}
+                                        />
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                </div>
+
+                    <div className="md:hidden p-4 grid grid-cols-1 gap-4">
+                        {sortedPlayers.map((player) => (
+                            <PlayerCard
+                                key={player.id}
+                                player={player}
+                                onSave={onUpdatePlayer}
+                                onDelete={handleDeletePlayer}
+                            />
+                        ))}
+                    </div>
+                </>
             ) : (
                 <div className="card-neo p-12 flex flex-col items-center">
                     <Users className="h-12 w-12 text-slate-400 mb-3" />

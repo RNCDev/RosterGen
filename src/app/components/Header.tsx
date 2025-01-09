@@ -36,8 +36,8 @@ export default function Header({
         <div className="bg-white border-b">
             <div className="max-w-7xl mx-auto">
                 {/* Tab Navigation */}
-                <div className="flex justify-center px-6 py-4">
-                    <nav className="flex gap-1 p-1.5 card-neo">
+                <div className="px-6 py-4">
+                    <nav className="flex gap-1 p-1.5 card-neo w-fit">
                         <button 
                             onClick={() => setActiveTab('players')}
                             className={`tab-neo flex items-center gap-2 px-6
