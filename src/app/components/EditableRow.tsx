@@ -60,7 +60,7 @@ const EditableRow = ({ player, onSave, onDelete }: EditableRowProps) => {
         <>
             {isEditing ? (
                 <tr className="bg-blue-50/50">
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-6 py-4 whitespace-nowrap sticky left-0 bg-blue-50/50">
                         <div className="flex gap-2">
                             <input
                                 type="text"
@@ -106,7 +106,7 @@ const EditableRow = ({ player, onSave, onDelete }: EditableRowProps) => {
                             <option value="no">No</option>
                         </select>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                    <td className="px-6 py-4 whitespace-nowrap text-center sticky right-0 bg-blue-50/50">
                         <div className="flex items-center justify-center gap-2">
                             <button
                                 onClick={handleSave}
@@ -128,7 +128,7 @@ const EditableRow = ({ player, onSave, onDelete }: EditableRowProps) => {
             ) : (
                 <>
                     <tr className="hover:bg-slate-50/80">
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-6 py-4 whitespace-nowrap sticky left-0 bg-white">
                             <div className="flex items-center">
                                 <div className="text-sm font-medium text-slate-900">
                                     {player.first_name} {player.last_name}
@@ -150,7 +150,7 @@ const EditableRow = ({ player, onSave, onDelete }: EditableRowProps) => {
                                 {player.is_attending ? 'Yes' : 'No'}
                             </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <td className="px-6 py-4 whitespace-nowrap text-center sticky right-0 bg-white">
                             <div className="flex items-center justify-center gap-2">
                                 <button
                                     onClick={handleEdit}
