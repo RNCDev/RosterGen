@@ -2,9 +2,10 @@
 'use client';
 
 import { type Player } from '@/types/PlayerTypes';
-import { Users } from 'lucide-react';
+import { Users, ArrowUpDown } from 'lucide-react';
 import EditableRow from './EditableRow';
 import _ from 'lodash';
+import { useState } from 'react';
 
 interface PlayersViewProps {
     players: Player[];
@@ -14,6 +15,14 @@ interface PlayersViewProps {
     handleDeletePlayer?: (id: number) => Promise<void>;
 }
 
+type SortField = 'name' | 'skill' | 'position' | 'attendance';
+type SortDirection = 'asc' | 'desc';
+
+interface SortConfig {
+    field: SortField;
+    direction: SortDirection;
+}
+
 export default function PlayersView({
     players,
     loading,
@@ -21,7 +30,54 @@ export default function PlayersView({
     onUpdatePlayer,
     handleDeletePlayer
 }: PlayersViewProps) {
-    const sortedPlayers = _.orderBy(players, ['last_name', 'first_name'], ['asc', 'asc']);
+    const [sortConfig, setSortConfig] = useState<SortConfig>({ field: 'name', direction: 'asc' });
+
+    const sortPlayers = (players: Player[]): Player[] => {
+        return [...players].sort((a, b) => {
+            switch (sortConfig.field) {
+                case 'name':
+                    const nameA = `${a.first_name} ${a.last_name}`.toLowerCase();
+                    const nameB = `${b.first_name} ${b.last_name}`.toLowerCase();
+                    return sortConfig.direction === 'asc' 
+                        ? nameA.localeCompare(nameB)
+                        : nameB.localeCompare(nameA);
+                case 'skill':
+                    return sortConfig.direction === 'asc' 
+                        ? a.skill - b.skill
+                        : b.skill - a.skill;
+                case 'position':
+                    return sortConfig.direction === 'asc' 
+                        ? Number(a.is_defense) - Number(b.is_defense)
+                        : Number(b.is_defense) - Number(a.is_defense);
+                case 'attendance':
+                    return sortConfig.direction === 'asc' 
+                        ? Number(a.is_attending) - Number(b.is_attending)
+                        : Number(b.is_attending) - Number(a.is_attending);
+                default:
+                    return 0;
+            }
+        });
+    };
+
+    const handleSort = (field: SortField) => {
+        setSortConfig(current => ({
+            field,
+            direction: current.field === field && current.direction === 'asc' ? 'desc' : 'asc'
+        }));
+    };
+
+    const SortButton = ({ field, label }: { field: SortField, label: string }) => (
+        <button 
+            onClick={() => handleSort(field)}
+            className={`flex items-center gap-1 hover:text-slate-900 transition-colors
+                ${sortConfig.field === field ? 'text-slate-900' : 'text-slate-500'}`}
+        >
+            {label}
+            <ArrowUpDown className="h-4 w-4" />
+        </button>
+    );
+
+    const sortedPlayers = sortPlayers(players);
 
     return (
         <div className="space-y-8">
@@ -42,16 +98,16 @@ export default function PlayersView({
                         <thead>
                             <tr className="bg-gradient-to-b from-slate-50 to-white">
                                 <th scope="col" className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
-                                    Name
+                                    <SortButton field="name" label="Name" />
                                 </th>
                                 <th scope="col" className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
-                                    Skill
+                                    <SortButton field="skill" label="Skill" />
                                 </th>
                                 <th scope="col" className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
-                                    Position
+                                    <SortButton field="position" label="Position" />
                                 </th>
                                 <th scope="col" className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
-                                    Attending
+                                    <SortButton field="attendance" label="Attending" />
                                 </th>
                                 <th scope="col" className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
                                     Actions
