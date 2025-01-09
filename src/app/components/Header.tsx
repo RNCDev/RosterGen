@@ -33,74 +33,58 @@ export default function Header({
     };
 
     return (
-        <div className="w-full bg-white border-b shadow-sm sticky top-0 z-50">
+        <div className="w-full bg-slate-50/80 backdrop-blur-sm border-b sticky top-0 z-50">
             <div className="max-w-7xl mx-auto">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 gap-4">
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto">
-                        <div className="flex items-center gap-2 w-full sm:w-auto">
-                            <input
-                                type="text"
-                                value={groupCode}
-                                onChange={(e) => onGroupCodeChange(e.target.value)}
-                                onKeyPress={handleKeyPress}
-                                placeholder="Enter group code"
-                                className="block w-full sm:w-44 rounded-md border border-gray-300 px-3 py-2 text-sm 
-                                         focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-                            />
-                            <button
-                                onClick={onRetrieveGroupCode}
-                                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 
-                                         transition-colors text-sm font-medium shadow-sm"
-                            >
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-6 gap-4">
+                    {/* Group Code Input Section */}
+                    <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+                        <input
+                            type="text"
+                            value={groupCode}
+                            onChange={(e) => onGroupCodeChange(e.target.value)}
+                            onKeyPress={handleKeyPress}
+                            placeholder="Enter group code"
+                            className="input-neo w-full sm:w-48"
+                        />
+                        <div className="flex gap-2">
+                            <button onClick={onRetrieveGroupCode} 
+                                    className="button-neo text-blue-600">
                                 Load
                             </button>
-                            <button
-                                onClick={onSaveGroupCode}
-                                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 
-                                         transition-colors text-sm font-medium shadow-sm"
-                            >
+                            <button onClick={onSaveGroupCode}
+                                    className="button-neo text-emerald-600">
                                 Save
                             </button>
-                            <button
-                                onClick={onCancelGroupCode}
-                                className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 
-                                         transition-colors text-sm font-medium shadow-sm"
-                            >
+                            <button onClick={onCancelGroupCode}
+                                    className="button-neo text-slate-600">
                                 Clear
                             </button>
-                            <button
-                                onClick={onDeleteGroup}
-                                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 
-                                         transition-colors text-sm font-medium shadow-sm"
-                            >
+                            <button onClick={onDeleteGroup}
+                                    className="button-neo text-red-600">
                                 Delete
                             </button>
                         </div>
                     </div>
 
                     {/* Tab Navigation */}
-                    <div className="flex gap-2 w-full sm:w-auto justify-center sm:justify-end bg-slate-100 p-1 rounded-lg">
+                    <nav className="flex gap-1 p-1.5 card-neo">
                         <button 
                             onClick={() => setActiveTab('players')}
-                            className={`py-2 px-4 rounded-lg transition-all duration-200 flex items-center gap-2
-                                ${activeTab === 'players' 
-                                    ? 'bg-white text-blue-600 shadow-sm' 
-                                    : 'text-slate-600 hover:bg-white/50'}`}
+                            className={`tab-neo flex items-center gap-2
+                                ${activeTab === 'players' ? 'active' : 'text-slate-600'}`}
                         >
                             <Users size={18} />
                             <span className="font-medium">Players</span>
                         </button>
                         <button 
                             onClick={() => setActiveTab('roster')}
-                            className={`py-2 px-4 rounded-lg transition-all duration-200 flex items-center gap-2
-                                ${activeTab === 'roster' 
-                                    ? 'bg-white text-blue-600 shadow-sm' 
-                                    : 'text-slate-600 hover:bg-white/50'}`}
+                            className={`tab-neo flex items-center gap-2
+                                ${activeTab === 'roster' ? 'active' : 'text-slate-600'}`}
                         >
                             <ListChecks size={18} />
                             <span className="font-medium">Teams</span>
                         </button>
-                    </div>
+                    </nav>
                 </div>
             </div>
         </div>

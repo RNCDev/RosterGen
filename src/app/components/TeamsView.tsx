@@ -27,40 +27,46 @@ interface TeamSectionProps {
         defensemen: Player[];
     };
     colorScheme: {
-        bg: string;
-        text: string;
-        card: string;
-        border: string;
+        header: string;
+        footer: string;
+        badge: string;
     };
     stats: TeamStats;
 }
 
+const Statistic = ({ label, value }: { label: string, value: number }) => (
+    <div className="card-neo p-4">
+        <div className="text-sm text-slate-600">{label}</div>
+        <div className="text-2xl font-semibold text-slate-900">{value}</div>
+    </div>
+);
+
 export default function TeamsView({ teams, hasPlayers, groupCode, onRegenerateTeams }: TeamsViewProps) {
     const TeamSection = ({ teamName, players, colorScheme, stats }: TeamSectionProps) => {
-        const { bg, text, card, border } = colorScheme;
-
         const PlayerList = ({ players, type }: { players: Player[], type: 'forwards' | 'defensemen' }) => (
-            <div className="space-y-2">
-                <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">
+            <div className="space-y-3">
+                <h4 className="text-sm font-semibold text-slate-500 uppercase tracking-wider">
                     {type === 'forwards' ? 'Forwards' : 'Defense'}
                 </h4>
-                <div className="space-y-1">
+                <div className="space-y-2">
                     {players.map((player) => (
                         <div 
                             key={player.id} 
-                            className={`flex items-center justify-between p-2 rounded-lg ${card} border ${border} transition-colors`}
+                            className="card-neo p-3 flex items-center justify-between
+                                     hover:shadow-[8px_8px_16px_#e2e8f0,-8px_-8px_16px_#ffffff]
+                                     transition-all duration-200"
                         >
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-3">
                                 {type === 'forwards' ? (
-                                    <User className="h-4 w-4 text-gray-400" />
+                                    <User className="h-4 w-4 text-slate-400" />
                                 ) : (
-                                    <Shield className="h-4 w-4 text-gray-400" />
+                                    <Shield className="h-4 w-4 text-slate-400" />
                                 )}
-                                <span className="text-sm font-medium">
+                                <span className="text-sm font-medium text-slate-700">
                                     {player.first_name} {player.last_name}
                                 </span>
                             </div>
-                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${bg} ${text}`}>
+                            <span className={`badge-neo ${colorScheme.badge}`}>
                                 {player.skill}
                             </span>
                         </div>
@@ -70,37 +76,25 @@ export default function TeamsView({ teams, hasPlayers, groupCode, onRegenerateTe
         );
 
         return (
-            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                <div className={`px-4 py-3 ${bg} ${text} border-b ${border}`}>
+            <div className="card-neo overflow-hidden">
+                <div className={`p-4 ${colorScheme.header}`}>
                     <div className="flex justify-between items-center">
                         <h3 className="text-lg font-semibold">{teamName} Team</h3>
-                        <span className="text-sm">
+                        <span className="badge-neo bg-white/90 text-slate-700">
                             Avg Skill: {stats.averageSkill}
                         </span>
                     </div>
                 </div>
-                <div className="p-4 space-y-6">
+                <div className="p-6 space-y-6 bg-gradient-to-b from-white to-slate-50">
                     <PlayerList players={players.forwards} type="forwards" />
                     <PlayerList players={players.defensemen} type="defensemen" />
                 </div>
-                <div className={`px-4 py-3 ${bg} border-t ${border}`}>
-                    <div className="grid grid-cols-4 gap-4 text-xs">
-                        <div>
-                            <span className="block text-gray-500">Forwards</span>
-                            <span className={`font-medium ${text}`}>{stats.forwardCount}</span>
-                        </div>
-                        <div>
-                            <span className="block text-gray-500">Defense</span>
-                            <span className={`font-medium ${text}`}>{stats.defenseCount}</span>
-                        </div>
-                        <div>
-                            <span className="block text-gray-500">Total Players</span>
-                            <span className={`font-medium ${text}`}>{stats.totalPlayers}</span>
-                        </div>
-                        <div>
-                            <span className="block text-gray-500">Total Skill</span>
-                            <span className={`font-medium ${text}`}>{stats.totalSkill}</span>
-                        </div>
+                <div className={`p-4 ${colorScheme.footer} border-t border-slate-100`}>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        <Statistic label="Forward" value={stats.forwardCount} />
+                        <Statistic label="Defense" value={stats.defenseCount} />
+                        <Statistic label="Total Players" value={stats.totalPlayers} />
+                        <Statistic label="Total Skill" value={stats.totalSkill} />
                     </div>
                 </div>
             </div>
@@ -123,16 +117,14 @@ export default function TeamsView({ teams, hasPlayers, groupCode, onRegenerateTe
 
     const colorSchemes = {
         red: {
-            bg: 'bg-red-50',
-            text: 'text-red-700',
-            card: 'hover:bg-red-50/50',
-            border: 'border-red-100'
+            header: 'bg-gradient-to-r from-red-50 to-red-100 text-red-700',
+            footer: 'bg-gradient-to-r from-red-50 to-red-100',
+            badge: 'bg-red-100 text-red-700'
         },
         white: {
-            bg: 'bg-blue-50',
-            text: 'text-blue-700',
-            card: 'hover:bg-blue-50/50',
-            border: 'border-blue-100'
+            header: 'bg-gradient-to-r from-blue-50 to-blue-100 text-blue-700',
+            footer: 'bg-gradient-to-r from-blue-50 to-blue-100',
+            badge: 'bg-blue-100 text-blue-700'
         }
     };
 
@@ -140,25 +132,26 @@ export default function TeamsView({ teams, hasPlayers, groupCode, onRegenerateTe
         <div className="space-y-8">
             <div className="flex justify-between items-center px-6 py-4">
                 <div className="flex items-center gap-4">
-                    <h2 className="text-xl font-semibold text-gray-900">Generated Teams</h2>
-                    <Button 
-                        variant="outline" 
-                        size="sm" 
+                    <h2 className="text-xl font-semibold text-slate-900">Generated Teams</h2>
+                    <button 
                         onClick={onRegenerateTeams}
                         disabled={!hasPlayers}
+                        className="button-neo text-slate-600"
                     >
                         Regenerate
-                    </Button>
+                    </button>
                 </div>
                 {groupCode && (
-                    <span className="text-sm px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full font-medium">
-                        Group: {groupCode}
-                    </span>
+                    <div className="card-neo px-4 py-1.5">
+                        <span className="text-sm font-medium text-blue-600">
+                            Group: {groupCode}
+                        </span>
+                    </div>
                 )}
             </div>
 
             {teams.red.forwards.length > 0 ? (
-                <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
                     <TeamSection
                         teamName="Red"
                         players={teams.red}
@@ -173,10 +166,10 @@ export default function TeamsView({ teams, hasPlayers, groupCode, onRegenerateTe
                     />
                 </div>
             ) : (
-                <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
-                    <ListChecks className="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 className="mt-2 text-sm font-medium text-gray-900">No Teams Generated</h3>
-                    <p className="mt-1 text-sm text-gray-500">
+                <div className="card-neo p-12 flex flex-col items-center">
+                    <ListChecks className="h-12 w-12 text-slate-400 mb-3" />
+                    <h3 className="text-sm font-medium text-slate-900">No Teams Generated</h3>
+                    <p className="mt-1 text-sm text-slate-500">
                         {hasPlayers
                             ? "Use the Generate Teams button in the Players tab to create teams."
                             : "Add players before generating teams."}

@@ -25,43 +25,45 @@ export default function ActionBar({
     };
 
     return (
-        <div className="flex flex-wrap gap-3 my-6 px-1">
-            <div className="flex gap-3 flex-1 sm:flex-none">
-                <button
-                    onClick={onAddPlayer}
-                    disabled={disabled}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg 
-                             hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed 
-                             text-sm font-medium shadow-sm"
-                >
-                    <UserPlus size={18} />
-                    Add Player
-                </button>
+        <div className="p-6 bg-slate-50/80 backdrop-blur-sm border-b">
+            <div className="flex flex-wrap gap-4 justify-between">
+                <div className="flex gap-3 flex-1 sm:flex-none">
+                    <button
+                        onClick={onAddPlayer}
+                        disabled={disabled}
+                        className="button-neo bg-gradient-to-b from-blue-500 to-blue-600 
+                                 text-white hover:from-blue-600 hover:to-blue-700
+                                 inline-flex items-center gap-2"
+                    >
+                        <UserPlus size={18} />
+                        Add Player
+                    </button>
 
-                <button
-                    onClick={handleUploadClick}
-                    disabled={disabled}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-lg 
-                             hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed 
-                             text-sm font-medium shadow-sm"
-                >
-                    <Upload size={18} />
-                    Upload CSV
-                </button>
+                    <button
+                        onClick={handleUploadClick}
+                        disabled={disabled}
+                        className="button-neo bg-gradient-to-b from-indigo-500 to-indigo-600
+                                 text-white hover:from-indigo-600 hover:to-indigo-700
+                                 inline-flex items-center gap-2"
+                    >
+                        <Upload size={18} />
+                        Upload CSV
+                    </button>
+                </div>
+
+                {showGenerateTeams && onGenerateTeams && (
+                    <button
+                        onClick={onGenerateTeams}
+                        disabled={disabled}
+                        className="button-neo bg-gradient-to-b from-purple-500 to-purple-600
+                                 text-white hover:from-purple-600 hover:to-purple-700
+                                 inline-flex items-center gap-2"
+                    >
+                        <ArrowLeftRight size={18} />
+                        Generate Teams
+                    </button>
+                )}
             </div>
-
-            {showGenerateTeams && onGenerateTeams && (
-                <button
-                    onClick={onGenerateTeams}
-                    disabled={disabled}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-purple-600 text-white rounded-lg 
-                             hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed 
-                             text-sm font-medium shadow-sm ml-auto"
-                >
-                    <ArrowLeftRight size={18} />
-                    Generate Teams
-                </button>
-            )}
         </div>
     );
 }

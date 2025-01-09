@@ -22,15 +22,15 @@ export default function Dialog({
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
-            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-                <h2 className="text-xl font-semibold mb-4">{title}</h2>
-                <p className="text-gray-600 mb-6">{description}</p>
+        <div className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="card-neo p-6 max-w-md w-full mx-4 animate-slideIn">
+                <h2 className="text-xl font-semibold text-slate-900 mb-2">{title}</h2>
+                <p className="text-slate-600 mb-6">{description}</p>
 
-                <div className="flex justify-end gap-4">
+                <div className="flex justify-end gap-3">
                     <button
                         onClick={onClose}
-                        className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+                        className="button-neo text-slate-600"
                     >
                         {cancelLabel}
                     </button>
@@ -39,7 +39,8 @@ export default function Dialog({
                             onConfirm();
                             onClose();
                         }}
-                        className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700"
+                        className="button-neo bg-gradient-to-b from-red-500 to-red-600 
+                                 text-white hover:from-red-600 hover:to-red-700"
                     >
                         {confirmLabel}
                     </button>

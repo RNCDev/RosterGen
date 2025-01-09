@@ -3,14 +3,13 @@
 @tailwind utilities;
 
 :root {
-    /* Custom color palette */
-    --primary: #2563eb;    /* Blue 600 */
-    --primary-dark: #1d4ed8;  /* Blue 700 */
-    --secondary: #4f46e5;  /* Indigo 600 */
-    --success: #16a34a;    /* Green 600 */
-    --danger: #dc2626;     /* Red 600 */
-    --warning: #d97706;    /* Amber 600 */
-    --background: #f8fafc; /* Slate 50 */
+    /* Modern color palette */
+    --surface-primary: #ffffff;
+    --surface-secondary: #f8fafc;
+    --accent-primary: #3b82f6;
+    --accent-secondary: #6366f1;
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
 }
 
 @layer base {
@@ -24,49 +23,69 @@
 }
 
 @layer components {
-    /* Button Styles */
-    .btn {
-        @apply px-4 py-2 rounded-lg font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
+    /* Neomorphic Card */
+    .card-neo {
+        @apply bg-white rounded-xl border border-white/10
+               shadow-[6px_6px_12px_#e2e8f0,-6px_-6px_12px_#ffffff]
+               backdrop-blur-sm;
     }
 
-    .btn-primary {
-        @apply btn bg-blue-600 text-white hover:bg-blue-700;
+    /* Neomorphic Button */
+    .button-neo {
+        @apply px-4 py-2.5 rounded-lg font-medium
+               transition-all duration-200 
+               bg-gradient-to-b from-white to-slate-50
+               border border-slate-200
+               shadow-[4px_4px_8px_#e2e8f0,-4px_-4px_8px_#ffffff]
+               active:shadow-[inset_4px_4px_8px_#e2e8f0,inset_-4px_-4px_8px_#ffffff]
+               active:scale-[0.98]
+               disabled:opacity-50 disabled:cursor-not-allowed
+               hover:border-slate-300;
     }
 
-    .btn-secondary {
-        @apply btn bg-indigo-600 text-white hover:bg-indigo-700;
-    }
-
-    .btn-success {
-        @apply btn bg-green-600 text-white hover:bg-green-700;
-    }
-
-    .btn-danger {
-        @apply btn bg-red-600 text-white hover:bg-red-700;
-    }
-
-    /* Input Styles */
-    .input {
-        @apply px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-200 focus:border-blue-600 outline-none transition-all duration-200;
-    }
-
-    /* Card Styles */
-    .card {
-        @apply bg-white rounded-xl shadow-sm border border-slate-200;
+    /* Neomorphic Input */
+    .input-neo {
+        @apply px-4 py-2.5 rounded-lg
+               bg-slate-50
+               border border-slate-200
+               shadow-[inset_4px_4px_8px_#e2e8f0,inset_-4px_-4px_8px_#ffffff]
+               focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500
+               transition-all duration-200;
     }
 
     /* Table Styles */
-    .table-container {
-        @apply overflow-x-auto rounded-lg border border-slate-200;
+    .table-neo {
+        @apply overflow-hidden rounded-xl
+               bg-gradient-to-b from-white to-slate-50
+               border border-slate-200
+               shadow-[6px_6px_12px_#e2e8f0,-6px_-6px_12px_#ffffff];
     }
 
-    /* Animation Classes */
-    .fade-in {
-        @apply animate-[fadeIn_0.2s_ease-in-out];
+    /* Tab Button */
+    .tab-neo {
+        @apply px-4 py-2.5 rounded-lg
+               transition-all duration-200
+               hover:bg-white/80;
     }
 
-    .slide-in {
-        @apply animate-[slideIn_0.3s_ease-out];
+    .tab-neo.active {
+        @apply bg-white text-blue-600
+               shadow-[4px_4px_8px_#e2e8f0,-4px_-4px_8px_#ffffff];
+    }
+
+    /* Status Badge */
+    .badge-neo {
+        @apply px-2.5 py-1 rounded-full text-xs font-medium
+               shadow-[2px_2px_4px_#e2e8f0,-2px_-2px_4px_#ffffff]
+               border border-white/10;
+    }
+
+    /* Loading Spinner */
+    .spinner-neo {
+        @apply animate-spin rounded-full
+               border-2 border-slate-200
+               border-t-blue-600
+               shadow-[2px_2px_4px_#e2e8f0,-2px_-2px_4px_#ffffff];
     }
 }
 
@@ -76,6 +95,16 @@
 }
 
 @keyframes slideIn {
-    from { transform: translateY(-10px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
+    from { 
+        transform: translateY(-20px) scale(0.95);
+        opacity: 0;
+    }
+    to { 
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+}
+
+.animate-slideIn {
+    animation: slideIn 0.2s ease-out forwards;
 }
