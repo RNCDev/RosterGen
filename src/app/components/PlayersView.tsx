@@ -100,19 +100,25 @@ export default function PlayersView({
                             <table className="min-w-full divide-y divide-slate-200">
                                 <thead>
                                     <tr className="bg-gradient-to-b from-slate-50 to-white">
-                                        <th scope="col" className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                                        <th scope="col" className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap">
                                             <SortButton field="name" label="Name" />
                                         </th>
-                                        <th scope="col" className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
-                                            <SortButton field="skill" label="Skill" />
+                                        <th scope="col" className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap">
+                                            <div className="flex justify-center">
+                                                <SortButton field="skill" label="Skill" />
+                                            </div>
                                         </th>
-                                        <th scope="col" className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
-                                            <SortButton field="position" label="Position" />
+                                        <th scope="col" className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap">
+                                            <div className="flex justify-center">
+                                                <SortButton field="position" label="Position" />
+                                            </div>
                                         </th>
-                                        <th scope="col" className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
-                                            <SortButton field="attendance" label="Attending" />
+                                        <th scope="col" className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap">
+                                            <div className="flex justify-center">
+                                                <SortButton field="attendance" label="Attending" />
+                                            </div>
                                         </th>
-                                        <th scope="col" className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+                                        <th scope="col" className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap">
                                             Actions
                                         </th>
                                     </tr>
