@@ -129,8 +129,8 @@ export default function TeamsView({ teams, hasPlayers, groupCode, onRegenerateTe
     };
 
     return (
-        <div className="space-y-8">
-            <div className="flex justify-between items-center px-6 py-4">
+        <div>
+            <div className="flex justify-between items-center px-6 py-4 bg-white">
                 <div className="flex items-center gap-4">
                     <h2 className="text-xl font-semibold text-slate-900">Generated Teams</h2>
                     <button 
@@ -151,7 +151,7 @@ export default function TeamsView({ teams, hasPlayers, groupCode, onRegenerateTe
             </div>
 
             {teams.red.forwards.length > 0 ? (
-                <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+                <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 p-6">
                     <TeamSection
                         teamName="Red"
                         players={teams.red}

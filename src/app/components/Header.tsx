@@ -33,10 +33,10 @@ export default function Header({
     };
 
     return (
-        <div className="w-full bg-slate-50/80 backdrop-blur-sm border-b sticky top-0 z-50">
+        <div className="bg-white border-b">
             <div className="max-w-7xl mx-auto">
-                {/* Tab Navigation - Now First */}
-                <div className="flex justify-center p-6 border-b">
+                {/* Tab Navigation */}
+                <div className="flex justify-center px-6 py-4">
                     <nav className="flex gap-1 p-1.5 card-neo">
                         <button 
                             onClick={() => setActiveTab('players')}
@@ -56,35 +56,39 @@ export default function Header({
                         </button>
                     </nav>
                 </div>
+            </div>
 
-                {/* Group Code Controls - Now Second */}
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-6 gap-4">
-                    <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
-                        <input
-                            type="text"
-                            value={groupCode}
-                            onChange={(e) => onGroupCodeChange(e.target.value)}
-                            onKeyPress={handleKeyPress}
-                            placeholder="Enter group code"
-                            className="input-neo w-full sm:w-48"
-                        />
-                        <div className="flex gap-2">
-                            <button onClick={onRetrieveGroupCode} 
-                                    className="button-neo text-blue-600">
-                                Load
-                            </button>
-                            <button onClick={onSaveGroupCode}
-                                    className="button-neo text-emerald-600">
-                                Save
-                            </button>
-                            <button onClick={onCancelGroupCode}
-                                    className="button-neo text-slate-600">
-                                Clear
-                            </button>
-                            <button onClick={onDeleteGroup}
-                                    className="button-neo text-red-600">
-                                Delete
-                            </button>
+            {/* Group Code Controls - Moved outside max-width container */}
+            <div className="w-full border-t bg-slate-50">
+                <div className="max-w-7xl mx-auto">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-6 py-4">
+                        <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+                            <input
+                                type="text"
+                                value={groupCode}
+                                onChange={(e) => onGroupCodeChange(e.target.value)}
+                                onKeyPress={handleKeyPress}
+                                placeholder="Enter group code"
+                                className="input-neo w-full sm:w-48"
+                            />
+                            <div className="flex gap-2">
+                                <button onClick={onRetrieveGroupCode} 
+                                        className="button-neo text-blue-600">
+                                    Load
+                                </button>
+                                <button onClick={onSaveGroupCode}
+                                        className="button-neo text-emerald-600">
+                                    Save
+                                </button>
+                                <button onClick={onCancelGroupCode}
+                                        className="button-neo text-slate-600">
+                                    Clear
+                                </button>
+                                <button onClick={onDeleteGroup}
+                                        className="button-neo text-red-600">
+                                    Delete
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

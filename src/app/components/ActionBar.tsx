@@ -1,4 +1,5 @@
 // src/app/components/ActionBar.tsx
+
 'use client';
 
 import React from 'react';
@@ -25,7 +26,7 @@ export default function ActionBar({
     };
 
     return (
-        <div className="p-6 bg-slate-50/80 backdrop-blur-sm border-b">
+        <div className="px-6 py-4 border-b">
             <div className="flex flex-wrap gap-4 justify-between">
                 <div className="flex gap-3 flex-1 sm:flex-none">
                     <button

@@ -344,7 +344,7 @@ export default function Home() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-slate-100">
             <Header 
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
@@ -356,7 +356,7 @@ export default function Home() {
                 onDeleteGroup={handleGroupDelete}
             />
 
-            <div className="sticky top-0 z-10 bg-white border-b shadow-sm">
+            <div className="bg-white border-y">
                 <div className="max-w-7xl mx-auto">
                     <ActionBar 
                         onAddPlayer={handleAddPlayer}
@@ -368,28 +368,26 @@ export default function Home() {
                 </div>
             </div>
 
-            <main className="px-4 py-6 sm:px-6 lg:px-8">
-                <div className="max-w-7xl mx-auto">
-                    <ErrorAlert message={error} />
+            <main className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+                <ErrorAlert message={error} />
 
-                    <div className="bg-white rounded-lg shadow-sm border">
-                        {activeTab === 'players' ? (
-                            <PlayersView
-                                players={players}
-                                loading={loading}
-                                groupCode={groupCode}
-                                onUpdatePlayer={handlePlayerUpdate}
-                                handleDeletePlayer={handleDeletePlayer}
-                            />
-                        ) : (
-                            <TeamsView
-                                teams={teams}
-                                hasPlayers={players.length > 0}
-                                groupCode={groupCode}
-                                onRegenerateTeams={handleTeamsGenerated}
-                            />
-                        )}
-                    </div>
+                <div className="bg-white border rounded-lg overflow-hidden">
+                    {activeTab === 'players' ? (
+                        <PlayersView
+                            players={players}
+                            loading={loading}
+                            groupCode={groupCode}
+                            onUpdatePlayer={handlePlayerUpdate}
+                            handleDeletePlayer={handleDeletePlayer}
+                        />
+                    ) : (
+                        <TeamsView
+                            teams={teams}
+                            hasPlayers={players.length > 0}
+                            groupCode={groupCode}
+                            onRegenerateTeams={handleTeamsGenerated}
+                        />
+                    )}
                 </div>
             </main>
 
