@@ -82,8 +82,10 @@ export default function PlayersView({
 
     return (
         <div>
-            <div className="flex justify-between items-center px-6 py-4 bg-white">
-                <h2 className="text-xl font-semibold text-slate-900">Players</h2>
+            <div className="flex justify-between items-center px-6 py-4 bg-white border-b border-slate-100">
+                <div className="flex items-center gap-4">
+                    <h2 className="text-xl font-semibold text-slate-900">Players</h2>
+                </div>
                 {groupCode && (
                     <div className="card-neo px-4 py-1.5">
                         <span className="text-sm font-medium text-blue-600">
@@ -94,7 +96,7 @@ export default function PlayersView({
             </div>
 
             {players.length > 0 ? (
-                <>
+                <div className="p-6">
                     <div className="hidden md:block overflow-x-auto">
                         <div className="table-neo min-w-full">
                             <table className="min-w-full divide-y divide-slate-200">
@@ -137,7 +139,7 @@ export default function PlayersView({
                         </div>
                     </div>
 
-                    <div className="md:hidden p-4 grid grid-cols-1 gap-4">
+                    <div className="md:hidden grid grid-cols-1 gap-6">
                         {sortedPlayers.map((player) => (
                             <PlayerCard
                                 key={player.id}
@@ -147,14 +149,16 @@ export default function PlayersView({
                             />
                         ))}
                     </div>
-                </>
+                </div>
             ) : (
-                <div className="card-neo p-12 flex flex-col items-center">
-                    <Users className="h-12 w-12 text-slate-400 mb-3" />
-                    <h3 className="text-sm font-medium text-slate-900">No players</h3>
-                    <p className="mt-1 text-sm text-slate-500">
-                        Get started by adding a player or uploading a CSV file.
-                    </p>
+                <div className="p-6">
+                    <div className="card-neo p-12 flex flex-col items-center">
+                        <Users className="h-12 w-12 text-slate-400 mb-3" />
+                        <h3 className="text-sm font-medium text-slate-900">No players</h3>
+                        <p className="mt-1 text-sm text-slate-500">
+                            Get started by adding a player or uploading a CSV file.
+                        </p>
+                    </div>
                 </div>
             )}
 

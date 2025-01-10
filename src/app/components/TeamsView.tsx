@@ -32,17 +32,18 @@ interface TeamSectionProps {
         badge: string;
     };
     stats: TeamStats;
+    className?: string;
 }
 
 const Statistic = ({ label, value }: { label: string, value: number }) => (
-    <div className="card-neo p-4">
-        <div className="text-sm text-slate-600">{label}</div>
+    <div className="card-neo p-4 hover:shadow-[4px_4px_10px_#e2e8f0,-4px_-4px_10px_#ffffff] transition-all duration-200">
+        <div className="text-sm text-slate-600 mb-1">{label}</div>
         <div className="text-2xl font-semibold text-slate-900">{value}</div>
     </div>
 );
 
 export default function TeamsView({ teams, hasPlayers, groupCode, onRegenerateTeams }: TeamsViewProps) {
-    const TeamSection = ({ teamName, players, colorScheme, stats }: TeamSectionProps) => {
+    const TeamSection = ({ teamName, players, colorScheme, stats, className = '' }: TeamSectionProps) => {
         const PlayerList = ({ players, type }: { players: Player[], type: 'forwards' | 'defensemen' }) => (
             <div className="space-y-3">
                 <h4 className="text-sm font-semibold text-slate-500 uppercase tracking-wider">
@@ -53,7 +54,7 @@ export default function TeamsView({ teams, hasPlayers, groupCode, onRegenerateTe
                         <div 
                             key={player.id} 
                             className="card-neo p-3 flex items-center justify-between
-                                     hover:shadow-[8px_8px_16px_#e2e8f0,-8px_-8px_16px_#ffffff]
+                                     hover:shadow-[4px_4px_10px_#e2e8f0,-4px_-4px_10px_#ffffff]
                                      transition-all duration-200"
                         >
                             <div className="flex items-center gap-3">
@@ -66,7 +67,7 @@ export default function TeamsView({ teams, hasPlayers, groupCode, onRegenerateTe
                                     {player.first_name} {player.last_name}
                                 </span>
                             </div>
-                            <span className={`badge-neo ${colorScheme.badge}`}>
+                            <span className={`badge-neo ${colorScheme.badge} text-sm`}>
                                 {player.skill}
                             </span>
                         </div>
@@ -76,7 +77,9 @@ export default function TeamsView({ teams, hasPlayers, groupCode, onRegenerateTe
         );
 
         return (
-            <div className="card-neo overflow-hidden">
+            <div className={`card-neo overflow-hidden transition-all duration-200
+                          hover:shadow-[8px_8px_16px_#e2e8f0,-8px_-8px_16px_#ffffff]
+                          flex flex-col ${className}`}>
                 <div className={`p-4 ${colorScheme.header}`}>
                     <div className="flex justify-between items-center">
                         <h3 className="text-lg font-semibold">{teamName} Team</h3>
@@ -85,7 +88,7 @@ export default function TeamsView({ teams, hasPlayers, groupCode, onRegenerateTe
                         </span>
                     </div>
                 </div>
-                <div className="p-6 space-y-6 bg-gradient-to-b from-white to-slate-50">
+                <div className="p-6 space-y-6 bg-gradient-to-b from-white to-slate-50/50 flex-grow">
                     <PlayerList players={players.forwards} type="forwards" />
                     <PlayerList players={players.defensemen} type="defensemen" />
                 </div>
@@ -117,20 +120,20 @@ export default function TeamsView({ teams, hasPlayers, groupCode, onRegenerateTe
 
     const colorSchemes = {
         red: {
-            header: 'bg-gradient-to-r from-red-50 to-red-100 text-red-700',
-            footer: 'bg-gradient-to-r from-red-50 to-red-100',
-            badge: 'bg-red-100 text-red-700'
+            header: 'bg-gradient-to-r from-red-50 to-red-100/80 text-red-700',
+            footer: 'bg-gradient-to-r from-red-50 to-red-100/80',
+            badge: 'bg-red-100/80 text-red-700'
         },
         white: {
-            header: 'bg-gradient-to-r from-blue-50 to-blue-100 text-blue-700',
-            footer: 'bg-gradient-to-r from-blue-50 to-blue-100',
-            badge: 'bg-blue-100 text-blue-700'
+            header: 'bg-gradient-to-r from-blue-50 to-blue-100/80 text-blue-700',
+            footer: 'bg-gradient-to-r from-blue-50 to-blue-100/80',
+            badge: 'bg-blue-100/80 text-blue-700'
         }
     };
 
     return (
         <div>
-            <div className="flex justify-between items-center px-6 py-4 bg-white">
+            <div className="flex justify-between items-center px-6 py-4 bg-white border-b border-slate-100">
                 <div className="flex items-center gap-4">
                     <h2 className="text-xl font-semibold text-slate-900">Generated Teams</h2>
                     <button 
@@ -157,12 +160,14 @@ export default function TeamsView({ teams, hasPlayers, groupCode, onRegenerateTe
                         players={teams.red}
                         colorScheme={colorSchemes.red}
                         stats={calculateTeamStats(teams.red)}
+                        className="h-full"
                     />
                     <TeamSection
                         teamName="White"
                         players={teams.white}
                         colorScheme={colorSchemes.white}
                         stats={calculateTeamStats(teams.white)}
+                        className="h-full"
                     />
                 </div>
             ) : (
