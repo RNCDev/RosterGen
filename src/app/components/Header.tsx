@@ -2,7 +2,7 @@
 'use client';
 
 import React from 'react';
-import { Users, ListChecks } from 'lucide-react';
+import { Download, Save, X, Trash2 } from 'lucide-react';
 
 interface HeaderProps {
     activeTab: 'players' | 'roster';
@@ -27,68 +27,81 @@ export default function Header({
 }: HeaderProps) {
     const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === 'Enter') {
-            e.preventDefault();
             onRetrieveGroupCode();
         }
     };
 
     return (
         <div className="bg-white border-b">
-            <div className="max-w-7xl mx-auto">
-                {/* Tab Navigation */}
-                <div className="px-6 py-4">
-                    <nav className="flex gap-1 p-1.5 card-neo w-fit">
+            <div className="max-w-7xl mx-auto px-6 py-4">
+                <div className="flex items-center justify-between">
+                    {/* Left side: Simple text tabs */}
+                    <nav className="flex gap-8">
                         <button 
                             onClick={() => setActiveTab('players')}
-                            className={`tab-neo flex items-center gap-2 px-6
-                                ${activeTab === 'players' ? 'active' : 'text-slate-600'}`}
+                            className={`relative py-2 text-sm font-medium transition-colors
+                                ${activeTab === 'players' 
+                                    ? 'text-blue-600' 
+                                    : 'text-slate-600 hover:text-slate-900'}`}
                         >
-                            <Users size={18} />
-                            <span className="font-medium">Players</span>
+                            Players
+                            {activeTab === 'players' && (
+                                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600" />
+                            )}
                         </button>
                         <button 
                             onClick={() => setActiveTab('roster')}
-                            className={`tab-neo flex items-center gap-2 px-6
-                                ${activeTab === 'roster' ? 'active' : 'text-slate-600'}`}
+                            className={`relative py-2 text-sm font-medium transition-colors
+                                ${activeTab === 'roster' 
+                                    ? 'text-blue-600' 
+                                    : 'text-slate-600 hover:text-slate-900'}`}
                         >
-                            <ListChecks size={18} />
-                            <span className="font-medium">Teams</span>
+                            Teams
+                            {activeTab === 'roster' && (
+                                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600" />
+                            )}
                         </button>
                     </nav>
-                </div>
-            </div>
 
-            {/* Group Code Controls - Moved outside max-width container */}
-            <div className="w-full border-t bg-slate-50">
-                <div className="max-w-7xl mx-auto">
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-6 py-4">
-                        <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
-                            <input
-                                type="text"
-                                value={groupCode}
-                                onChange={(e) => onGroupCodeChange(e.target.value)}
-                                onKeyPress={handleKeyPress}
-                                placeholder="Enter group code"
-                                className="input-neo w-full sm:w-48"
-                            />
-                            <div className="flex gap-2">
-                                <button onClick={onRetrieveGroupCode} 
-                                        className="button-neo text-blue-600">
-                                    Load
-                                </button>
-                                <button onClick={onSaveGroupCode}
-                                        className="button-neo text-emerald-600">
-                                    Save
-                                </button>
-                                <button onClick={onCancelGroupCode}
-                                        className="button-neo text-slate-600">
-                                    Clear
-                                </button>
-                                <button onClick={onDeleteGroup}
-                                        className="button-neo text-red-600">
-                                    Delete
-                                </button>
-                            </div>
+                    {/* Right side: Group Code */}
+                    <div className="flex items-center gap-2">
+                        <input
+                            type="text"
+                            value={groupCode}
+                            onChange={(e) => onGroupCodeChange(e.target.value)}
+                            onKeyPress={handleKeyPress}
+                            placeholder="Group Code"
+                            className="input-neo w-48"
+                        />
+                        <div className="flex gap-1">
+                            <button 
+                                onClick={onRetrieveGroupCode} 
+                                className="button-neo p-2 text-blue-600" 
+                                title="Load"
+                            >
+                                <Download size={16} />
+                            </button>
+                            <button 
+                                onClick={onSaveGroupCode}
+                                className="button-neo p-2 text-emerald-600"
+                                title="Save"
+                            >
+                                <Save size={16} />
+                            </button>
+                            <button 
+                                onClick={onCancelGroupCode}
+                                className="button-neo p-2 text-slate-600"
+                                title="Clear"
+                            >
+                                <X size={16} />
+                            </button>
+                            <button 
+                                onClick={onDeleteGroup}
+                                className="button-neo p-2 text-red-600"
+                                title="Delete Group"
+                            >
+                                <Trash2 size={16} />
+                            </button>
                         </div>
                     </div>
                 </div>
