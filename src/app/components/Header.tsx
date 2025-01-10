@@ -34,8 +34,7 @@ export default function Header({
     return (
         <div className="bg-white border-b">
             <div className="max-w-7xl mx-auto px-6 py-4">
-                {/* Stack vertically on mobile, space between on desktop */}
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="flex items-center justify-between">
                     {/* Left side: Simple text tabs */}
                     <nav className="flex gap-8">
                         <button 
@@ -64,17 +63,17 @@ export default function Header({
                         </button>
                     </nav>
 
-                    {/* Right side: Group Code - Full width on mobile */}
-                    <div className="flex items-center gap-2 w-full sm:w-auto">
+                    {/* Right side: Group Code */}
+                    <div className="flex items-center gap-2">
                         <input
                             type="text"
                             value={groupCode}
                             onChange={(e) => onGroupCodeChange(e.target.value)}
                             onKeyPress={handleKeyPress}
                             placeholder="Group Code"
-                            className="input-neo flex-grow sm:w-48"
+                            className="input-neo w-48"
                         />
-                        <div className="flex gap-1 flex-shrink-0">
+                        <div className="flex gap-1">
                             <button 
                                 onClick={onRetrieveGroupCode} 
                                 className="button-neo p-2 text-blue-600" 
