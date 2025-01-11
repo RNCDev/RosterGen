@@ -12,8 +12,7 @@ const nextConfig = {
   },
   experimental: {
     // serverComponentsExternalPackages: ['@vercel/postgres']
-  },
-  serverExternalPackages: ['@vercel/postgres']
+  }
 }
 
 module.exports = nextConfig
