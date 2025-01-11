@@ -376,7 +376,6 @@ export default function Home() {
                         <PlayersView
                             players={players}
                             loading={loading}
-                            groupCode={groupCode}
                             onUpdatePlayer={handlePlayerUpdate}
                             handleDeletePlayer={handleDeletePlayer}
                         />
@@ -384,7 +383,6 @@ export default function Home() {
                         <TeamsView
                             teams={teams}
                             hasPlayers={players.length > 0}
-                            groupCode={groupCode}
                             onRegenerateTeams={handleTeamsGenerated}
                         />
                     )}

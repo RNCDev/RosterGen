@@ -25,17 +25,10 @@ export default function Header({
     onCancelGroupCode,
     onDeleteGroup
 }: HeaderProps) {
-    const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === 'Enter') {
-            onRetrieveGroupCode();
-        }
-    };
-
     return (
         <div className="bg-white border-b">
             <div className="max-w-7xl mx-auto px-6 py-4">
-               {/* Stack vertically on mobile, space between on desktop */}
-               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     {/* Left side: Simple text tabs */}
                     <nav className="flex gap-8">
                         <button 
@@ -64,41 +57,62 @@ export default function Header({
                         </button>
                     </nav>
 
-                                        {/* Right side: Group Code - Full width on mobile */}
-                                        <div className="flex items-center gap-2 w-full sm:w-auto">
+                    {/* Right side: Group Code - Full width on mobile */}
+                    <div 
+                        className="flex items-center gap-2 w-full sm:w-auto"
+                        data-form-type="other"
+                        data-dashlane-ignore="true"
+                    >
                         <input
                             type="text"
                             value={groupCode}
                             onChange={(e) => onGroupCodeChange(e.target.value)}
-                            onKeyPress={handleKeyPress}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                    onRetrieveGroupCode();
+                                }
+                            }}
                             placeholder="Group Code"
-                            className="input-neo flex-grow sm:w-48"                        />
-                                                <div className="flex gap-1 flex-shrink-0">
+                            className="input-neo flex-grow sm:w-48"
+                            data-form-type="other"
+                            data-dashlane-ignore="true"
+                            autoComplete="off"
+                            aria-label="Group Code"
+                        />
+                        <div className="flex gap-1 flex-shrink-0">
                             <button 
-                                onClick={onRetrieveGroupCode} 
+                                onClick={() => onRetrieveGroupCode()} 
                                 className="button-neo p-2 text-blue-600" 
                                 title="Load"
+                                data-dashlane-ignore="true"
+                                type="button"
                             >
                                 <Download size={16} />
                             </button>
                             <button 
-                                onClick={onSaveGroupCode}
+                                onClick={() => onSaveGroupCode()}
                                 className="button-neo p-2 text-emerald-600"
                                 title="Save"
+                                data-dashlane-ignore="true"
+                                type="button"
                             >
                                 <Save size={16} />
                             </button>
                             <button 
-                                onClick={onCancelGroupCode}
+                                onClick={() => onCancelGroupCode()}
                                 className="button-neo p-2 text-slate-600"
                                 title="Clear"
+                                data-dashlane-ignore="true"
+                                type="button"
                             >
                                 <X size={16} />
                             </button>
                             <button 
-                                onClick={onDeleteGroup}
+                                onClick={() => onDeleteGroup()}
                                 className="button-neo p-2 text-red-600"
                                 title="Delete Group"
+                                data-dashlane-ignore="true"
+                                type="button"
                             >
                                 <Trash2 size={16} />
                             </button>

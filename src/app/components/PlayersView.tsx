@@ -11,7 +11,6 @@ import PlayerCard from './PlayerCard';
 interface PlayersViewProps {
     players: Player[];
     loading: boolean;
-    groupCode: string;
     onUpdatePlayer: (player: Player) => Promise<void>;
     handleDeletePlayer?: (id: number) => Promise<void>;
 }
@@ -27,7 +26,6 @@ interface SortConfig {
 export default function PlayersView({
     players,
     loading,
-    groupCode,
     onUpdatePlayer,
     handleDeletePlayer
 }: PlayersViewProps) {
@@ -86,13 +84,6 @@ export default function PlayersView({
                 <div className="flex items-center gap-4">
                     <h2 className="text-xl font-semibold text-slate-900">Players</h2>
                 </div>
-                {groupCode && (
-                    <div className="card-neo px-4 py-1.5">
-                        <span className="text-sm font-medium text-blue-600">
-                            Group: {groupCode}
-                        </span>
-                    </div>
-                )}
             </div>
 
             {players.length > 0 ? (

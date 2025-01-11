@@ -8,7 +8,6 @@ import { Button } from './button';
 interface TeamsViewProps {
     teams: Teams;
     hasPlayers: boolean;
-    groupCode: string;
     onRegenerateTeams?: () => void;
 }
 
@@ -42,7 +41,7 @@ const Statistic = ({ label, value }: { label: string, value: number }) => (
     </div>
 );
 
-export default function TeamsView({ teams, hasPlayers, groupCode, onRegenerateTeams }: TeamsViewProps) {
+export default function TeamsView({ teams, hasPlayers, onRegenerateTeams }: TeamsViewProps) {
     const TeamSection = ({ teamName, players, colorScheme, stats, className = '' }: TeamSectionProps) => {
         const PlayerList = ({ players, type }: { players: Player[], type: 'forwards' | 'defensemen' }) => (
             <div className="space-y-3">
@@ -144,13 +143,6 @@ export default function TeamsView({ teams, hasPlayers, groupCode, onRegenerateTe
                         Regenerate
                     </button>
                 </div>
-                {groupCode && (
-                    <div className="card-neo px-4 py-1.5">
-                        <span className="text-sm font-medium text-blue-600">
-                            Group: {groupCode}
-                        </span>
-                    </div>
-                )}
             </div>
 
             {teams.red.forwards.length > 0 ? (
