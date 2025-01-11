@@ -24,6 +24,10 @@ export default function Home() {
         red: { forwards: [], defensemen: [] },
         white: { forwards: [], defensemen: [] },
     });
+    const [teamNames, setTeamNames] = useState({
+        team1: 'Red',
+        team2: 'White'
+    });
 
     useEffect(() => {
         const savedGroupCode = localStorage.getItem('groupCode');
@@ -343,6 +347,13 @@ export default function Home() {
         }
     };
 
+    const handleTeamNameChange = (team: 'team1' | 'team2', name: string) => {
+        setTeamNames(prev => ({
+            ...prev,
+            [team]: name
+        }));
+    };
+
     return (
         <div className="min-h-screen bg-slate-100">
             <Header 
@@ -384,6 +395,8 @@ export default function Home() {
                             teams={teams}
                             hasPlayers={players.length > 0}
                             onRegenerateTeams={handleTeamsGenerated}
+                            teamNames={teamNames}
+                            onTeamNameChange={handleTeamNameChange}
                         />
                     )}
                 </div>

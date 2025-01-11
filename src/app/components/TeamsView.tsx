@@ -4,11 +4,14 @@
 import { type Teams, type Player } from '@/types/PlayerTypes';
 import { ListChecks, User, Shield } from 'lucide-react';
 import { Button } from './button';
+import { useCallback, useState, useEffect } from 'react';
 
 interface TeamsViewProps {
     teams: Teams;
     hasPlayers: boolean;
     onRegenerateTeams?: () => void;
+    teamNames: { team1: string; team2: string };
+    onTeamNameChange: (team: 'team1' | 'team2', name: string) => void;
 }
 
 interface TeamStats {
@@ -21,6 +24,7 @@ interface TeamStats {
 
 interface TeamSectionProps {
     teamName: string;
+    onTeamNameChange: (name: string) => void;
     players: {
         forwards: Player[];
         defensemen: Player[];
@@ -41,8 +45,29 @@ const Statistic = ({ label, value }: { label: string, value: number }) => (
     </div>
 );
 
-export default function TeamsView({ teams, hasPlayers, onRegenerateTeams }: TeamsViewProps) {
-    const TeamSection = ({ teamName, players, colorScheme, stats, className = '' }: TeamSectionProps) => {
+const TeamNameInput = ({ value, onChange }: { value: string, onChange: (value: string) => void }) => {
+    const [localValue, setLocalValue] = useState(value);
+
+    useEffect(() => {
+        setLocalValue(value);
+    }, [value]);
+
+    return (
+        <input
+            type="text"
+            value={localValue}
+            onChange={(e) => {
+                setLocalValue(e.target.value);
+            }}
+            onBlur={() => onChange(localValue)}
+            placeholder="Enter team name"
+            className="input-neo bg-white/90 text-base font-semibold w-60"
+        />
+    );
+};
+
+export default function TeamsView({ teams, hasPlayers, onRegenerateTeams, teamNames, onTeamNameChange }: TeamsViewProps) {
+    const TeamSection = ({ teamName, onTeamNameChange, players, colorScheme, stats, className = '' }: TeamSectionProps) => {
         const PlayerList = ({ players, type }: { players: Player[], type: 'forwards' | 'defensemen' }) => (
             <div className="space-y-3">
                 <h4 className="text-sm font-semibold text-slate-500 uppercase tracking-wider">
@@ -81,7 +106,10 @@ export default function TeamsView({ teams, hasPlayers, onRegenerateTeams }: Team
                           flex flex-col ${className}`}>
                 <div className={`p-4 ${colorScheme.header}`}>
                     <div className="flex justify-between items-center">
-                        <h3 className="text-lg font-semibold">{teamName} Team</h3>
+                        <TeamNameInput 
+                            value={teamName}
+                            onChange={onTeamNameChange}
+                        />
                         <span className="badge-neo bg-white/90 text-slate-700">
                             Avg Skill: {stats.averageSkill}
                         </span>
@@ -148,14 +176,16 @@ export default function TeamsView({ teams, hasPlayers, onRegenerateTeams }: Team
             {teams.red.forwards.length > 0 ? (
                 <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 p-6">
                     <TeamSection
-                        teamName="Red"
+                        teamName={teamNames.team1}
+                        onTeamNameChange={(name) => onTeamNameChange('team1', name)}
                         players={teams.red}
                         colorScheme={colorSchemes.red}
                         stats={calculateTeamStats(teams.red)}
                         className="h-full"
                     />
                     <TeamSection
-                        teamName="White"
+                        teamName={teamNames.team2}
+                        onTeamNameChange={(name) => onTeamNameChange('team2', name)}
                         players={teams.white}
                         colorScheme={colorSchemes.white}
                         stats={calculateTeamStats(teams.white)}
