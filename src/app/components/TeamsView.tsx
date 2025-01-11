@@ -2,9 +2,10 @@
 'use client';
 
 import { type Teams, type Player } from '@/types/PlayerTypes';
-import { ListChecks, User, Shield } from 'lucide-react';
+import { ListChecks, User, Shield, Camera } from 'lucide-react';
 import { Button } from './button';
-import { useCallback, useState, useEffect } from 'react';
+import { useCallback, useState, useEffect, useRef } from 'react';
+import * as htmlToImage from 'html-to-image';
 
 interface TeamsViewProps {
     teams: Teams;
@@ -67,6 +68,22 @@ const TeamNameInput = ({ value, onChange }: { value: string, onChange: (value: s
 };
 
 export default function TeamsView({ teams, hasPlayers, onRegenerateTeams, teamNames, onTeamNameChange }: TeamsViewProps) {
+    const teamsRef = useRef<HTMLDivElement>(null);
+
+    const handleCaptureTeams = async () => {
+        if (teamsRef.current && teams.red.forwards.length > 0) {
+            try {
+                const dataUrl = await htmlToImage.toBlob(teamsRef.current);
+                if (dataUrl) {
+                    const item = new ClipboardItem({ 'image/png': dataUrl });
+                    await navigator.clipboard.write([item]);
+                }
+            } catch (error) {
+                console.error('Failed to capture teams:', error);
+            }
+        }
+    };
+
     const TeamSection = ({ teamName, onTeamNameChange, players, colorScheme, stats, className = '' }: TeamSectionProps) => {
         const PlayerList = ({ players, type }: { players: Player[], type: 'forwards' | 'defensemen' }) => (
             <div className="space-y-3">
@@ -170,39 +187,49 @@ export default function TeamsView({ teams, hasPlayers, onRegenerateTeams, teamNa
                     >
                         Regenerate
                     </button>
+                    <button
+                        onClick={handleCaptureTeams}
+                        disabled={!teams.red.forwards.length}
+                        className="button-neo text-slate-600"
+                        title="COPY TEAMS & STATS"
+                    >
+                        <Camera className="h-4 w-4" />
+                    </button>
                 </div>
             </div>
 
-            {teams.red.forwards.length > 0 ? (
-                <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 p-6">
-                    <TeamSection
-                        teamName={teamNames.team1}
-                        onTeamNameChange={(name) => onTeamNameChange('team1', name)}
-                        players={teams.red}
-                        colorScheme={colorSchemes.red}
-                        stats={calculateTeamStats(teams.red)}
-                        className="h-full"
-                    />
-                    <TeamSection
-                        teamName={teamNames.team2}
-                        onTeamNameChange={(name) => onTeamNameChange('team2', name)}
-                        players={teams.white}
-                        colorScheme={colorSchemes.white}
-                        stats={calculateTeamStats(teams.white)}
-                        className="h-full"
-                    />
-                </div>
-            ) : (
-                <div className="card-neo p-12 flex flex-col items-center">
-                    <ListChecks className="h-12 w-12 text-slate-400 mb-3" />
-                    <h3 className="text-sm font-medium text-slate-900">No Teams Generated</h3>
-                    <p className="mt-1 text-sm text-slate-500">
-                        {hasPlayers
-                            ? "Use the Generate Teams button in the Players tab to create teams."
-                            : "Add players before generating teams."}
-                    </p>
-                </div>
-            )}
+            <div ref={teamsRef}>
+                {teams.red.forwards.length > 0 ? (
+                    <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 p-6">
+                        <TeamSection
+                            teamName={teamNames.team1}
+                            onTeamNameChange={(name) => onTeamNameChange('team1', name)}
+                            players={teams.red}
+                            colorScheme={colorSchemes.red}
+                            stats={calculateTeamStats(teams.red)}
+                            className="h-full"
+                        />
+                        <TeamSection
+                            teamName={teamNames.team2}
+                            onTeamNameChange={(name) => onTeamNameChange('team2', name)}
+                            players={teams.white}
+                            colorScheme={colorSchemes.white}
+                            stats={calculateTeamStats(teams.white)}
+                            className="h-full"
+                        />
+                    </div>
+                ) : (
+                    <div className="card-neo p-12 flex flex-col items-center">
+                        <ListChecks className="h-12 w-12 text-slate-400 mb-3" />
+                        <h3 className="text-sm font-medium text-slate-900">No Teams Generated</h3>
+                        <p className="mt-1 text-sm text-slate-500">
+                            {hasPlayers
+                                ? "Use the Generate Teams button in the Players tab to create teams."
+                                : "Add players before generating teams."}
+                        </p>
+                    </div>
+                )}
+            </div>
         </div>
     );
 }
