@@ -375,6 +375,7 @@ export default function Home() {
                         onGenerateTeams={players.length > 0 ? handleTeamsGenerated : undefined}
                         showGenerateTeams={activeTab === 'players'}
                         disabled={loading}
+                        groupCode={groupCode}
                     />
                 </div>
             </div>

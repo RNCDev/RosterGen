@@ -13,6 +13,7 @@ interface PlayersViewProps {
     loading: boolean;
     onUpdatePlayer: (player: Player) => Promise<void>;
     handleDeletePlayer?: (id: number) => Promise<void>;
+    hasGroupCode?: boolean;
 }
 
 type SortField = 'name' | 'skill' | 'position' | 'attendance';
@@ -27,7 +28,8 @@ export default function PlayersView({
     players,
     loading,
     onUpdatePlayer,
-    handleDeletePlayer
+    handleDeletePlayer,
+    hasGroupCode = false
 }: PlayersViewProps) {
     const [sortConfig, setSortConfig] = useState<SortConfig>({ field: 'name', direction: 'asc' });
 
@@ -146,8 +148,15 @@ export default function PlayersView({
                     <div className="card-neo p-12 flex flex-col items-center">
                         <Users className="h-12 w-12 text-slate-400 mb-3" />
                         <h3 className="text-sm font-medium text-slate-900">No players</h3>
-                        <p className="mt-1 text-sm text-slate-500">
-                            Get started by adding a player or uploading a CSV file.
+                        <p className="mt-1 text-sm text-slate-500 text-center">
+                            {hasGroupCode ? (
+                                "Get started by adding a player or uploading a CSV file."
+                            ) : (
+                                <>
+                                    Enter a group code to get started.<br />
+                                    This code helps you access your roster later.
+                                </>
+                            )}
                         </p>
                     </div>
                 </div>
