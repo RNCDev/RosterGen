@@ -3,6 +3,7 @@
 
 import React from 'react';
 import { Download, Save, X, Trash2 } from 'lucide-react';
+import _ from 'lodash';
 
 interface HeaderProps {
     activeTab: 'players' | 'roster';
@@ -68,7 +69,7 @@ export default function Header({
                             value={groupCode}
                             onChange={(e) => onGroupCodeChange(e.target.value)}
                             onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
+                                if (e.key === 'Enter' && groupCode.trim()) {
                                     onRetrieveGroupCode();
                                 }
                             }}
@@ -81,25 +82,19 @@ export default function Header({
                         />
                         <div className="flex gap-1 flex-shrink-0">
                             <button 
-                                onClick={() => onRetrieveGroupCode()} 
-                                className="button-neo p-2 text-blue-600" 
-                                title="Load"
+                                onClick={onRetrieveGroupCode}
+                                disabled={!groupCode.trim()}
+                                className="button-neo bg-gradient-to-b from-blue-500 to-blue-600 
+                                         text-white hover:from-blue-600 hover:to-blue-700
+                                         disabled:opacity-50 disabled:cursor-not-allowed p-2"
+                                title="Load Group"
                                 data-dashlane-ignore="true"
                                 type="button"
                             >
                                 <Download size={16} />
                             </button>
                             <button 
-                                onClick={() => onSaveGroupCode()}
-                                className="button-neo p-2 text-emerald-600"
-                                title="Save"
-                                data-dashlane-ignore="true"
-                                type="button"
-                            >
-                                <Save size={16} />
-                            </button>
-                            <button 
-                                onClick={() => onCancelGroupCode()}
+                                onClick={onCancelGroupCode}
                                 className="button-neo p-2 text-slate-600"
                                 title="Clear"
                                 data-dashlane-ignore="true"
@@ -108,11 +103,12 @@ export default function Header({
                                 <X size={16} />
                             </button>
                             <button 
-                                onClick={() => onDeleteGroup()}
+                                onClick={onDeleteGroup}
                                 className="button-neo p-2 text-red-600"
                                 title="Delete Group"
                                 data-dashlane-ignore="true"
                                 type="button"
+                                disabled={!groupCode.trim()}
                             >
                                 <Trash2 size={16} />
                             </button>
