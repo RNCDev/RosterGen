@@ -102,7 +102,7 @@ export default function ActionHeader({
                             <ArrowLeftRight size={16} className="mr-2" />
                             {activeTab === 'teams' ? 'Regenerate' : 'Generate Teams'}
                         </Button>
-                        <div className="flex items-center gap-1 rounded-md shadow-inner bg-slate-200 p-1">
+                        <div className="flex items-center gap-1 rounded-md shadow-inner bg-white p-1">
                              <input
                                 type="text"
                                 value={groupCode}

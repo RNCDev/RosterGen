@@ -18,6 +18,7 @@ export default function Home() {
     const {
         groupCode,
         setGroupCode,
+        loadedGroupCode,
         players,
         setPlayers,
         loading,
@@ -173,7 +174,7 @@ export default function Home() {
                         loading={loading}
                         isBulkEditing={isBulkEditing}
                         onCreateGroup={() => setCreateGroupOpen(true)}
-                        groupCode={groupCode}
+                        groupCode={loadedGroupCode}
                     />
                 ) : (
                     <TeamsView 

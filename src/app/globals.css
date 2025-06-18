@@ -1,124 +1,59 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-:root {
-    /* Modern color palette */
-    --surface-primary: #ffffff;
-    --surface-secondary: #f8fafc;
-    --accent-primary: #3b82f6;
-    --accent-secondary: #6366f1;
-    --text-primary: #1e293b;
-    --text-secondary: #64748b;
-}
-
+ 
 @layer base {
-    html {
-        height: 100%;
-        /* Force scrollbar to always show to prevent layout shift */
-        overflow-y: scroll;
-    }
-
-    body {
-        @apply h-full bg-slate-50 text-slate-900;
-    }
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+    --radius: 0.5rem;
+  }
+ 
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+  }
 }
-
-@layer components {
-    /* Neomorphic Card */
-    .card-neo {
-        @apply bg-white rounded-xl border border-white/10
-               shadow-[6px_6px_12px_#e2e8f0,-6px_-6px_12px_#ffffff]
-               backdrop-blur-sm;
-    }
-
-    /* Neomorphic Button */
-    .button-neo {
-        @apply px-4 py-2.5 rounded-lg font-medium
-               transition-all duration-200 
-               bg-gradient-to-b from-white to-slate-50
-               border border-slate-200
-               shadow-[4px_4px_8px_#e2e8f0,-4px_-4px_8px_#ffffff]
-               active:shadow-[inset_4px_4px_8px_#e2e8f0,inset_-4px_-4px_8px_#ffffff]
-               active:scale-[0.98]
-               disabled:opacity-50 disabled:cursor-not-allowed
-               hover:border-slate-300;
-    }
-
-    .button-green {
-        @apply px-4 py-2.5 rounded-lg font-medium
-               transition-all duration-200 
-               bg-gradient-to-b from-green-500 to-green-600 text-white
-               border border-green-700/50
-               shadow-[4px_4px_8px_#dcfce7,-4px_-4px_8px_#ffffff]
-               active:shadow-[inset_4px_4px_8px_#166534,inset_-4px_-4px_8px_#86efac]
-               active:scale-[0.98]
-               disabled:opacity-50 disabled:cursor-not-allowed
-               hover:from-green-600 hover:to-green-700;
-    }
-
-    /* Neomorphic Input */
-    .input-neo {
-        @apply px-4 py-2.5 rounded-lg
-               bg-slate-50
-               border border-slate-200
-               shadow-[inset_4px_4px_8px_#e2e8f0,inset_-4px_-4px_8px_#ffffff]
-               focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500
-               transition-all duration-200;
-    }
-
-    /* Table Styles */
-    .table-neo {
-        @apply overflow-hidden rounded-xl
-               bg-gradient-to-b from-white to-slate-50
-               border border-slate-200
-               shadow-[6px_6px_12px_#e2e8f0,-6px_-6px_12px_#ffffff];
-    }
-
-    /* Tab Button */
-    .tab-neo {
-        @apply px-4 py-2.5 rounded-lg
-               transition-all duration-200
-               hover:bg-white/80;
-    }
-
-    .tab-neo.active {
-        @apply bg-white text-blue-600
-               shadow-[4px_4px_8px_#e2e8f0,-4px_-4px_8px_#ffffff];
-    }
-
-    /* Status Badge */
-    .badge-neo {
-        @apply px-2.5 py-1 rounded-full text-xs font-medium
-               shadow-[2px_2px_4px_#e2e8f0,-2px_-2px_4px_#ffffff]
-               border border-white/10;
-    }
-
-    /* Loading Spinner */
-    .spinner-neo {
-        @apply animate-spin rounded-full
-               border-2 border-slate-200
-               border-t-blue-600
-               shadow-[2px_2px_4px_#e2e8f0,-2px_-2px_4px_#ffffff];
-    }
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-@keyframes slideIn {
-    from { 
-        transform: translateY(-20px) scale(0.95);
-        opacity: 0;
-    }
-    to { 
-        transform: translateY(0) scale(1);
-        opacity: 1;
-    }
-}
-
-.animate-slideIn {
-    animation: slideIn 0.2s ease-out forwards;
+ 
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
 }

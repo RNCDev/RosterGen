@@ -6,6 +6,7 @@ import _ from 'lodash';
 
 export function useGroupManager() {
     const [groupCode, setGroupCode] = useState<string>('');
+    const [loadedGroupCode, setLoadedGroupCode] = useState<string>('');
     const [players, setPlayers] = useState<Player[]>([]);
     const [originalPlayers, setOriginalPlayers] = useState<Player[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
@@ -16,6 +17,7 @@ export function useGroupManager() {
         if (!code) {
             setPlayers([]);
             setOriginalPlayers([]);
+            setLoadedGroupCode('');
             setLoading(false);
             return;
         }
@@ -31,11 +33,13 @@ export function useGroupManager() {
             const data: Player[] = await response.json();
             setPlayers(data);
             setOriginalPlayers(data); // Set original state after fetching
+            setLoadedGroupCode(code);
             localStorage.setItem('groupCode', code);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to load players');
             setPlayers([]);
             setOriginalPlayers([]);
+            setLoadedGroupCode('');
             console.error(err);
         } finally {
             setLoading(false);
@@ -78,7 +82,7 @@ export function useGroupManager() {
             const savedPlayers: Player[] = await response.json();
             setPlayers(savedPlayers);
             setOriginalPlayers(savedPlayers); // Update original state after saving
-
+            setLoadedGroupCode(groupCode);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to save group');
             console.error(err);
@@ -89,6 +93,7 @@ export function useGroupManager() {
 
     const handleClearGroup = () => {
         setGroupCode('');
+        setLoadedGroupCode('');
         setPlayers([]);
         setOriginalPlayers([]);
         localStorage.removeItem('groupCode');
@@ -136,6 +141,7 @@ export function useGroupManager() {
     return {
         groupCode,
         setGroupCode,
+        loadedGroupCode,
         players,
         setPlayers,
         originalPlayers,

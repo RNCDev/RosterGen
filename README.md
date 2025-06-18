@@ -31,14 +31,27 @@ src/
 │   │   ├── players/
 │   │   ├── stats/
 │   │   └── teams/
-│   └── components/
-│       ├── dialogs/
-│       └── ui/
+│   ├── layout.tsx
+│   └── page.tsx
+│
+├── components/
+│   ├── ui/
+│   ├── dialogs/
+│   ├── ActionHeader.tsx
+│   ├── AppHeader.tsx
+│   ├── EditableRow.tsx
+│   ├── ErrorAlert.tsx
+│   ├── PlayersView.tsx
+│   └── TeamsView.tsx
+│
 ├── hooks/
 │   └── useGroupManager.ts
+│
 ├── lib/
 │   ├── db.ts
-│   └── teamGenerator.ts
+│   ├── teamGenerator.ts
+│   └── utils.ts
+│
 └── types/
     ├── declarations.d.ts
     └── PlayerTypes.ts
