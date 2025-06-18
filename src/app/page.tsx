@@ -2,12 +2,14 @@
 
 import { useState } from 'react';
 import { type Player, type Teams } from '@/types/PlayerTypes';
-import Header from '@/components/Header';
+import AppHeader from '@/components/AppHeader';
+import ActionHeader from '@/components/ActionHeader';
 import PlayersView from '@/components/PlayersView';
 import TeamsView from '@/components/TeamsView';
 import ErrorAlert from '@/components/ErrorAlert';
 import AddPlayerDialog from '@/components/dialogs/AddPlayerDialog';
 import UploadCsvDialog from '@/components/dialogs/UploadCsvDialog';
+import CreateGroupDialog from '@/components/dialogs/CreateGroupDialog';
 import { generateTeams } from '@/lib/teamGenerator';
 import { useGroupManager } from '@/hooks/useGroupManager';
 
@@ -40,15 +42,22 @@ export default function Home() {
     // Dialog states
     const [isAddPlayerOpen, setAddPlayerOpen] = useState(false);
     const [isUploadCsvOpen, setUploadCsvOpen] = useState(false);
+    const [isCreateGroupOpen, setCreateGroupOpen] = useState(false);
     
-    const handleAddPlayer = async (newPlayerData: any) => {
+    // Bulk editing state
+    const [isBulkEditing, setIsBulkEditing] = useState(false);
+
+    const handleAddPlayer = async (newPlayerData: Omit<Player, 'id' | 'group_code' | 'created_at' | 'updated_at'>) => {
         if (!groupCode) {
             setError("A group code must be set before adding players.");
             return;
         }
+        
+        const playerWithGroupCode = { ...newPlayerData, group_code: groupCode };
+
         // Optimistic UI update
         const tempId = Date.now();
-        const playerToAdd = { ...newPlayerData, id: tempId, group_code: groupCode };
+        const playerToAdd = { ...playerWithGroupCode, id: tempId };
         setPlayers([...players, playerToAdd]);
 
         // API call
@@ -56,18 +65,20 @@ export default function Home() {
             const response = await fetch('/api/players', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ...newPlayerData, groupCode })
+                body: JSON.stringify(playerWithGroupCode) // Send the correct object
             });
 
             if (!response.ok) {
-                throw new Error("Failed to add player");
+                const errorData = await response.json();
+                console.error("API Error:", errorData);
+                throw new Error(errorData.error || "Failed to add player");
             }
             // Refresh data from server to get correct ID
             handleLoadGroup(groupCode); 
         } catch (e) {
             setError(e instanceof Error ? e.message : 'An error occurred.');
             // Revert optimistic update
-            setPlayers(players);
+            setPlayers(players.filter(p => p.id !== tempId));
         }
     };
 
@@ -83,6 +94,7 @@ export default function Home() {
         // This effectively replaces the current players with the CSV data
         setPlayers(csvPlayers);
         // The isDirty flag will now be true, user needs to click "Save" in the header
+        setIsBulkEditing(true); // Automatically enter bulk edit mode after CSV upload
     };
     
     const handleGenerateTeams = () => {
@@ -96,11 +108,44 @@ export default function Home() {
         setActiveTab('teams');
     };
 
+    // New handler for creating a group
+    const handleCreateGroup = async (newGroupCode: string) => {
+        try {
+            const response = await fetch('/api/groups', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ groupCode: newGroupCode })
+            });
+
+            if (!response.ok) {
+                const { error } = await response.json();
+                throw new Error(error || "Failed to create group.");
+            }
+
+            // On success, set the new group code, clear players, and close the dialog
+            setGroupCode(newGroupCode);
+            setPlayers([]);
+            setError(null);
+            setCreateGroupOpen(false);
+
+        } catch (e: any) {
+            console.error(e);
+            // Re-throw to be caught by the dialog
+            throw e;
+        }
+    };
+
+    const attendingPlayerCount = players.filter((p: Player) => p.is_attending).length;
+
     return (
         <div className="flex flex-col min-h-screen bg-slate-50">
-            <Header
+            <AppHeader
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
+            />
+
+            <ActionHeader
+                activeTab={activeTab}
                 groupCode={groupCode}
                 onGroupCodeChange={setGroupCode}
                 onLoadGroup={() => handleLoadGroup(groupCode)}
@@ -109,9 +154,16 @@ export default function Home() {
                 onDeleteGroup={handleDeleteGroup}
                 isDirty={isDirty}
                 isLoading={loading}
+                isBulkEditing={isBulkEditing}
+                onToggleBulkEdit={() => setIsBulkEditing(!isBulkEditing)}
+                onAddPlayer={() => setAddPlayerOpen(true)}
+                onUploadCsv={() => setUploadCsvOpen(true)}
+                onGenerateTeams={handleGenerateTeams}
+                playerCount={attendingPlayerCount}
+                totalPlayerCount={players.length}
             />
 
-            <main className="flex-1 w-full max-w-7xl mx-auto px-6 py-8">
+            <main className="flex-1 w-full max-w-7xl mx-auto px-6 py-8 overflow-y-auto">
                 {error && <ErrorAlert message={error} onDismiss={() => setError(null)} />}
 
                 {activeTab === 'players' ? (
@@ -119,12 +171,16 @@ export default function Home() {
                         players={players}
                         setPlayers={setPlayers}
                         loading={loading}
-                        onGenerateTeams={handleGenerateTeams}
-                        onAddPlayer={() => setAddPlayerOpen(true)}
-                        onUploadCsv={() => setUploadCsvOpen(true)}
+                        isBulkEditing={isBulkEditing}
+                        onCreateGroup={() => setCreateGroupOpen(true)}
+                        groupCode={groupCode}
                     />
                 ) : (
-                    <TeamsView />
+                    <TeamsView 
+                        teams={teams}
+                        teamNames={teamNames}
+                        setTeamNames={setTeamNames}
+                    />
                 )}
             </main>
             
@@ -138,6 +194,12 @@ export default function Home() {
                 isOpen={isUploadCsvOpen}
                 onClose={() => setUploadCsvOpen(false)}
                 onUpload={handleCsvUpload}
+            />
+
+            <CreateGroupDialog
+                isOpen={isCreateGroupOpen}
+                onClose={() => setCreateGroupOpen(false)}
+                onCreate={handleCreateGroup}
             />
         </div>
     );

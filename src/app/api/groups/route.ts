@@ -46,47 +46,52 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
     try {
-        const body = await request.json();
-        const validation = z.object({
-            groupCode: z.string().trim().min(1, 'Group code cannot be empty.'),
-            players: z.array(playerSchema),
-        }).safeParse(body);
+        const { groupCode } = await request.json();
 
-        if (!validation.success) {
-            return NextResponse.json({ error: 'Invalid data', details: validation.error.flatten() }, { status: 400 });
+        if (!groupCode || typeof groupCode !== 'string' || groupCode.trim().length === 0) {
+            return NextResponse.json({ error: 'Group code is required and must be a non-empty string.' }, { status: 400 });
         }
-        
-        const { groupCode, players } = validation.data;
 
-        const newPlayers = await sql.begin(async (tx: any) => {
-            // 1. Delete all existing players for this group
-            await tx`DELETE FROM players WHERE group_code = ${groupCode};`;
+        // Check if any players exist with this group code
+        const { rows } = await sql`
+            SELECT 1 FROM players WHERE group_code = ${groupCode} LIMIT 1;
+        `;
 
-            // 2. Insert all the new players
-            if (players.length === 0) {
-                return []; // Return empty array if no players to insert
-            }
-            
-            // Build a single, dynamic INSERT statement for all players
-            const values = players.flatMap(p => [p.first_name, p.last_name, p.skill, p.is_defense, p.is_attending, groupCode]);
-            const placeholders = players.map((_, i) => 
-                `($${i * 6 + 1}, $${i * 6 + 2}, $${i * 6 + 3}, $${i * 6 + 4}, $${i * 6 + 5}, $${i * 6 + 6})`
-            ).join(', ');
+        if (rows.length > 0) {
+            return NextResponse.json({ error: 'A group with this code already exists.' }, { status: 409 });
+        }
 
-            const query = `
-                INSERT INTO players (first_name, last_name, skill, is_defense, is_attending, group_code)
-                VALUES ${placeholders}
-                RETURNING *;
-            `;
+        // If no players exist, the group is considered "created" and available.
+        // We don't need to add anything to the database at this stage.
+        return NextResponse.json({ message: 'Group code is available and ready for use.' }, { status: 200 });
+    } catch (e) {
+        console.error('Error in POST /api/groups:', e);
+        return NextResponse.json({ error: 'An unexpected error occurred.' }, { status: 500 });
+    }
+}
 
-            const { rows } = await tx.query(query, values);
-            return rows;
-        });
+/**
+ * DELETE /api/groups
+ * Deletes an entire group by its code.
+ */
+export async function DELETE(request: NextRequest) {
+    let groupCode;
+    try {
+        const body = await request.json();
+        groupCode = body.groupCode;
 
-        return NextResponse.json(newPlayers, { status: 201 });
+        if (!groupCode) {
+            return NextResponse.json({ error: 'Group code is required' }, { status: 400 });
+        }
+
+        await sql`
+            DELETE FROM players WHERE group_code = ${groupCode};
+        `;
+
+        return new NextResponse(null, { status: 204 }); // No Content
 
     } catch (error) {
-        console.error('Failed to save group:', error);
+        console.error(`Failed to delete group ${groupCode}:`, error);
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }

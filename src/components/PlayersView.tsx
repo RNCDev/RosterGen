@@ -2,23 +2,23 @@
 
 import React, { useState, useMemo } from 'react';
 import { type Player } from '@/types/PlayerTypes';
-import { Users, UserPlus, Upload, ArrowLeftRight, ArrowUpDown } from 'lucide-react';
-import EditableRow from './EditableRow';
+import { Users, ArrowUpDown, Info, UserPlus } from 'lucide-react';
+import EditableRow from '@/components/EditableRow';
+import { Button } from '@/components/ui/Button';
 
 interface PlayersViewProps {
     players: Player[];
     setPlayers: (players: Player[]) => void;
     loading: boolean;
-    onGenerateTeams: () => void;
-    onAddPlayer: () => void;
-    onUploadCsv: () => void;
+    isBulkEditing: boolean;
+    onCreateGroup: () => void;
+    groupCode: string;
 }
 
 type SortField = 'name' | 'skill' | 'position' | 'attendance';
 type SortDirection = 'asc' | 'desc';
 
-export default function PlayersView({ players, setPlayers, loading, onGenerateTeams, onAddPlayer, onUploadCsv }: PlayersViewProps) {
-    const [isBulkEditing, setIsBulkEditing] = useState(false);
+export default function PlayersView({ players, setPlayers, loading, isBulkEditing, onCreateGroup, groupCode }: PlayersViewProps) {
     const [sortConfig, setSortConfig] = useState<{ field: SortField, direction: SortDirection }>({ field: 'name', direction: 'asc' });
 
     const handlePlayerUpdate = (updatedPlayer: Player) => {
@@ -67,51 +67,45 @@ export default function PlayersView({ players, setPlayers, loading, onGenerateTe
 
     if (players.length === 0) {
         return (
-            <div className="p-6">
-                <div className="card-neo p-12 flex flex-col items-center">
-                    <Users className="h-12 w-12 text-slate-400 mb-3" />
-                    <h3 className="text-lg font-semibold text-slate-900">No Players in Group</h3>
-                    <p className="mt-1 text-sm text-slate-500 text-center">
-                        Load a group using the controls above, or add a player to get started.
-                    </p>
-                </div>
+            <div className="text-center p-12 card-neo">
+                <Users className="mx-auto h-12 w-12 text-slate-400" />
+                {groupCode ? (
+                    <>
+                        <h3 className="mt-4 text-lg font-semibold text-slate-900">Group '{groupCode}' is Empty</h3>
+                        <p className="mt-2 text-sm text-slate-500">
+                            Use the "Add Player" or "Upload CSV" buttons to populate your roster.
+                        </p>
+                    </>
+                ) : (
+                    <>
+                        <h3 className="mt-4 text-lg font-semibold text-slate-900">Your Roster is Empty</h3>
+                        <p className="mt-2 text-sm text-slate-500">
+                            Load an existing group using the code above, or create a new one to get started.
+                        </p>
+                        <div className="mt-6">
+                            <Button onClick={onCreateGroup}>
+                                <UserPlus size={16} className="mr-2"/>
+                                Create New Group
+                            </Button>
+                        </div>
+                    </>
+                )}
             </div>
         );
     }
     
     return (
         <div className="space-y-6">
-            {/* Action Bar */}
-            <div className="flex flex-wrap items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                    <button onClick={onAddPlayer} className="button-neo inline-flex items-center gap-2"><UserPlus size={18} /> Add Player</button>
-                    <button onClick={onUploadCsv} className="button-neo inline-flex items-center gap-2"><Upload size={18} /> Upload CSV</button>
-                </div>
-                <div className="flex items-center gap-4">
-                    {isBulkEditing ? (
-                        <>
-                            <button onClick={() => setIsBulkEditing(false)} className="button-neo">Cancel</button>
-                            <button onClick={() => setIsBulkEditing(false)} className="button-neo bg-green-500 text-white">Save All</button>
-                        </>
-                    ) : (
-                        <button onClick={() => setIsBulkEditing(true)} className="button-neo">Bulk Edit</button>
-                    )}
-                    <button onClick={onGenerateTeams} disabled={players.filter(p => p.is_attending).length < 2} className="button-neo inline-flex items-center gap-2">
-                        <ArrowLeftRight size={18} /> Generate Teams
-                    </button>
-                </div>
-            </div>
-
             {/* Player Table */}
             <div className="table-neo min-w-full">
                 <table className="min-w-full divide-y divide-slate-200">
                     <thead>
                         <tr>
-                            <th scope="col" className="px-6 py-4 text-left"><SortButton field="name" label="Name" /></th>
-                            <th scope="col" className="px-6 py-4 text-center"><SortButton field="skill" label="Skill" /></th>
-                            <th scope="col" className="px-6 py-4 text-center"><SortButton field="position" label="Position" /></th>
-                            <th scope="col" className="px-6 py-4 text-center"><SortButton field="attendance" label="Attending" /></th>
-                            <th scope="col" className="px-6 py-4 text-center">Actions</th>
+                            <th scope="col" className="px-4 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider sticky left-0 bg-white"><SortButton field="name" label="Name" /></th>
+                            <th scope="col" className="px-4 py-2 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider"><SortButton field="skill" label="Skill" /></th>
+                            <th scope="col" className="px-4 py-2 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider"><SortButton field="position" label="Position" /></th>
+                            <th scope="col" className="px-4 py-2 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider"><SortButton field="attendance" label="Attending" /></th>
+                            <th scope="col" className="px-4 py-2 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider sticky right-0 bg-white">Actions</th>
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-slate-200">

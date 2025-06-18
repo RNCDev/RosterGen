@@ -1,6 +1,6 @@
 # Hockey Roster Manager
 
-This is a Next.js application designed to help manage hockey rosters. It allows users to create groups of players, manage player details, and automatically generate balanced teams.
+This is a Next.js application designed to help manage hockey rosters. It allows users to create groups of players, manage player details, and automatically generate balanced teams. The application has recently undergone a major refactoring to improve state management, component architecture, and overall code quality.
 
 ![Hockey Roster Manager Screenshot](https://i.imgur.com/xVd2OOf.png)
 
@@ -20,6 +20,29 @@ This is a Next.js application designed to help manage hockey rosters. It allows 
 -   **Database**: [Vercel Postgres](https://vercel.com/storage/postgres)
 -   **CSV Parsing**: [Papa Parse](https://www.papaparse.com/)
 -   **Deployment**: [Vercel](https://vercel.com/)
+
+## Project Structure
+
+```
+src/
+├── app/
+│   ├── api/
+│   │   ├── groups/
+│   │   ├── players/
+│   │   ├── stats/
+│   │   └── teams/
+│   └── components/
+│       ├── dialogs/
+│       └── ui/
+├── hooks/
+│   └── useGroupManager.ts
+├── lib/
+│   ├── db.ts
+│   └── teamGenerator.ts
+└── types/
+    ├── declarations.d.ts
+    └── PlayerTypes.ts
+```
 
 ## Getting Started
 

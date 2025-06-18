@@ -45,6 +45,18 @@
                hover:border-slate-300;
     }
 
+    .button-green {
+        @apply px-4 py-2.5 rounded-lg font-medium
+               transition-all duration-200 
+               bg-gradient-to-b from-green-500 to-green-600 text-white
+               border border-green-700/50
+               shadow-[4px_4px_8px_#dcfce7,-4px_-4px_8px_#ffffff]
+               active:shadow-[inset_4px_4px_8px_#166534,inset_-4px_-4px_8px_#86efac]
+               active:scale-[0.98]
+               disabled:opacity-50 disabled:cursor-not-allowed
+               hover:from-green-600 hover:to-green-700;
+    }
+
     /* Neomorphic Input */
     .input-neo {
         @apply px-4 py-2.5 rounded-lg

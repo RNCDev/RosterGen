@@ -111,10 +111,19 @@ export function useGroupManager() {
             });
 
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to delete group');
+                // If there's an error, try to parse JSON, but handle cases where it might not be
+                let errorMessage = 'Failed to delete group';
+                try {
+                    const errorData = await response.json();
+                    errorMessage = errorData.error || errorMessage;
+                } catch (e) {
+                    // Response was not JSON, use status text
+                    errorMessage = `${response.status} ${response.statusText}`;
+                }
+                throw new Error(errorMessage);
             }
 
+            // On success (e.g., 204 No Content), just clear the group
             handleClearGroup();
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to delete group');
