@@ -1,0 +1,142 @@
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
+import { type Player } from '@/types/PlayerTypes';
+import _ from 'lodash';
+
+export function useGroupManager() {
+    const [groupCode, setGroupCode] = useState<string>('');
+    const [players, setPlayers] = useState<Player[]>([]);
+    const [originalPlayers, setOriginalPlayers] = useState<Player[]>([]);
+    const [loading, setLoading] = useState<boolean>(true);
+    const [error, setError] = useState<string | null>(null);
+
+    // Load initial group code from localStorage
+    useEffect(() => {
+        const savedGroupCode = localStorage.getItem('groupCode');
+        if (savedGroupCode) {
+            setGroupCode(savedGroupCode);
+            handleLoadGroup(savedGroupCode);
+        } else {
+            setLoading(false);
+        }
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+    const isDirty = !_.isEqual(players, originalPlayers);
+
+    const handleLoadGroup = useCallback(async (code: string) => {
+        if (!code) {
+            setPlayers([]);
+            setOriginalPlayers([]);
+            setLoading(false);
+            return;
+        }
+
+        setLoading(true);
+        setError(null);
+        try {
+            const response = await fetch(`/api/players?groupCode=${code}`);
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to fetch players');
+            }
+            const data: Player[] = await response.json();
+            setPlayers(data);
+            setOriginalPlayers(data);
+            localStorage.setItem('groupCode', code);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to load players');
+            setPlayers([]);
+            setOriginalPlayers([]);
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+    
+    const handleSaveGroup = async () => {
+        if (!groupCode) {
+            setError('Please enter a group code to save.');
+            return;
+        }
+
+        setLoading(true);
+        setError(null);
+        try {
+            // This endpoint will create the group if it doesn't exist, or overwrite it if it does.
+            const response = await fetch('/api/groups', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ groupCode, players }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to save group');
+            }
+            
+            const savedPlayers: Player[] = await response.json();
+            setPlayers(savedPlayers);
+            setOriginalPlayers(savedPlayers);
+
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to save group');
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    };
+    
+    const handleClearGroup = () => {
+        setGroupCode('');
+        setPlayers([]);
+        setOriginalPlayers([]);
+        localStorage.removeItem('groupCode');
+        setError(null);
+    };
+
+    const handleDeleteGroup = async () => {
+        if (!groupCode) {
+            setError('No group code selected to delete.');
+            return;
+        }
+
+        setLoading(true);
+        setError(null);
+        try {
+            const response = await fetch('/api/groups', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ groupCode }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to delete group');
+            }
+
+            handleClearGroup();
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to delete group');
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return {
+        groupCode,
+        setGroupCode,
+        players,
+        setPlayers,
+        originalPlayers,
+        loading,
+        error,
+        isDirty,
+        handleLoadGroup,
+        handleSaveGroup,
+        handleClearGroup,
+        handleDeleteGroup,
+        setError,
+    };
+} 

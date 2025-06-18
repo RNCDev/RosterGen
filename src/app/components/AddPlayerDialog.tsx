@@ -1,5 +1,6 @@
 // src/app/components/AddPlayerDialog.tsx
 import React, { useState } from 'react';
+import Dialog from './Dialog';
 
 interface AddPlayerDialogProps {
     isOpen: boolean;
@@ -25,20 +26,14 @@ export default function AddPlayerDialog({ isOpen, onClose, onSubmit }: AddPlayer
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         onSubmit(formData);
-        setFormData({
-            firstName: '',
-            lastName: '',
-            skill: 5,
-            defense: false,
-            attending: true
-        });
+        onClose();
     };
 
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm flex items-center justify-center z-50">
-            <div className="card-neo p-6 max-w-md w-full mx-4 animate-slideIn">
+        <Dialog isOpen={isOpen} onClose={onClose}>
+            <div className="p-6">
                 <h2 className="text-xl font-semibold text-slate-900 mb-4">Add New Player</h2>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
@@ -118,6 +113,6 @@ export default function AddPlayerDialog({ isOpen, onClose, onSubmit }: AddPlayer
                     </div>
                 </form>
             </div>
-        </div>
+        </Dialog>
     );
 }

@@ -165,9 +165,44 @@ export async function POST(
 
 export async function PUT(
     request: NextRequest
-): Promise<NextResponse<PlayerDB | { error: string }>> {
+): Promise<NextResponse<PlayerDB | PlayerDB[] | { error: string }>> {
     try {
-        const formData = await request.json() as FormPlayer & { id: number };
+        const body = await request.json();
+        
+        // Check for bulk update
+        if (Array.isArray(body.players)) {
+            const players = body.players as PlayerDB[];
+            const groupCode = body.groupCode as string;
+
+            if (!groupCode) {
+                return NextResponse.json({ error: 'Group code is required for bulk update' }, { status: 400 });
+            }
+
+            const updatedPlayers: PlayerDB[] = [];
+            await sql.begin(async (tx: typeof sql) => {
+                for (const player of players) {
+                    const { rows } = await tx<PlayerDB>`
+                        UPDATE players
+                        SET
+                            first_name = ${player.first_name},
+                            last_name = ${player.last_name},
+                            skill = ${player.skill},
+                            is_defense = ${player.is_defense},
+                            is_attending = ${player.is_attending}
+                        WHERE id = ${player.id} AND group_code = ${groupCode}
+                        RETURNING *
+                    `;
+                    if (rows[0]) {
+                        updatedPlayers.push(rows[0]);
+                    }
+                }
+            });
+
+            return NextResponse.json(updatedPlayers);
+        }
+
+        // Handle single player update
+        const formData = body as FormPlayer & { id: number };
         console.log('Received update data:', formData);
 
         // Validate required fields

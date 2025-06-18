@@ -2,7 +2,7 @@
 'use client';
 
 import React from 'react';
-import { Download, Save, X, Trash2 } from 'lucide-react';
+import { Download, Save, X, Trash2, Search } from 'lucide-react';
 import _ from 'lodash';
 
 interface HeaderProps {
@@ -10,7 +10,7 @@ interface HeaderProps {
     setActiveTab: (tab: 'players' | 'roster') => void;
     groupCode: string;
     onGroupCodeChange: (groupCode: string) => void;
-    onRetrieveGroupCode: () => Promise<void>;
+    onRetrieveGroupCode: () => void;
     onSaveGroupCode: () => Promise<void>;
     onCancelGroupCode: () => void;
     onDeleteGroup: () => Promise<void>;
@@ -91,7 +91,19 @@ export default function Header({
                                 data-dashlane-ignore="true"
                                 type="button"
                             >
-                                <Download size={16} />
+                                <Search size={16} />
+                            </button>
+                            <button 
+                                onClick={onSaveGroupCode}
+                                disabled={!groupCode.trim()}
+                                className="button-neo bg-gradient-to-b from-green-500 to-green-600 
+                                         text-white hover:from-green-600 hover:to-green-700
+                                         disabled:opacity-50 disabled:cursor-not-allowed p-2"
+                                title="Save Group"
+                                data-dashlane-ignore="true"
+                                type="button"
+                            >
+                                <Save size={16} />
                             </button>
                             <button 
                                 onClick={onCancelGroupCode}
