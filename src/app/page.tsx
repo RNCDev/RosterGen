@@ -1,16 +1,13 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
 import { type Player, type Teams } from '@/types/PlayerTypes';
 import Header from '@/components/Header';
-import ActionBar from '@/components/ActionBar';
 import PlayersView from '@/components/PlayersView';
 import TeamsView from '@/components/TeamsView';
 import ErrorAlert from '@/components/ErrorAlert';
-import Dialog from '@/components/Dialog';
-import AddPlayerDialog from '@/components/AddPlayerDialog';
-import UploadCsvDialog from '@/components/UploadCsvDialog';
-import _ from 'lodash';
+import AddPlayerDialog from '@/components/dialogs/AddPlayerDialog';
+import UploadCsvDialog from '@/components/dialogs/UploadCsvDialog';
 import { generateTeams } from '@/lib/teamGenerator';
 import { useGroupManager } from '@/hooks/useGroupManager';
 
@@ -21,7 +18,6 @@ export default function Home() {
         setGroupCode,
         players,
         setPlayers,
-        originalPlayers,
         loading,
         error,
         isDirty,
@@ -45,9 +41,57 @@ export default function Home() {
     const [isAddPlayerOpen, setAddPlayerOpen] = useState(false);
     const [isUploadCsvOpen, setUploadCsvOpen] = useState(false);
     
+    const handleAddPlayer = async (newPlayerData: any) => {
+        if (!groupCode) {
+            setError("A group code must be set before adding players.");
+            return;
+        }
+        // Optimistic UI update
+        const tempId = Date.now();
+        const playerToAdd = { ...newPlayerData, id: tempId, group_code: groupCode };
+        setPlayers([...players, playerToAdd]);
+
+        // API call
+        try {
+            const response = await fetch('/api/players', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...newPlayerData, groupCode })
+            });
+
+            if (!response.ok) {
+                throw new Error("Failed to add player");
+            }
+            // Refresh data from server to get correct ID
+            handleLoadGroup(groupCode); 
+        } catch (e) {
+            setError(e instanceof Error ? e.message : 'An error occurred.');
+            // Revert optimistic update
+            setPlayers(players);
+        }
+    };
+
+    const handleCsvUpload = async (csvPlayers: any[]) => {
+        if (!groupCode) {
+            setError("A group code must be set before uploading a CSV.");
+            throw new Error("Group code not set.");
+        }
+        if (isDirty && !window.confirm("You have unsaved changes that will be lost. Are you sure you want to overwrite the current roster?")) {
+            throw new Error("Upload cancelled by user.");
+        }
+        
+        // This effectively replaces the current players with the CSV data
+        setPlayers(csvPlayers);
+        // The isDirty flag will now be true, user needs to click "Save" in the header
+    };
+    
     const handleGenerateTeams = () => {
-        const attendingPlayers = players.filter(p => p.is_attending);
-        const generated = generateTeams(attendingPlayers);
+        const attendingPlayers = players.filter((p: Player) => p.is_attending);
+        if (attendingPlayers.length < 2) {
+            setError("You need at least two attending players to generate teams.");
+            return;
+        }
+        const generated = generateTeams(attendingPlayers, groupCode);
         setTeams(generated);
         setActiveTab('teams');
     };
@@ -59,24 +103,26 @@ export default function Home() {
                 setActiveTab={setActiveTab}
                 groupCode={groupCode}
                 onGroupCodeChange={setGroupCode}
-                onRetrieveGroupCode={handleLoadGroup}
-                onSaveGroupCode={handleSaveGroup}
-                onCancelGroupCode={handleClearGroup}
+                onLoadGroup={() => handleLoadGroup(groupCode)}
+                onSaveGroup={handleSaveGroup}
+                onClearGroup={handleClearGroup}
                 onDeleteGroup={handleDeleteGroup}
+                isDirty={isDirty}
+                isLoading={loading}
             />
 
             <main className="flex-1 w-full max-w-7xl mx-auto px-6 py-8">
-                <ActionBar
-                    onAddPlayer={() => setAddPlayerOpen(true)}
-                    onUploadCsv={() => setUploadCsvOpen(true)}
-                    onGenerateTeams={handleGenerateTeams}
-                    showGenerateTeams={players.filter(p => p.is_attending).length > 0 && activeTab === 'players'}
-                />
-
                 {error && <ErrorAlert message={error} onDismiss={() => setError(null)} />}
 
                 {activeTab === 'players' ? (
-                    <PlayersView />
+                    <PlayersView
+                        players={players}
+                        setPlayers={setPlayers}
+                        loading={loading}
+                        onGenerateTeams={handleGenerateTeams}
+                        onAddPlayer={() => setAddPlayerOpen(true)}
+                        onUploadCsv={() => setUploadCsvOpen(true)}
+                    />
                 ) : (
                     <TeamsView />
                 )}
@@ -85,28 +131,14 @@ export default function Home() {
             <AddPlayerDialog
                 isOpen={isAddPlayerOpen}
                 onClose={() => setAddPlayerOpen(false)}
-                onSubmit={(data) => {
-                    // Handle adding a player
-                }}
+                onAddPlayer={handleAddPlayer}
             />
-
-            <Dialog
-                isOpen={false}
-                onClose={() => {}}
-            >
-                {/* Dialog content */}
-            </Dialog>
-
+            
             <UploadCsvDialog
                 isOpen={isUploadCsvOpen}
                 onClose={() => setUploadCsvOpen(false)}
-                onUpload={(data) => {
-                    // Handle uploading CSV
-                }}
-                groupCode={groupCode}
-                setGroupCode={setGroupCode}
+                onUpload={handleCsvUpload}
             />
-
         </div>
     );
 }

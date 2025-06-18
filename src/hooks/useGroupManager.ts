@@ -11,19 +11,7 @@ export function useGroupManager() {
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
 
-    // Load initial group code from localStorage
-    useEffect(() => {
-        const savedGroupCode = localStorage.getItem('groupCode');
-        if (savedGroupCode) {
-            setGroupCode(savedGroupCode);
-            handleLoadGroup(savedGroupCode);
-        } else {
-            setLoading(false);
-        }
-    }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-    const isDirty = !_.isEqual(players, originalPlayers);
-
+    // Using a callback for handleLoadGroup to use it in useEffect
     const handleLoadGroup = useCallback(async (code: string) => {
         if (!code) {
             setPlayers([]);
@@ -35,14 +23,14 @@ export function useGroupManager() {
         setLoading(true);
         setError(null);
         try {
-            const response = await fetch(`/api/players?groupCode=${code}`);
+            const response = await fetch(`/api/groups?groupCode=${code}`);
             if (!response.ok) {
                 const errorData = await response.json();
                 throw new Error(errorData.error || 'Failed to fetch players');
             }
             const data: Player[] = await response.json();
             setPlayers(data);
-            setOriginalPlayers(data);
+            setOriginalPlayers(data); // Set original state after fetching
             localStorage.setItem('groupCode', code);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to load players');
@@ -53,7 +41,20 @@ export function useGroupManager() {
             setLoading(false);
         }
     }, []);
-    
+
+    // Load initial group code from localStorage
+    useEffect(() => {
+        const savedGroupCode = localStorage.getItem('groupCode');
+        if (savedGroupCode) {
+            setGroupCode(savedGroupCode);
+            handleLoadGroup(savedGroupCode);
+        } else {
+            setLoading(false);
+        }
+    }, [handleLoadGroup]);
+
+    const isDirty = !_.isEqual(players, originalPlayers);
+
     const handleSaveGroup = async () => {
         if (!groupCode) {
             setError('Please enter a group code to save.');
@@ -63,7 +64,6 @@ export function useGroupManager() {
         setLoading(true);
         setError(null);
         try {
-            // This endpoint will create the group if it doesn't exist, or overwrite it if it does.
             const response = await fetch('/api/groups', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -74,10 +74,10 @@ export function useGroupManager() {
                 const errorData = await response.json();
                 throw new Error(errorData.error || 'Failed to save group');
             }
-            
+
             const savedPlayers: Player[] = await response.json();
             setPlayers(savedPlayers);
-            setOriginalPlayers(savedPlayers);
+            setOriginalPlayers(savedPlayers); // Update original state after saving
 
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to save group');
@@ -86,7 +86,7 @@ export function useGroupManager() {
             setLoading(false);
         }
     };
-    
+
     const handleClearGroup = () => {
         setGroupCode('');
         setPlayers([]);
@@ -139,4 +139,4 @@ export function useGroupManager() {
         handleDeleteGroup,
         setError,
     };
-} 
+}
