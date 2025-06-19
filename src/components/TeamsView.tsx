@@ -12,6 +12,7 @@ interface TeamsViewProps {
     setTeamNames: (names: { team1: string; team2: string }) => void;
     onGenerateTeams: () => void;
     attendingPlayerCount: number;
+    isGenerating: boolean;
 }
 
 // Helper to calculate team stats
@@ -149,7 +150,7 @@ const TeamCard = ({
     );
 };
 
-export default function TeamsView({ teams, teamNames, setTeamNames, onGenerateTeams, attendingPlayerCount }: TeamsViewProps) {
+export default function TeamsView({ teams, teamNames, setTeamNames, onGenerateTeams, attendingPlayerCount, isGenerating }: TeamsViewProps) {
     const teamsContainerRef = useRef<HTMLDivElement>(null);
 
     const handleCopyToClipboard = () => {
@@ -242,11 +243,11 @@ export default function TeamsView({ teams, teamNames, setTeamNames, onGenerateTe
                 <div className="flex items-center gap-3">
                     <Button 
                         onClick={onGenerateTeams} 
-                        disabled={attendingPlayerCount < 2}
-                        className="btn-primary"
+                        disabled={attendingPlayerCount < 2 || isGenerating}
+                        className={`btn-primary ${isGenerating ? 'animate-pulse' : ''}`}
                     >
-                        <RefreshCw size={16} className="mr-2" /> 
-                        Regenerate Teams
+                        <RefreshCw size={16} className={`mr-2 ${isGenerating ? 'animate-spin' : ''}`} /> 
+                        {isGenerating ? 'Generating...' : 'Regenerate Teams'}
                     </Button>
                     <Button onClick={handleCopyToClipboard} variant="outline" className="btn-secondary">
                         <Clipboard size={16} className="mr-2" /> 
@@ -257,18 +258,22 @@ export default function TeamsView({ teams, teamNames, setTeamNames, onGenerateTe
             
             {/* Teams Grid */}
             <div ref={teamsContainerRef} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <TeamCard
-                    name={teamNames.team1}
-                    team={teams.red}
-                    onNameChange={(name) => setTeamNames({ ...teamNames, team1: name })}
-                    teamColor="red"
-                />
-                <TeamCard
-                    name={teamNames.team2}
-                    team={teams.white}
-                    onNameChange={(name) => setTeamNames({ ...teamNames, team2: name })}
-                    teamColor="blue"
-                />
+                <div className="animate-slide-up" style={{ animationDelay: '0.1s' }}>
+                    <TeamCard
+                        name={teamNames.team1}
+                        team={teams.red}
+                        onNameChange={(name) => setTeamNames({ ...teamNames, team1: name })}
+                        teamColor="red"
+                    />
+                </div>
+                <div className="animate-slide-up" style={{ animationDelay: '0.2s' }}>
+                    <TeamCard
+                        name={teamNames.team2}
+                        team={teams.white}
+                        onNameChange={(name) => setTeamNames({ ...teamNames, team2: name })}
+                        teamColor="blue"
+                    />
+                </div>
             </div>
         </div>
     );

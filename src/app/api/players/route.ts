@@ -54,15 +54,24 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
     try {
         const body = await request.json();
+        console.log('PUT /api/players received body:', body);
+        
         const { groupCode, players } = z.object({
             groupCode: z.string().trim().min(1),
             players: z.array(playerUpdateSchema)
         }).parse(body);
 
-        const updatedPlayers = await sql.begin(async (tx: any) => {
-            const results = [];
-            for (const player of players) {
-                const { rows } = await tx`
+        console.log(`Updating ${players.length} players for group: ${groupCode}`);
+
+        const updatedPlayers = [];
+        
+        // Process each player update
+        for (let i = 0; i < players.length; i++) {
+            const player = players[i];
+            console.log(`Updating player ${i + 1}/${players.length}: ${player.first_name} ${player.last_name} (ID: ${player.id})`);
+            
+            try {
+                const result = await sql`
                     UPDATE players
                     SET 
                         first_name = ${player.first_name},
@@ -73,18 +82,37 @@ export async function PUT(request: NextRequest) {
                     WHERE id = ${player.id} AND group_code = ${groupCode}
                     RETURNING *;
                 `;
-                results.push(rows[0]);
+                
+                console.log(`Update result for player ${player.id}:`, result.rows);
+                
+                if (result.rows && result.rows[0]) {
+                    updatedPlayers.push(result.rows[0]);
+                } else {
+                    console.warn(`No rows returned for player ${player.id} - may not exist or group code mismatch`);
+                }
+            } catch (playerError) {
+                console.error(`Error updating player ${player.id}:`, playerError);
+                throw playerError;
             }
-            return results;
-        });
+        }
 
+        console.log(`Successfully updated ${updatedPlayers.length} players`);
         return NextResponse.json(updatedPlayers);
+        
     } catch (error) {
         console.error('Failed to bulk update players:', error);
         if (error instanceof z.ZodError) {
-            return NextResponse.json({ error: 'Invalid data for bulk update', details: error.flatten() }, { status: 400 });
+            return NextResponse.json({ 
+                error: 'Invalid data for bulk update', 
+                details: error.flatten(),
+                received: error.message 
+            }, { status: 400 });
         }
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+        return NextResponse.json({ 
+            error: 'Internal Server Error', 
+            message: error instanceof Error ? error.message : 'Unknown error',
+            stack: error instanceof Error ? error.stack : undefined
+        }, { status: 500 });
     }
 }
 

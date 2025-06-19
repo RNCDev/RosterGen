@@ -68,21 +68,40 @@ export function useGroupManager() {
         setLoading(true);
         setError(null);
         try {
-            const response = await fetch('/api/groups', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ groupCode, players }),
-            });
+            // If we have a loaded group (existing group), update the players
+            if (loadedGroupCode && loadedGroupCode === groupCode) {
+                const response = await fetch('/api/players', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ groupCode, players }),
+                });
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to save group');
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to update players');
+                }
+
+                const savedPlayers: Player[] = await response.json();
+                setPlayers(savedPlayers);
+                setOriginalPlayers(savedPlayers); // Update original state after saving
+            } else {
+                // If this is a new group, use the groups endpoint
+                const response = await fetch('/api/groups', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ groupCode, players }),
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to save group');
+                }
+
+                const savedPlayers: Player[] = await response.json();
+                setPlayers(savedPlayers);
+                setOriginalPlayers(savedPlayers); // Update original state after saving
+                setLoadedGroupCode(groupCode);
             }
-
-            const savedPlayers: Player[] = await response.json();
-            setPlayers(savedPlayers);
-            setOriginalPlayers(savedPlayers); // Update original state after saving
-            setLoadedGroupCode(groupCode);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to save group');
             console.error(err);

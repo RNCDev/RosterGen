@@ -20,6 +20,7 @@ interface PlayersViewProps {
     onGenerateTeams: () => void;
     // State
     isDirty: boolean;
+    isGenerating: boolean;
 }
 
 type SortField = 'name' | 'skill' | 'position' | 'attendance';
@@ -36,7 +37,8 @@ export default function PlayersView({
     onUploadCsv,
     onToggleBulkEdit,
     onGenerateTeams,
-    isDirty
+    isDirty,
+    isGenerating
 }: PlayersViewProps) {
     const [sortConfig, setSortConfig] = useState<{ field: SortField, direction: SortDirection }>({ field: 'name', direction: 'asc' });
 
@@ -229,13 +231,13 @@ export default function PlayersView({
                         size="sm"
                     >
                         <Pencil size={16} className="mr-2"/> 
-                        {isBulkEditing ? 'Finish Edit' : 'Bulk Edit'}
+                        {isBulkEditing ? (isDirty ? 'Save & Finish' : 'Finish Edit') : 'Bulk Edit'}
                     </Button>
                 </div>
                 
                 <Button 
                     onClick={onGenerateTeams} 
-                    disabled={attendingCount < 2 || isBulkEditing}
+                    disabled={attendingCount < 2 || isBulkEditing || isGenerating}
                     className="btn-primary"
                 >
                     <ArrowLeftRight size={16} className="mr-2" />

@@ -15,6 +15,7 @@ import { useGroupManager } from '@/hooks/useGroupManager';
 
 export default function Home() {
     const [activeTab, setActiveTab] = useState<'players' | 'teams'>('players');
+    const [isGeneratingTeams, setIsGeneratingTeams] = useState(false);
     const {
         groupCode,
         setGroupCode,
@@ -98,15 +99,22 @@ export default function Home() {
         setIsBulkEditing(true); // Automatically enter bulk edit mode after CSV upload
     };
     
-    const handleGenerateTeams = () => {
+    const handleGenerateTeams = async () => {
         const attendingPlayers = players.filter((p: Player) => p.is_attending);
         if (attendingPlayers.length < 2) {
             setError("You need at least two attending players to generate teams.");
             return;
         }
-        const generated = generateTeams(attendingPlayers, groupCode);
-        setTeams(generated);
-        setActiveTab('teams');
+        
+        setIsGeneratingTeams(true);
+        
+        // Add a slight delay for the loading animation
+        setTimeout(() => {
+            const generated = generateTeams(attendingPlayers, groupCode);
+            setTeams(generated);
+            setIsGeneratingTeams(false);
+            setActiveTab('teams');
+        }, 800);
     };
 
     // New handler for creating a group
@@ -138,6 +146,21 @@ export default function Home() {
 
     const attendingPlayerCount = players.filter((p: Player) => p.is_attending).length;
 
+    const handleToggleBulkEdit = async () => {
+        if (isBulkEditing && isDirty) {
+            // If exiting bulk edit mode with unsaved changes, save first
+            try {
+                await handleSaveGroup();
+                setIsBulkEditing(false);
+            } catch (error) {
+                // If save fails, don't exit bulk edit mode
+                console.error('Failed to save changes:', error);
+            }
+        } else {
+            setIsBulkEditing(!isBulkEditing);
+        }
+    };
+
     return (
         <div className="flex flex-col min-h-screen">
             <AppHeader
@@ -156,7 +179,7 @@ export default function Home() {
                 isDirty={isDirty}
                 isLoading={loading}
                 isBulkEditing={isBulkEditing}
-                onToggleBulkEdit={() => setIsBulkEditing(!isBulkEditing)}
+                onToggleBulkEdit={handleToggleBulkEdit}
                 onAddPlayer={() => setAddPlayerOpen(true)}
                 onUploadCsv={() => setUploadCsvOpen(true)}
                 onGenerateTeams={handleGenerateTeams}
@@ -164,32 +187,63 @@ export default function Home() {
                 totalPlayerCount={players.length}
             />
 
-            <main className="flex-1 w-full max-w-7xl mx-auto px-8 py-8 overflow-y-auto custom-scrollbar">
-                {error && <ErrorAlert message={error} onDismiss={() => setError(null)} />}
+            <main className="flex-1 bg-gradient-to-br from-blue-50/30 to-indigo-50/30 relative overflow-hidden">
+                <div className="max-w-7xl mx-auto px-8 py-8">
+                    {error && <ErrorAlert message={error} onDismiss={() => setError(null)} />}
 
-                {activeTab === 'players' ? (
-                    <PlayersView
-                        players={players}
-                        setPlayers={setPlayers}
-                        loading={loading}
-                        isBulkEditing={isBulkEditing}
-                        onCreateGroup={() => setCreateGroupOpen(true)}
-                        groupCode={loadedGroupCode}
-                        onAddPlayer={() => setAddPlayerOpen(true)}
-                        onUploadCsv={() => setUploadCsvOpen(true)}
-                        onToggleBulkEdit={() => setIsBulkEditing(!isBulkEditing)}
-                        onGenerateTeams={handleGenerateTeams}
-                        isDirty={isDirty}
-                    />
-                ) : (
-                    <TeamsView 
-                        teams={teams}
-                        teamNames={teamNames}
-                        setTeamNames={setTeamNames}
-                        onGenerateTeams={handleGenerateTeams}
-                        attendingPlayerCount={attendingPlayerCount}
-                    />
-                )}
+                    {/* Generate Teams Loading Overlay */}
+                    {isGeneratingTeams && (
+                        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+                            <div className="bg-white/90 backdrop-blur-md rounded-2xl p-8 flex flex-col items-center gap-6 animate-fade-in shadow-2xl">
+                                <div className="relative">
+                                    <div className="w-16 h-16 border-4 border-blue-200 rounded-full"></div>
+                                    <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin absolute top-0 left-0"></div>
+                                </div>
+                                <div className="text-center">
+                                    <h3 className="text-lg font-semibold text-gray-800 mb-2">Generating Teams...</h3>
+                                    <p className="text-sm text-gray-600">Balancing players by skill and position</p>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce"></div>
+                                    <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                                    <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="relative">
+                        {activeTab === 'players' ? (
+                            <div key="players" className="animate-slide-in-left">
+                                <PlayersView
+                                    players={players}
+                                    setPlayers={setPlayers}
+                                    loading={loading}
+                                    isBulkEditing={isBulkEditing}
+                                    onCreateGroup={() => setCreateGroupOpen(true)}
+                                    groupCode={loadedGroupCode}
+                                    onAddPlayer={() => setAddPlayerOpen(true)}
+                                    onUploadCsv={() => setUploadCsvOpen(true)}
+                                    onToggleBulkEdit={handleToggleBulkEdit}
+                                    onGenerateTeams={handleGenerateTeams}
+                                    isDirty={isDirty}
+                                    isGenerating={isGeneratingTeams}
+                                />
+                            </div>
+                        ) : (
+                            <div key="teams" className="animate-slide-in-right">
+                                <TeamsView 
+                                    teams={teams}
+                                    teamNames={teamNames}
+                                    setTeamNames={setTeamNames}
+                                    onGenerateTeams={handleGenerateTeams}
+                                    attendingPlayerCount={attendingPlayerCount}
+                                    isGenerating={isGeneratingTeams}
+                                />
+                            </div>
+                        )}
+                    </div>
+                </div>
             </main>
             
             <AddPlayerDialog
