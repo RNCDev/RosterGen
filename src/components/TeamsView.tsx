@@ -86,8 +86,10 @@ const TeamCard = ({
                         />
                     </div>
                     <div className="text-right">
-                        <div className="text-sm font-bold text-gray-700">{stats.totalPlayers} players</div>
-                        <div className="text-xs text-gray-500">Avg: {stats.averageSkill}</div>
+                        <div className="text-sm font-bold text-gray-700">
+                            {team.forwards.length}F {team.defensemen.length}D
+                        </div>
+                        <div className="text-xs text-gray-500">Avg: {stats.averageSkill.toFixed(1)}</div>
                     </div>
                 </div>
             </div>
