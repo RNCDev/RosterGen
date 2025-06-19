@@ -157,40 +157,40 @@ export default function PlayersView({
     
     return (
         <div className="space-y-6 animate-fade-in">
-            {/* Stats Summary */}
-            <div className="grid grid-cols-3 gap-4">
-                <div className="card-modern p-4">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                            <Users className="w-5 h-5 text-blue-600" />
+            {/* Stats Summary - De-emphasized */}
+            <div className="grid grid-cols-3 gap-3">
+                <div className="bg-white/50 backdrop-blur-sm rounded-lg border border-white/40 p-3">
+                    <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 bg-blue-100 rounded-md flex items-center justify-center">
+                            <Users className="w-4 h-4 text-blue-600" />
                         </div>
                         <div>
-                            <p className="text-sm font-medium text-gray-600">Total Players</p>
-                            <p className="text-xl font-bold text-gray-900">{players.length}</p>
+                            <p className="text-xs font-medium text-gray-500">Total Players</p>
+                            <p className="text-lg font-bold text-gray-900">{players.length}</p>
                         </div>
                     </div>
                 </div>
                 
-                <div className="card-modern p-4">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                            <Activity className="w-5 h-5 text-green-600" />
+                <div className="bg-white/50 backdrop-blur-sm rounded-lg border border-white/40 p-3">
+                    <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 bg-green-100 rounded-md flex items-center justify-center">
+                            <Activity className="w-4 h-4 text-green-600" />
                         </div>
                         <div>
-                            <p className="text-sm font-medium text-gray-600">Attending</p>
-                            <p className="text-xl font-bold text-gray-900">{attendingCount}</p>
+                            <p className="text-xs font-medium text-gray-500">Attending</p>
+                            <p className="text-lg font-bold text-gray-900">{attendingCount}</p>
                         </div>
                     </div>
                 </div>
                 
-                <div className="card-modern p-4">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                            <TrendingUp className="w-5 h-5 text-purple-600" />
+                <div className="bg-white/50 backdrop-blur-sm rounded-lg border border-white/40 p-3">
+                    <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 bg-purple-100 rounded-md flex items-center justify-center">
+                            <TrendingUp className="w-4 h-4 text-purple-600" />
                         </div>
                         <div>
-                            <p className="text-sm font-medium text-gray-600">Avg. Skill</p>
-                            <p className="text-xl font-bold text-gray-900">
+                            <p className="text-xs font-medium text-gray-500">Avg. Skill</p>
+                            <p className="text-lg font-bold text-gray-900">
                                 {players.length > 0 
                                     ? (players.reduce((sum, p) => sum + p.skill, 0) / players.length).toFixed(1)
                                     : '0'

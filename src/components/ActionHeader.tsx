@@ -67,11 +67,11 @@ export default function ActionHeader({
     return (
         <div className="bg-white/40 backdrop-blur-md border-b border-white/30 sticky top-16 z-30">
             <div className="max-w-7xl mx-auto px-8 py-4">
-                <div className="flex items-center justify-center">
+                <div className="flex items-center justify-start">
                     <div className="flex items-center gap-4">
                         {/* Group Code Input */}
                         <div className="flex items-center gap-2">
-                            <label className="text-sm font-semibold text-gray-700">Group:</label>
+                            <label className="text-sm font-semibold text-gray-700">GROUP</label>
                             <div className="card-modern flex items-center gap-2 px-3 py-2">
                                 <input
                                     type="text"

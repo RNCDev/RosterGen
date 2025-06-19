@@ -49,120 +49,99 @@ const TeamCard = ({
         red: {
             gradient: 'from-red-500 to-rose-600',
             bgGradient: 'from-red-50 to-rose-50',
-            iconBg: 'bg-red-100',
-            iconColor: 'text-red-600',
             border: 'border-red-200/30',
-            accent: 'text-red-600'
+            accent: 'text-red-600',
+            headerBg: 'bg-red-100',
+            forwardBg: 'bg-orange-50',
+            defenseBg: 'bg-purple-50'
         },
         blue: {
             gradient: 'from-blue-500 to-indigo-600',
             bgGradient: 'from-blue-50 to-indigo-50',
-            iconBg: 'bg-blue-100',
-            iconColor: 'text-blue-600',
             border: 'border-blue-200/30',
-            accent: 'text-blue-600'
+            accent: 'text-blue-600',
+            headerBg: 'bg-blue-100',
+            forwardBg: 'bg-orange-50',
+            defenseBg: 'bg-purple-50'
         }
     };
     
     const colors = colorClasses[teamColor];
     
     return (
-        <div className={`card-elevated p-6 bg-gradient-to-br ${colors.bgGradient} border-2 ${colors.border} flex-grow animate-slide-up`}>
-            {/* Team Header */}
-            <div className="flex items-center gap-3 mb-6">
-                <div className={`w-12 h-12 bg-gradient-to-br ${colors.gradient} rounded-xl flex items-center justify-center shadow-lg`}>
-                    <Trophy className="w-6 h-6 text-white" />
-                </div>
-                <input
-                    type="text"
-                    value={name}
-                    onChange={(e) => onNameChange(e.target.value)}
-                    className={`text-2xl font-bold bg-transparent border-b-2 border-transparent focus:border-gray-400 outline-none flex-1 ${colors.accent}`}
-                    placeholder="Team Name"
-                />
-            </div>
-            
-            {/* Stats Grid */}
-            <div className="grid grid-cols-3 gap-4 mb-6">
-                <div className="text-center">
-                    <div className={`w-10 h-10 ${colors.iconBg} rounded-lg flex items-center justify-center mx-auto mb-2`}>
-                        <Users className={`w-5 h-5 ${colors.iconColor}`} />
+        <div className={`bg-white/70 backdrop-blur-sm rounded-lg border-2 ${colors.border} overflow-hidden`}>
+            {/* Compact Team Header */}
+            <div className={`${colors.headerBg} px-4 py-3 border-b ${colors.border}`}>
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className={`w-8 h-8 bg-gradient-to-br ${colors.gradient} rounded-lg flex items-center justify-center shadow-sm`}>
+                            <Trophy className="w-4 h-4 text-white" />
+                        </div>
+                        <input
+                            type="text"
+                            value={name}
+                            onChange={(e) => onNameChange(e.target.value)}
+                            className={`text-lg font-bold bg-transparent border-b border-transparent focus:border-gray-400 outline-none ${colors.accent}`}
+                            placeholder="Team Name"
+                        />
                     </div>
-                    <div className="text-2xl font-bold text-gray-900">{stats.totalPlayers}</div>
-                    <div className="text-sm text-gray-600 font-medium">Players</div>
-                </div>
-                <div className="text-center">
-                    <div className={`w-10 h-10 ${colors.iconBg} rounded-lg flex items-center justify-center mx-auto mb-2`}>
-                        <BarChart2 className={`w-5 h-5 ${colors.iconColor}`} />
+                    <div className="text-right">
+                        <div className="text-sm font-bold text-gray-700">{stats.totalPlayers} players</div>
+                        <div className="text-xs text-gray-500">Avg: {stats.averageSkill}</div>
                     </div>
-                    <div className="text-2xl font-bold text-gray-900">{stats.averageSkill}</div>
-                    <div className="text-sm text-gray-600 font-medium">Avg. Skill</div>
-                </div>
-                <div className="text-center">
-                    <div className={`w-10 h-10 ${colors.iconBg} rounded-lg flex items-center justify-center mx-auto mb-2`}>
-                        <Target className={`w-5 h-5 ${colors.iconColor}`} />
-                    </div>
-                    <div className="text-2xl font-bold text-gray-900">{stats.totalSkill}</div>
-                    <div className="text-sm text-gray-600 font-medium">Total Skill</div>
                 </div>
             </div>
             
-            {/* Forwards Section */}
-            <div className="mb-6">
-                <div className="flex items-center gap-2 mb-4">
-                    <div className="w-8 h-8 bg-gradient-to-br from-orange-100 to-yellow-100 rounded-lg flex items-center justify-center">
-                        <Zap className="w-4 h-4 text-orange-600" />
-                    </div>
-                    <h4 className="text-lg font-semibold text-gray-800">
-                        Forwards ({team.forwards.length})
-                    </h4>
-                </div>
-                <div className="space-y-2">
-                    {team.forwards.length > 0 ? (
-                        team.forwards.map(p => (
-                            <div key={p.id} className="flex items-center justify-between p-3 bg-white/60 backdrop-blur-sm rounded-lg border border-white/40">
-                                <span className="font-medium text-gray-800">{p.first_name} {p.last_name}</span>
-                                <div className="flex items-center gap-2">
-                                    <span className="text-xs text-gray-500 font-medium">SKILL</span>
-                                    <span className="bg-gradient-to-r from-orange-500 to-yellow-500 text-white text-sm font-bold px-2 py-1 rounded-full">
+            {/* Compact Player Lists */}
+            <div className="p-3 space-y-3">
+                {/* Forwards - Compact List */}
+                {team.forwards.length > 0 && (
+                    <div>
+                        <div className="flex items-center gap-2 mb-2">
+                            <Zap className="w-4 h-4 text-orange-600" />
+                            <h4 className="text-sm font-semibold text-gray-700">
+                                Forwards ({team.forwards.length})
+                            </h4>
+                        </div>
+                        <div className="grid grid-cols-2 gap-1">
+                            {team.forwards.map(p => (
+                                <div key={p.id} className="flex items-center justify-between px-2 py-1 bg-orange-50/70 rounded text-xs">
+                                    <span className="font-medium text-gray-800 truncate">{p.first_name} {p.last_name}</span>
+                                    <span className="bg-orange-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 ml-1">
                                         {p.skill}
                                     </span>
                                 </div>
-                            </div>
-                        ))
-                    ) : (
-                        <div className="text-center py-4 text-gray-500 text-sm">No forwards assigned</div>
-                    )}
-                </div>
-            </div>
-            
-            {/* Defense Section */}
-            <div>
-                <div className="flex items-center gap-2 mb-4">
-                    <div className="w-8 h-8 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-lg flex items-center justify-center">
-                        <Shield className="w-4 h-4 text-purple-600" />
+                            ))}
+                        </div>
                     </div>
-                    <h4 className="text-lg font-semibold text-gray-800">
-                        Defense ({team.defensemen.length})
-                    </h4>
-                </div>
-                <div className="space-y-2">
-                    {team.defensemen.length > 0 ? (
-                        team.defensemen.map(p => (
-                            <div key={p.id} className="flex items-center justify-between p-3 bg-white/60 backdrop-blur-sm rounded-lg border border-white/40">
-                                <span className="font-medium text-gray-800">{p.first_name} {p.last_name}</span>
-                                <div className="flex items-center gap-2">
-                                    <span className="text-xs text-gray-500 font-medium">SKILL</span>
-                                    <span className="bg-gradient-to-r from-purple-500 to-indigo-500 text-white text-sm font-bold px-2 py-1 rounded-full">
+                )}
+                
+                {/* Defense - Compact List */}
+                {team.defensemen.length > 0 && (
+                    <div>
+                        <div className="flex items-center gap-2 mb-2">
+                            <Shield className="w-4 h-4 text-purple-600" />
+                            <h4 className="text-sm font-semibold text-gray-700">
+                                Defense ({team.defensemen.length})
+                            </h4>
+                        </div>
+                        <div className="grid grid-cols-2 gap-1">
+                            {team.defensemen.map(p => (
+                                <div key={p.id} className="flex items-center justify-between px-2 py-1 bg-purple-50/70 rounded text-xs">
+                                    <span className="font-medium text-gray-800 truncate">{p.first_name} {p.last_name}</span>
+                                    <span className="bg-purple-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 ml-1">
                                         {p.skill}
                                     </span>
                                 </div>
-                            </div>
-                        ))
-                    ) : (
-                        <div className="text-center py-4 text-gray-500 text-sm">No defensemen assigned</div>
-                    )}
-                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+                
+                {/* Empty State */}
+                {team.forwards.length === 0 && team.defensemen.length === 0 && (
+                    <div className="text-center py-6 text-gray-500 text-sm">No players assigned</div>
+                )}
             </div>
         </div>
     );
@@ -211,40 +190,40 @@ export default function TeamsView({ teams, teamNames, setTeamNames, onGenerateTe
 
     return (
         <div className="space-y-6 animate-fade-in">
-            {/* Header Stats */}
-            <div className="grid grid-cols-3 gap-4 mb-6">
-                <div className="card-modern p-4">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                            <Users className="w-5 h-5 text-blue-600" />
+            {/* Header Stats - De-emphasized */}
+            <div className="grid grid-cols-3 gap-3">
+                <div className="bg-white/50 backdrop-blur-sm rounded-lg border border-white/40 p-3">
+                    <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 bg-blue-100 rounded-md flex items-center justify-center">
+                            <Users className="w-4 h-4 text-blue-600" />
                         </div>
                         <div>
-                            <p className="text-sm font-medium text-gray-600">Total Players</p>
-                            <p className="text-xl font-bold text-gray-900">{totalPlayers}</p>
+                            <p className="text-xs font-medium text-gray-500">Total Players</p>
+                            <p className="text-lg font-bold text-gray-900">{totalPlayers}</p>
                         </div>
                     </div>
                 </div>
                 
-                <div className="card-modern p-4">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                            <BarChart2 className="w-5 h-5 text-green-600" />
+                <div className="bg-white/50 backdrop-blur-sm rounded-lg border border-white/40 p-3">
+                    <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 bg-green-100 rounded-md flex items-center justify-center">
+                            <BarChart2 className="w-4 h-4 text-green-600" />
                         </div>
                         <div>
-                            <p className="text-sm font-medium text-gray-600">Skill Difference</p>
-                            <p className="text-xl font-bold text-gray-900">{skillDifference}</p>
+                            <p className="text-xs font-medium text-gray-500">Skill Difference</p>
+                            <p className="text-lg font-bold text-gray-900">{skillDifference}</p>
                         </div>
                     </div>
                 </div>
                 
-                <div className="card-modern p-4">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                            <Trophy className="w-5 h-5 text-purple-600" />
+                <div className="bg-white/50 backdrop-blur-sm rounded-lg border border-white/40 p-3">
+                    <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 bg-purple-100 rounded-md flex items-center justify-center">
+                            <Trophy className="w-4 h-4 text-purple-600" />
                         </div>
                         <div>
-                            <p className="text-sm font-medium text-gray-600">Balance Score</p>
-                            <p className="text-xl font-bold text-gray-900">
+                            <p className="text-xs font-medium text-gray-500">Balance Score</p>
+                            <p className="text-lg font-bold text-gray-900">
                                 {skillDifference <= 2 ? 'Excellent' : skillDifference <= 5 ? 'Good' : 'Fair'}
                             </p>
                         </div>
