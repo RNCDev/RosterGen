@@ -1,25 +1,36 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { type Player, type Teams } from '@/types/PlayerTypes';
-import Header from '@/components/Header';
-import ActionBar from '@/components/ActionBar';
+import AppHeader from '@/components/AppHeader';
+import ActionHeader from '@/components/ActionHeader';
 import PlayersView from '@/components/PlayersView';
 import TeamsView from '@/components/TeamsView';
 import ErrorAlert from '@/components/ErrorAlert';
-import Dialog from '@/components/Dialog';
-import AddPlayerDialog from '@/components/AddPlayerDialog';
-import _ from 'lodash';
+import AddPlayerDialog from '@/components/dialogs/AddPlayerDialog';
+import UploadCsvDialog from '@/components/dialogs/UploadCsvDialog';
+import CreateGroupDialog from '@/components/dialogs/CreateGroupDialog';
 import { generateTeams } from '@/lib/teamGenerator';
+import { useGroupManager } from '@/hooks/useGroupManager';
 
 export default function Home() {
-    const [players, setPlayers] = useState<Player[]>([]);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [activeTab, setActiveTab] = useState<'players' | 'roster'>('players');
-    const [groupCode, setGroupCode] = useState<string>('');
-    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-    const [showAddPlayer, setShowAddPlayer] = useState(false);
+    const [activeTab, setActiveTab] = useState<'players' | 'teams'>('players');
+    const {
+        groupCode,
+        setGroupCode,
+        loadedGroupCode,
+        players,
+        setPlayers,
+        loading,
+        error,
+        isDirty,
+        handleLoadGroup,
+        handleSaveGroup,
+        handleClearGroup,
+        handleDeleteGroup,
+        setError,
+    } = useGroupManager();
+
     const [teams, setTeams] = useState<Teams>({
         red: { forwards: [], defensemen: [] },
         white: { forwards: [], defensemen: [] },
@@ -28,401 +39,175 @@ export default function Home() {
         team1: 'Red',
         team2: 'White'
     });
+    
+    // Dialog states
+    const [isAddPlayerOpen, setAddPlayerOpen] = useState(false);
+    const [isUploadCsvOpen, setUploadCsvOpen] = useState(false);
+    const [isCreateGroupOpen, setCreateGroupOpen] = useState(false);
+    
+    // Bulk editing state
+    const [isBulkEditing, setIsBulkEditing] = useState(false);
 
-    useEffect(() => {
-        const savedGroupCode = localStorage.getItem('groupCode');
-        if (savedGroupCode) {
-            setGroupCode(savedGroupCode);
-            fetchPlayers(savedGroupCode);
-        }
-    }, []);
-
-    const fetchPlayers = async (groupCode?: string) => {
-        try {
-            setLoading(true);
-            const response = await fetch(`/api/players?groupCode=${groupCode || ''}`);
-            if (!response.ok) throw new Error('Failed to fetch players');
-            const data = await response.json();
-            setPlayers(data);
-        } catch (err) {
-            setError('Failed to load players');
-            console.error(err);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleGroupCodeChange = (newGroupCode: string) => {
-        setGroupCode(newGroupCode);
-    };
-
-    const handleRetrieveGroupCode = async () => {
+    const handleAddPlayer = async (newPlayerData: Omit<Player, 'id' | 'group_code' | 'created_at' | 'updated_at'>) => {
         if (!groupCode) {
-            setError('Please enter a group code');
+            setError("A group code must be set before adding players.");
             return;
         }
+        
+        const playerWithGroupCode = { ...newPlayerData, group_code: groupCode };
 
+        // Optimistic UI update
+        const tempId = Date.now();
+        const playerToAdd = { ...playerWithGroupCode, id: tempId };
+        setPlayers([...players, playerToAdd]);
+
+        // API call
         try {
-            setLoading(true);
-            setError(null);
-            await fetchPlayers(groupCode);
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to retrieve group');
-            console.error(err);
-        } finally {
-            setLoading(false);
+            const response = await fetch('/api/players', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(playerWithGroupCode) // Send the correct object
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error("API Error:", errorData);
+                throw new Error(errorData.error || "Failed to add player");
+            }
+            // Refresh data from server to get correct ID
+            handleLoadGroup(groupCode); 
+        } catch (e) {
+            setError(e instanceof Error ? e.message : 'An error occurred.');
+            // Revert optimistic update
+            setPlayers(players.filter(p => p.id !== tempId));
         }
     };
 
-    const handleGroupSave = async () => {
+    const handleCsvUpload = async (csvPlayers: any[]) => {
         if (!groupCode) {
-            setError('Please enter a group code');
+            setError("A group code must be set before uploading a CSV.");
+            throw new Error("Group code not set.");
+        }
+        if (isDirty && !window.confirm("You have unsaved changes that will be lost. Are you sure you want to overwrite the current roster?")) {
+            throw new Error("Upload cancelled by user.");
+        }
+        
+        // This effectively replaces the current players with the CSV data
+        setPlayers(csvPlayers);
+        // The isDirty flag will now be true, user needs to click "Save" in the header
+        setIsBulkEditing(true); // Automatically enter bulk edit mode after CSV upload
+    };
+    
+    const handleGenerateTeams = () => {
+        const attendingPlayers = players.filter((p: Player) => p.is_attending);
+        if (attendingPlayers.length < 2) {
+            setError("You need at least two attending players to generate teams.");
             return;
         }
+        const generated = generateTeams(attendingPlayers, groupCode);
+        setTeams(generated);
+        setActiveTab('teams');
+    };
 
+    // New handler for creating a group
+    const handleCreateGroup = async (newGroupCode: string) => {
         try {
-            setLoading(true);
-            setError(null);
-
-            // Create new group with existing players
             const response = await fetch('/api/groups', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    groupCode,
-                    players: players.map(p => ({
-                        firstName: p.first_name,
-                        lastName: p.last_name,
-                        skill: p.skill,
-                        defense: p.is_defense,
-                        attending: p.is_attending
-                    }))
-                })
+                body: JSON.stringify({ groupCode: newGroupCode })
             });
 
             if (!response.ok) {
-                throw new Error('Failed to create group');
+                const { error } = await response.json();
+                throw new Error(error || "Failed to create group.");
             }
 
-            localStorage.setItem('groupCode', groupCode);
-            await fetchPlayers(groupCode);
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to save group');
-            console.error(err);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleGroupCancel = () => {
-        // Clear group code
-        setGroupCode('');
-        localStorage.removeItem('groupCode');
-        
-        // Clear players
-        setPlayers([]);
-        
-        // Clear teams
-        setTeams({
-            red: { forwards: [], defensemen: [] },
-            white: { forwards: [], defensemen: [] }
-        });
-        
-        // Clear any errors
-        setError(null);
-    };
-
-
-    const handleGroupDelete = async () => {
-        setShowDeleteConfirm(true);
-    };
-
-    const confirmGroupDelete = async () => {
-        try {
-            setLoading(true);
-            setError(null);
-
-            const response = await fetch('/api/groups', {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ groupCode })
-            });
-
-            if (!response.ok) {
-                const data = await response.json();
-                throw new Error(data.error || 'Failed to delete group');
-            }
-
-            setGroupCode('');
-            localStorage.removeItem('groupCode');
-            setTeams({
-                red: { forwards: [], defensemen: [] },
-                white: { forwards: [], defensemen: [] }
-            });
+            // On success, set the new group code, clear players, and close the dialog
+            setGroupCode(newGroupCode);
             setPlayers([]);
-            setShowDeleteConfirm(false);
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to delete group');
-            console.error(err);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleAddPlayer = () => {
-        if (!groupCode) {
-            setError('Please select a group before adding players');
-            return;
-        }
-        setShowAddPlayer(true);
-    };
-
-    const handleAddPlayerSubmit = async (playerData: {
-        firstName: string;
-        lastName: string;
-        skill: number;
-        defense: boolean;
-        attending: boolean;
-    }) => {
-        try {
-            setLoading(true);
             setError(null);
-            
-            const response = await fetch('/api/players', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    ...playerData,
-                    groupCode
-                }),
-            });
+            setCreateGroupOpen(false);
 
-            if (!response.ok) {
-                throw new Error('Failed to add player');
-            }
-
-            await fetchPlayers(groupCode);
-            setShowAddPlayer(false);
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to add player');
-            console.error(err);
-        } finally {
-            setLoading(false);
+        } catch (e: any) {
+            console.error(e);
+            // Re-throw to be caught by the dialog
+            throw e;
         }
     };
 
-    const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (!file) return;
-
-        setLoading(true);
-        setError(null);
-
-        try {
-            const formData = new FormData();
-            formData.append('file', file);
-            
-            const response = await fetch('/api/players', {
-                method: 'POST',
-                body: formData,
-            });
-
-            if (!response.ok) {
-                throw new Error('Upload failed');
-            }
-
-            // Set the group code to TEMPCODE after successful upload
-            setGroupCode('TEMPCODE');
-            await fetchPlayers('TEMPCODE');
-        } catch (err) {
-            setError('Failed to upload file');
-            console.error(err);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handlePlayerUpdate = async (updatedPlayer: Player) => {
-        try {
-            setLoading(true);
-            setError(null);
-
-            const response = await fetch('/api/players', {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    id: updatedPlayer.id,
-                    firstName: updatedPlayer.first_name,
-                    lastName: updatedPlayer.last_name,
-                    skill: updatedPlayer.skill,
-                    defense: updatedPlayer.is_defense,
-                    attending: updatedPlayer.is_attending,
-                    groupCode: updatedPlayer.group_code
-                }),
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to update player');
-            }
-
-            await fetchPlayers(groupCode);
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to update player');
-            console.error(err);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleDeletePlayer = async (id: number) => {
-        try {
-            const response = await fetch(`/api/players?id=${id}&groupCode=${groupCode}`, {
-                method: 'DELETE',
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to delete player');
-            }
-
-            // Refresh the players list after successful deletion
-            await fetchPlayers(groupCode);
-        } catch (error) {
-            console.error('Error deleting player:', error);
-            setError(error instanceof Error ? error.message : 'Failed to delete player');
-        }
-    };
-
-    const handleTeamsGenerated = async () => {
-        try {
-            setLoading(true);
-            setError(null);
-
-            // Get only attending players
-            const attendingPlayers = players.filter(p => p.is_attending);
-            
-            if (attendingPlayers.length < 2) {
-                setError('Need at least 2 attending players to generate teams');
-                return;
-            }
-
-            // Generate teams using your team generator with groupCode
-            const newTeams = generateTeams(attendingPlayers, groupCode);
-            setTeams(newTeams);
-
-            // Save teams to backend
-            const teamAssignmentData = {
-                redTeam: newTeams.red,
-                whiteTeam: newTeams.white,
-                groupCode
-            };
-
-            const response = await fetch('/api/teams', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(teamAssignmentData),
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to save teams');
-            }
-
-            // Switch to the roster view to show the generated teams
-            setActiveTab('roster');
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to generate teams');
-            console.error(err);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleTeamNameChange = (team: 'team1' | 'team2', name: string) => {
-        setTeamNames(prev => ({
-            ...prev,
-            [team]: name
-        }));
-    };
+    const attendingPlayerCount = players.filter((p: Player) => p.is_attending).length;
 
     return (
-        <div className="flex-1 bg-slate-100">
-            <Header 
+        <div className="flex flex-col min-h-screen">
+            <AppHeader
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
+            />
+
+            <ActionHeader
+                activeTab={activeTab}
                 groupCode={groupCode}
-                onGroupCodeChange={handleGroupCodeChange}
-                onRetrieveGroupCode={handleRetrieveGroupCode}
-                onSaveGroupCode={handleGroupSave}
-                onCancelGroupCode={handleGroupCancel}
-                onDeleteGroup={handleGroupDelete}
+                onGroupCodeChange={setGroupCode}
+                onLoadGroup={() => handleLoadGroup(groupCode)}
+                onSaveGroup={handleSaveGroup}
+                onClearGroup={handleClearGroup}
+                onDeleteGroup={handleDeleteGroup}
+                isDirty={isDirty}
+                isLoading={loading}
+                isBulkEditing={isBulkEditing}
+                onToggleBulkEdit={() => setIsBulkEditing(!isBulkEditing)}
+                onAddPlayer={() => setAddPlayerOpen(true)}
+                onUploadCsv={() => setUploadCsvOpen(true)}
+                onGenerateTeams={handleGenerateTeams}
+                playerCount={attendingPlayerCount}
+                totalPlayerCount={players.length}
             />
 
-            <div className="bg-white border-y">
-                <div className="max-w-7xl mx-auto">
-                    <ActionBar 
-                        onAddPlayer={handleAddPlayer}
-                        onUploadClick={() => document.getElementById('file-upload')?.click()}
-                        onGenerateTeams={players.length > 0 ? handleTeamsGenerated : undefined}
-                        showGenerateTeams={activeTab === 'players'}
-                        disabled={loading}
-                        groupCode={groupCode}
+            <main className="flex-1 w-full max-w-7xl mx-auto px-8 py-8 overflow-y-auto custom-scrollbar">
+                {error && <ErrorAlert message={error} onDismiss={() => setError(null)} />}
+
+                {activeTab === 'players' ? (
+                    <PlayersView
+                        players={players}
+                        setPlayers={setPlayers}
+                        loading={loading}
+                        isBulkEditing={isBulkEditing}
+                        onCreateGroup={() => setCreateGroupOpen(true)}
+                        groupCode={loadedGroupCode}
+                        onAddPlayer={() => setAddPlayerOpen(true)}
+                        onUploadCsv={() => setUploadCsvOpen(true)}
+                        onToggleBulkEdit={() => setIsBulkEditing(!isBulkEditing)}
+                        onGenerateTeams={handleGenerateTeams}
+                        isDirty={isDirty}
                     />
-                </div>
-            </div>
-
-            <main className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
-                <ErrorAlert message={error} />
-
-                <div className="bg-white border rounded-lg overflow-hidden">
-                    {activeTab === 'players' ? (
-                        <PlayersView
-                            players={players}
-                            loading={loading}
-                            onUpdatePlayer={handlePlayerUpdate}
-                            handleDeletePlayer={handleDeletePlayer}
-                        />
-                    ) : (
-                        <TeamsView
-                            teams={teams}
-                            hasPlayers={players.length > 0}
-                            onRegenerateTeams={handleTeamsGenerated}
-                            teamNames={teamNames}
-                            onTeamNameChange={handleTeamNameChange}
-                        />
-                    )}
-                </div>
+                ) : (
+                    <TeamsView 
+                        teams={teams}
+                        teamNames={teamNames}
+                        setTeamNames={setTeamNames}
+                        onGenerateTeams={handleGenerateTeams}
+                        attendingPlayerCount={attendingPlayerCount}
+                    />
+                )}
             </main>
-
-            <Dialog
-                isOpen={showDeleteConfirm}
-                onClose={() => setShowDeleteConfirm(false)}
-                onConfirm={confirmGroupDelete}
-                title="Delete Group"
-                description="Are you sure you want to delete this group? This action cannot be undone."
-                confirmLabel="Delete"
-                cancelLabel="Cancel"
-            />
-            <input
-                id="file-upload"
-                type="file"
-                accept=".csv"
-                onChange={handleFileUpload}
-                className="hidden"
-            />
+            
             <AddPlayerDialog
-                isOpen={showAddPlayer}
-                onClose={() => setShowAddPlayer(false)}
-                onSubmit={handleAddPlayerSubmit}
+                isOpen={isAddPlayerOpen}
+                onClose={() => setAddPlayerOpen(false)}
+                onAddPlayer={handleAddPlayer}
+            />
+            
+            <UploadCsvDialog
+                isOpen={isUploadCsvOpen}
+                onClose={() => setUploadCsvOpen(false)}
+                onUpload={handleCsvUpload}
+            />
+
+            <CreateGroupDialog
+                isOpen={isCreateGroupOpen}
+                onClose={() => setCreateGroupOpen(false)}
+                onCreate={handleCreateGroup}
             />
         </div>
     );
