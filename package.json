@@ -1,6 +1,6 @@
 {
   "name": "roster-generator",
-  "version": "0.4.6",
+  "version": "0.5.0",
   "description": "Roster Generator for Hockey Creating a roster generator with the help of Claude",
   "private": true,
   "scripts": {
@@ -24,7 +24,9 @@
     "react-dom": "^18.2.0",
     "shadcn-ui": "^0.9.4",
     "tailwind-merge": "^3.3.1",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss": "^3.4.3",
+    "tailwindcss-animate": "^1.0.7",
+    "typescript": "^5.4.2"
   },
   "devDependencies": {
     "@shadcn/ui": "^0.0.4",
@@ -36,6 +38,7 @@
     "autoprefixer": "^10.4.19",
     "postcss": "^8.4.38",
     "tailwindcss": "^3.4.3",
+    "ts-node": "^10.9.2",
     "typescript": "^5.4.2"
   }
 }

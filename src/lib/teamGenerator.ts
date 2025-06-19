@@ -2,8 +2,10 @@ import { type Player, type Teams } from '@/types/PlayerTypes';
 import _ from 'lodash';
 
 export function generateTeams(players: Player[], groupCode: string): Teams {
-    // Filter attending players from current group
     const attendingPlayers = players.filter(p => p.is_attending && p.group_code === groupCode);
+
+    // Shuffle players to ensure randomness for tie-breaking, then sort by skill
+    const sortedPlayers = _.orderBy(_.shuffle(attendingPlayers), 'skill', 'desc');
 
     // Initialize teams
     const teams: Teams = {
@@ -11,56 +13,43 @@ export function generateTeams(players: Player[], groupCode: string): Teams {
         white: { forwards: [], defensemen: [], group_code: groupCode },
     };
 
-    // Sort players by position and skill
-    const forwards = _.orderBy(
-        attendingPlayers.filter(p => !p.is_defense),
-        'skill',
-        'desc'
-    );
-    const defensemen = _.orderBy(
-        attendingPlayers.filter(p => p.is_defense),
-        'skill',
-        'desc'
-    );
-
-    // First, distribute top players evenly
-    [...forwards, ...defensemen].slice(0, 4).forEach((player, i) => {
-        const team = i % 2 === 0 ? 'red' : 'white';
-        const position = player.is_defense ? 'defensemen' : 'forwards';
-        teams[team][position].push(player);
-    });
-
-    // Then handle remaining players with balanced approach
-    [...forwards, ...defensemen].slice(4).forEach(player => {
+    // Distribute players one by one from most skilled to least
+    sortedPlayers.forEach(player => {
         const position = player.is_defense ? 'defensemen' : 'forwards';
         
-        // Calculate current team stats
-        const redTotal = teams.red.forwards.length + teams.red.defensemen.length;
-        const whiteTotal = teams.white.forwards.length + teams.white.defensemen.length;
-        const redSkill = _.meanBy([...teams.red.forwards, ...teams.red.defensemen], 'skill') || 0;
-        const whiteSkill = _.meanBy([...teams.white.forwards, ...teams.white.defensemen], 'skill') || 0;
+        const redPositionCount = teams.red[position].length;
+        const whitePositionCount = teams.white[position].length;
 
-        // Determine team assignment
-        let chooseRed = false;
+        let assignToRed = false;
 
-        // First priority: balance team sizes
-        if (redTotal < whiteTotal) {
-            chooseRed = true;
-        } else if (whiteTotal < redTotal) {
-            chooseRed = false;
+        // Priority 1: Positional balance.
+        // If a team is behind in the player's position, it gets the player.
+        if (redPositionCount < whitePositionCount) {
+            assignToRed = true;
+        } else if (whitePositionCount < redPositionCount) {
+            assignToRed = false;
         } else {
-            // If sizes are equal, consider skill difference
-            const skillDiff = Math.abs(redSkill - whiteSkill);
-            if (skillDiff > 0.3) {
-                chooseRed = redSkill < whiteSkill;
+            // Positional counts for this specific position are equal.
+            // Priority 2: Overall team size.
+            const redTotal = teams.red.forwards.length + teams.red.defensemen.length;
+            const whiteTotal = teams.white.forwards.length + teams.white.defensemen.length;
+
+            if (redTotal < whiteTotal) {
+                assignToRed = true;
+            } else if (whiteTotal < redTotal) {
+                assignToRed = false;
             } else {
-                // Add controlled randomness when skills are close
-                chooseRed = Math.random() < 0.5;
+                // Sizes are balanced, move to final priority.
+                // Priority 3: Overall team skill.
+                const redSkill = _.meanBy([...teams.red.forwards, ...teams.red.defensemen], 'skill') || 0;
+                const whiteSkill = _.meanBy([...teams.white.forwards, ...teams.white.defensemen], 'skill') || 0;
+
+                assignToRed = redSkill <= whiteSkill;
             }
         }
-
-        // Assign player to chosen team
-        if (chooseRed) {
+        
+        // Assign player to the chosen team
+        if (assignToRed) {
             teams.red[position].push(player);
         } else {
             teams.white[position].push(player);
@@ -68,4 +57,27 @@ export function generateTeams(players: Player[], groupCode: string): Teams {
     });
 
     return teams;
+}
+
+function balancePositions(teams: Teams) {
+    // Simple swap: if one team has >1 more F/D than the other, swap one F for one D
+    const forwardDiff = teams.red.forwards.length - teams.white.forwards.length;
+    
+    if (Math.abs(forwardDiff) > 1) {
+        const teamToGiveF = forwardDiff < 0 ? teams.red : teams.white;
+        const teamToGiveD = forwardDiff < 0 ? teams.white : teams.red;
+
+        // Find a forward to swap from the team that has too many
+        const forwardToSwap = _.sample(teamToGiveD.forwards); 
+        // Find a defenseman to swap from the team that needs a forward
+        const defenseToSwap = _.sample(teamToGiveF.defensemen);
+
+        if (forwardToSwap && defenseToSwap) {
+             // Perform the swap
+            _.pull(teamToGiveD.forwards, forwardToSwap);
+            _.pull(teamToGiveF.defensemen, defenseToSwap);
+            teamToGiveF.forwards.push(forwardToSwap);
+            teamToGiveD.defensemen.push(defenseToSwap);
+        }
+    }
 } 
