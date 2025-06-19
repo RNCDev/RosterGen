@@ -139,7 +139,7 @@ export default function Home() {
     const attendingPlayerCount = players.filter((p: Player) => p.is_attending).length;
 
     return (
-        <div className="flex flex-col min-h-screen bg-slate-50">
+        <div className="flex flex-col min-h-screen">
             <AppHeader
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
@@ -164,7 +164,7 @@ export default function Home() {
                 totalPlayerCount={players.length}
             />
 
-            <main className="flex-1 w-full max-w-7xl mx-auto px-6 py-8 overflow-y-auto">
+            <main className="flex-1 w-full max-w-7xl mx-auto px-8 py-8 overflow-y-auto custom-scrollbar">
                 {error && <ErrorAlert message={error} onDismiss={() => setError(null)} />}
 
                 {activeTab === 'players' ? (
@@ -175,12 +175,19 @@ export default function Home() {
                         isBulkEditing={isBulkEditing}
                         onCreateGroup={() => setCreateGroupOpen(true)}
                         groupCode={loadedGroupCode}
+                        onAddPlayer={() => setAddPlayerOpen(true)}
+                        onUploadCsv={() => setUploadCsvOpen(true)}
+                        onToggleBulkEdit={() => setIsBulkEditing(!isBulkEditing)}
+                        onGenerateTeams={handleGenerateTeams}
+                        isDirty={isDirty}
                     />
                 ) : (
                     <TeamsView 
                         teams={teams}
                         teamNames={teamNames}
                         setTeamNames={setTeamNames}
+                        onGenerateTeams={handleGenerateTeams}
+                        attendingPlayerCount={attendingPlayerCount}
                     />
                 )}
             </main>

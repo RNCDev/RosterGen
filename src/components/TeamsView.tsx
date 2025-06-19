@@ -2,7 +2,7 @@
 
 import React, { useRef } from 'react';
 import { type Teams, type Player } from '@/types/PlayerTypes';
-import { Clipboard, Users, BarChart2, Hash } from 'lucide-react';
+import { Clipboard, Users, BarChart2, Hash, Trophy, Zap, Shield, Target, RefreshCw } from 'lucide-react';
 import _ from 'lodash';
 import { Button } from '@/components/ui/Button';
 
@@ -10,6 +10,8 @@ interface TeamsViewProps {
     teams: Teams;
     teamNames: { team1: string; team2: string };
     setTeamNames: (names: { team1: string; team2: string }) => void;
+    onGenerateTeams: () => void;
+    attendingPlayerCount: number;
 }
 
 // Helper to calculate team stats
@@ -30,61 +32,150 @@ const calculateStats = (team: Teams['red']) => {
 };
 
 // Internal component for displaying a single team
-const TeamCard = ({ name, team, onNameChange }: { name: string, team: Teams['red'], onNameChange: (newName: string) => void }) => {
+const TeamCard = ({ 
+    name, 
+    team, 
+    onNameChange, 
+    teamColor 
+}: { 
+    name: string; 
+    team: Teams['red']; 
+    onNameChange: (newName: string) => void;
+    teamColor: 'red' | 'blue';
+}) => {
     const stats = calculateStats(team);
     
+    const colorClasses = {
+        red: {
+            gradient: 'from-red-500 to-rose-600',
+            bgGradient: 'from-red-50 to-rose-50',
+            iconBg: 'bg-red-100',
+            iconColor: 'text-red-600',
+            border: 'border-red-200/30',
+            accent: 'text-red-600'
+        },
+        blue: {
+            gradient: 'from-blue-500 to-indigo-600',
+            bgGradient: 'from-blue-50 to-indigo-50',
+            iconBg: 'bg-blue-100',
+            iconColor: 'text-blue-600',
+            border: 'border-blue-200/30',
+            accent: 'text-blue-600'
+        }
+    };
+    
+    const colors = colorClasses[teamColor];
+    
     return (
-        <div className="card-neo p-6 flex-grow">
-            <input
-                type="text"
-                value={name}
-                onChange={(e) => onNameChange(e.target.value)}
-                className="text-2xl font-bold bg-transparent border-b-2 border-transparent focus:border-slate-300 outline-none w-full mb-4"
-            />
-            <div className="flex items-center justify-around text-center mb-6 text-sm text-slate-600">
-                <div className="flex flex-col items-center">
-                    <Users className="h-5 w-5 mb-1" />
-                    <span className="font-semibold">{stats.totalPlayers}</span>
-                    <span>Players</span>
+        <div className={`card-elevated p-6 bg-gradient-to-br ${colors.bgGradient} border-2 ${colors.border} flex-grow animate-slide-up`}>
+            {/* Team Header */}
+            <div className="flex items-center gap-3 mb-6">
+                <div className={`w-12 h-12 bg-gradient-to-br ${colors.gradient} rounded-xl flex items-center justify-center shadow-lg`}>
+                    <Trophy className="w-6 h-6 text-white" />
                 </div>
-                <div className="flex flex-col items-center">
-                    <BarChart2 className="h-5 w-5 mb-1" />
-                    <span className="font-semibold">{stats.averageSkill}</span>
-                    <span>Avg. Skill</span>
+                <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => onNameChange(e.target.value)}
+                    className={`text-2xl font-bold bg-transparent border-b-2 border-transparent focus:border-gray-400 outline-none flex-1 ${colors.accent}`}
+                    placeholder="Team Name"
+                />
+            </div>
+            
+            {/* Stats Grid */}
+            <div className="grid grid-cols-3 gap-4 mb-6">
+                <div className="text-center">
+                    <div className={`w-10 h-10 ${colors.iconBg} rounded-lg flex items-center justify-center mx-auto mb-2`}>
+                        <Users className={`w-5 h-5 ${colors.iconColor}`} />
+                    </div>
+                    <div className="text-2xl font-bold text-gray-900">{stats.totalPlayers}</div>
+                    <div className="text-sm text-gray-600 font-medium">Players</div>
                 </div>
-                <div className="flex flex-col items-center">
-                    <Hash className="h-5 w-5 mb-1" />
-                    <span className="font-semibold">{stats.totalSkill}</span>
-                    <span>Total Skill</span>
+                <div className="text-center">
+                    <div className={`w-10 h-10 ${colors.iconBg} rounded-lg flex items-center justify-center mx-auto mb-2`}>
+                        <BarChart2 className={`w-5 h-5 ${colors.iconColor}`} />
+                    </div>
+                    <div className="text-2xl font-bold text-gray-900">{stats.averageSkill}</div>
+                    <div className="text-sm text-gray-600 font-medium">Avg. Skill</div>
+                </div>
+                <div className="text-center">
+                    <div className={`w-10 h-10 ${colors.iconBg} rounded-lg flex items-center justify-center mx-auto mb-2`}>
+                        <Target className={`w-5 h-5 ${colors.iconColor}`} />
+                    </div>
+                    <div className="text-2xl font-bold text-gray-900">{stats.totalSkill}</div>
+                    <div className="text-sm text-gray-600 font-medium">Total Skill</div>
                 </div>
             </div>
             
+            {/* Forwards Section */}
+            <div className="mb-6">
+                <div className="flex items-center gap-2 mb-4">
+                    <div className="w-8 h-8 bg-gradient-to-br from-orange-100 to-yellow-100 rounded-lg flex items-center justify-center">
+                        <Zap className="w-4 h-4 text-orange-600" />
+                    </div>
+                    <h4 className="text-lg font-semibold text-gray-800">
+                        Forwards ({team.forwards.length})
+                    </h4>
+                </div>
+                <div className="space-y-2">
+                    {team.forwards.length > 0 ? (
+                        team.forwards.map(p => (
+                            <div key={p.id} className="flex items-center justify-between p-3 bg-white/60 backdrop-blur-sm rounded-lg border border-white/40">
+                                <span className="font-medium text-gray-800">{p.first_name} {p.last_name}</span>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-xs text-gray-500 font-medium">SKILL</span>
+                                    <span className="bg-gradient-to-r from-orange-500 to-yellow-500 text-white text-sm font-bold px-2 py-1 rounded-full">
+                                        {p.skill}
+                                    </span>
+                                </div>
+                            </div>
+                        ))
+                    ) : (
+                        <div className="text-center py-4 text-gray-500 text-sm">No forwards assigned</div>
+                    )}
+                </div>
+            </div>
+            
+            {/* Defense Section */}
             <div>
-                <h4 className="font-semibold text-slate-800 border-b border-slate-200 pb-2 mb-3">Forwards ({team.forwards.length})</h4>
-                <ul className="space-y-2">
-                    {team.forwards.map(p => <li key={p.id} className="flex justify-between"><span>{p.first_name} {p.last_name}</span> <span className="font-mono text-sm text-slate-500">{p.skill}</span></li>)}
-                </ul>
-            </div>
-            
-            <div className="mt-6">
-                <h4 className="font-semibold text-slate-800 border-b border-slate-200 pb-2 mb-3">Defense ({team.defensemen.length})</h4>
-                 <ul className="space-y-2">
-                    {team.defensemen.map(p => <li key={p.id} className="flex justify-between"><span>{p.first_name} {p.last_name}</span> <span className="font-mono text-sm text-slate-500">{p.skill}</span></li>)}
-                </ul>
+                <div className="flex items-center gap-2 mb-4">
+                    <div className="w-8 h-8 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-lg flex items-center justify-center">
+                        <Shield className="w-4 h-4 text-purple-600" />
+                    </div>
+                    <h4 className="text-lg font-semibold text-gray-800">
+                        Defense ({team.defensemen.length})
+                    </h4>
+                </div>
+                <div className="space-y-2">
+                    {team.defensemen.length > 0 ? (
+                        team.defensemen.map(p => (
+                            <div key={p.id} className="flex items-center justify-between p-3 bg-white/60 backdrop-blur-sm rounded-lg border border-white/40">
+                                <span className="font-medium text-gray-800">{p.first_name} {p.last_name}</span>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-xs text-gray-500 font-medium">SKILL</span>
+                                    <span className="bg-gradient-to-r from-purple-500 to-indigo-500 text-white text-sm font-bold px-2 py-1 rounded-full">
+                                        {p.skill}
+                                    </span>
+                                </div>
+                            </div>
+                        ))
+                    ) : (
+                        <div className="text-center py-4 text-gray-500 text-sm">No defensemen assigned</div>
+                    )}
+                </div>
             </div>
         </div>
     );
 };
 
-
-export default function TeamsView({ teams, teamNames, setTeamNames }: TeamsViewProps) {
+export default function TeamsView({ teams, teamNames, setTeamNames, onGenerateTeams, attendingPlayerCount }: TeamsViewProps) {
     const teamsContainerRef = useRef<HTMLDivElement>(null);
 
     const handleCopyToClipboard = () => {
         if (teamsContainerRef.current) {
-            // A more robust solution would use html-to-image
             const textToCopy = teamsContainerRef.current.innerText;
             navigator.clipboard.writeText(textToCopy).then(() => {
+                // Could add a toast notification here
                 alert('Teams copied to clipboard!');
             }).catch(err => {
                 console.error('Failed to copy teams: ', err);
@@ -94,37 +185,108 @@ export default function TeamsView({ teams, teamNames, setTeamNames }: TeamsViewP
     };
     
     const totalPlayers = teams.red.forwards.length + teams.red.defensemen.length + teams.white.forwards.length + teams.white.defensemen.length;
+    const redStats = calculateStats(teams.red);
+    const whiteStats = calculateStats(teams.white);
+    const skillDifference = Math.abs(redStats.totalSkill - whiteStats.totalSkill);
 
     if (totalPlayers === 0) {
         return (
-            <div className="card-neo p-12 flex flex-col items-center text-center">
-                <Users className="h-12 w-12 text-slate-400 mb-3" />
-                <h3 className="text-lg font-semibold text-slate-900">No Teams Generated</h3>
-                <p className="mt-1 text-sm text-slate-500">
-                    Go to the <span className="font-semibold">Players</span> tab and click 'Generate Teams' to get started.
-                </p>
+            <div className="flex items-center justify-center min-h-[60vh] animate-fade-in">
+                <div className="text-center p-12 card-elevated max-w-lg animate-slide-up">
+                    <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <Users className="w-10 h-10 text-blue-600" />
+                    </div>
+                    <h3 className="heading-secondary mb-3">No Teams Generated</h3>
+                    <p className="text-gray-500 mb-6 leading-relaxed">
+                        Go to the <span className="font-semibold text-blue-600">Players</span> tab and click 'Generate Teams' to create balanced teams.
+                    </p>
+                    <div className="flex items-center justify-center gap-2 text-sm text-gray-400">
+                        <Trophy className="w-4 h-4" />
+                        <span>Teams will appear here once generated</span>
+                    </div>
+                </div>
             </div>
         );
     }
 
     return (
-        <div className="space-y-6">
-            <div className="flex items-center justify-end gap-4">
-                <Button onClick={handleCopyToClipboard} variant="outline">
-                    <Clipboard size={16} className="mr-2" /> Copy to Clipboard
-                </Button>
+        <div className="space-y-6 animate-fade-in">
+            {/* Header Stats */}
+            <div className="grid grid-cols-3 gap-4 mb-6">
+                <div className="card-modern p-4">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <Users className="w-5 h-5 text-blue-600" />
+                        </div>
+                        <div>
+                            <p className="text-sm font-medium text-gray-600">Total Players</p>
+                            <p className="text-xl font-bold text-gray-900">{totalPlayers}</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div className="card-modern p-4">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                            <BarChart2 className="w-5 h-5 text-green-600" />
+                        </div>
+                        <div>
+                            <p className="text-sm font-medium text-gray-600">Skill Difference</p>
+                            <p className="text-xl font-bold text-gray-900">{skillDifference}</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div className="card-modern p-4">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                            <Trophy className="w-5 h-5 text-purple-600" />
+                        </div>
+                        <div>
+                            <p className="text-sm font-medium text-gray-600">Balance Score</p>
+                            <p className="text-xl font-bold text-gray-900">
+                                {skillDifference <= 2 ? 'Excellent' : skillDifference <= 5 ? 'Good' : 'Fair'}
+                            </p>
+                        </div>
+                    </div>
+                </div>
             </div>
             
-            <div ref={teamsContainerRef} className="flex flex-col lg:flex-row gap-6">
+            {/* Action Bar */}
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                    <Trophy className="w-5 h-5 text-gray-600" />
+                    <h2 className="text-lg font-semibold text-gray-800">Generated Teams</h2>
+                </div>
+                <div className="flex items-center gap-3">
+                    <Button 
+                        onClick={onGenerateTeams} 
+                        disabled={attendingPlayerCount < 2}
+                        className="btn-primary"
+                    >
+                        <RefreshCw size={16} className="mr-2" /> 
+                        Regenerate Teams
+                    </Button>
+                    <Button onClick={handleCopyToClipboard} variant="outline" className="btn-secondary">
+                        <Clipboard size={16} className="mr-2" /> 
+                        Copy to Clipboard
+                    </Button>
+                </div>
+            </div>
+            
+            {/* Teams Grid */}
+            <div ref={teamsContainerRef} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <TeamCard
                     name={teamNames.team1}
                     team={teams.red}
                     onNameChange={(name) => setTeamNames({ ...teamNames, team1: name })}
+                    teamColor="red"
                 />
                 <TeamCard
                     name={teamNames.team2}
                     team={teams.white}
                     onNameChange={(name) => setTeamNames({ ...teamNames, team2: name })}
+                    teamColor="blue"
                 />
             </div>
         </div>

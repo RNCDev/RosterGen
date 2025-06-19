@@ -3,16 +3,17 @@
 import React, { useState } from 'react';
 import { type Player } from '@/types/PlayerTypes';
 import { Button } from '@/components/ui/Button';
-import { Check, X, Trash2, Edit2 } from 'lucide-react';
+import { Check, X, Trash2, Edit2, User, Shield } from 'lucide-react';
 
 interface EditableRowProps {
     player: Player;
     onUpdate: (updatedPlayer: Player) => void;
     onDelete: (id: number) => void;
     isBulkEditing: boolean;
+    className?: string;
 }
 
-export default function EditableRow({ player, onUpdate, onDelete, isBulkEditing }: EditableRowProps) {
+export default function EditableRow({ player, onUpdate, onDelete, isBulkEditing, className = '' }: EditableRowProps) {
     const [isEditing, setIsEditing] = useState(false);
     const [editedPlayer, setEditedPlayer] = useState<Player>(player);
 
@@ -47,62 +48,176 @@ export default function EditableRow({ player, onUpdate, onDelete, isBulkEditing 
 
     if (effectiveIsEditing) {
         return (
-            <tr className={isBulkEditing ? 'bg-slate-50' : 'bg-blue-50/50'}>
-                <td className={`px-4 py-2 whitespace-nowrap sticky left-0 ${isBulkEditing ? 'bg-slate-50' : 'bg-blue-50/50'}`}>
-                    <div className="flex gap-2">
-                        <input type="text" value={data.first_name} onChange={(e) => handleFieldChange('first_name', e.target.value)} className="input-neo w-32 text-sm" />
-                        <input type="text" value={data.last_name} onChange={(e) => handleFieldChange('last_name', e.target.value)} className="input-neo w-32 text-sm" />
+            <tr className={`${isBulkEditing ? 'bg-blue-50/30' : 'bg-amber-50/30'} ${className}`}>
+                <td className="px-4 py-2 whitespace-nowrap">
+                    <div className="flex items-center gap-3 min-h-[32px]">
+                        <div className={`w-6 h-6 rounded-lg flex items-center justify-center ${
+                            data.is_defense ? 'bg-purple-100' : 'bg-green-100'
+                        }`}>
+                            {data.is_defense ? (
+                                <Shield className="w-3 h-3 text-purple-600" />
+                            ) : (
+                                <User className="w-3 h-3 text-green-600" />
+                            )}
+                        </div>
+                        <div className="flex gap-1 flex-1">
+                            <input 
+                                type="text" 
+                                value={data.first_name} 
+                                onChange={(e) => handleFieldChange('first_name', e.target.value)} 
+                                className="bg-white/80 border border-gray-200 rounded px-2 py-1 text-sm flex-1 focus:outline-none focus:ring-1 focus:ring-blue-400 h-6" 
+                                placeholder="First"
+                            />
+                            <input 
+                                type="text" 
+                                value={data.last_name} 
+                                onChange={(e) => handleFieldChange('last_name', e.target.value)} 
+                                className="bg-white/80 border border-gray-200 rounded px-2 py-1 text-sm flex-1 focus:outline-none focus:ring-1 focus:ring-blue-400 h-6" 
+                                placeholder="Last"
+                            />
+                        </div>
                     </div>
                 </td>
                 <td className="px-4 py-2 whitespace-nowrap text-center">
-                    <input type="number" min="1" max="10" value={data.skill} onChange={(e) => handleFieldChange('skill', parseInt(e.target.value))} className="input-neo w-20 text-center text-sm" />
+                    <div className="flex items-center justify-center gap-1 min-h-[32px]">
+                        <button
+                            type="button"
+                            onClick={() => handleFieldChange('skill', Math.max(1, data.skill - 1))}
+                            className="w-6 h-6 rounded bg-gray-200 hover:bg-gray-300 flex items-center justify-center text-xs font-bold text-gray-600"
+                        >
+                            −
+                        </button>
+                        <span className="inline-flex items-center justify-center w-6 h-6 bg-blue-100 text-blue-700 rounded-full text-xs font-bold">
+                            {data.skill}
+                        </span>
+                        <button
+                            type="button"
+                            onClick={() => handleFieldChange('skill', Math.min(10, data.skill + 1))}
+                            className="w-6 h-6 rounded bg-gray-200 hover:bg-gray-300 flex items-center justify-center text-xs font-bold text-gray-600"
+                        >
+                            +
+                        </button>
+                    </div>
                 </td>
                 <td className="px-4 py-2 whitespace-nowrap text-center">
-                    <select value={data.is_defense ? "defense" : "forward"} onChange={(e) => handleFieldChange('is_defense', e.target.value === "defense")} className="input-neo w-28 text-sm">
-                        <option value="forward">Forward</option>
-                        <option value="defense">Defense</option>
-                    </select>
+                    <div className="flex items-center justify-center min-h-[32px]">
+                        <button
+                            type="button"
+                            onClick={() => handleFieldChange('is_defense', !data.is_defense)}
+                            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold transition-colors min-h-[32px] ${
+                                data.is_defense 
+                                    ? 'bg-purple-100 text-purple-700 hover:bg-purple-200' 
+                                    : 'bg-green-100 text-green-700 hover:bg-green-200'
+                            }`}
+                        >
+                            {data.is_defense ? 'Defense' : 'Forward'}
+                        </button>
+                    </div>
                 </td>
                 <td className="px-4 py-2 whitespace-nowrap text-center">
-                    <select value={data.is_attending ? "yes" : "no"} onChange={(e) => handleFieldChange('is_attending', e.target.value === "yes")} className="input-neo w-24 text-sm">
-                        <option value="yes">Yes</option>
-                        <option value="no">No</option>
-                    </select>
+                    <div className="flex items-center justify-center min-h-[32px]">
+                        <button
+                            type="button"
+                            onClick={() => handleFieldChange('is_attending', !data.is_attending)}
+                            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold transition-colors min-h-[32px] ${
+                                data.is_attending 
+                                    ? 'bg-green-100 text-green-700 hover:bg-green-200' 
+                                    : 'bg-red-100 text-red-700 hover:bg-red-200'
+                            }`}
+                        >
+                            {data.is_attending ? 'Attending' : 'Not Attending'}
+                        </button>
+                    </div>
                 </td>
-                <td className={`px-4 py-2 whitespace-nowrap text-center sticky right-0 ${isBulkEditing ? 'bg-slate-50' : 'bg-blue-50/50'}`}>
-                    {!isBulkEditing && (
-                        <div className="flex items-center justify-center gap-2">
-                            <button onClick={handleSave} className="button-neo p-2 text-emerald-600" title="Save"><Check className="h-4 w-4" /></button>
-                            <button onClick={handleCancel} className="button-neo p-2 text-red-600" title="Cancel"><X className="h-4 w-4" /></button>
-                        </div>
-                    )}
+                <td className="px-4 py-2 whitespace-nowrap text-center">
+                    <div className="flex items-center justify-center min-h-[32px]">
+                        {!isBulkEditing && (
+                            <div className="flex items-center justify-center gap-1">
+                                <button 
+                                    onClick={handleSave} 
+                                    className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg transition-colors" 
+                                    title="Save"
+                                >
+                                    <Check className="h-4 w-4" />
+                                </button>
+                                <button 
+                                    onClick={handleCancel} 
+                                    className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors" 
+                                    title="Cancel"
+                                >
+                                    <X className="h-4 w-4" />
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 </td>
             </tr>
         );
     }
 
     return (
-        <tr className="hover:bg-slate-50/80">
-            <td className="px-4 py-2 whitespace-nowrap sticky left-0 bg-white">
-                <div className="text-sm font-medium text-slate-800">{player.first_name} {player.last_name}</div>
+        <tr className={`hover:bg-white/50 transition-colors duration-150 ${className}`}>
+            <td className="px-4 py-2 whitespace-nowrap">
+                <div className="flex items-center gap-3 min-h-[32px]">
+                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center ${
+                        player.is_defense ? 'bg-purple-100' : 'bg-green-100'
+                    }`}>
+                        {player.is_defense ? (
+                            <Shield className="w-3 h-3 text-purple-600" />
+                        ) : (
+                            <User className="w-3 h-3 text-green-600" />
+                        )}
+                    </div>
+                    <div className="text-sm font-semibold text-gray-900">
+                        {player.first_name} {player.last_name}
+                    </div>
+                </div>
             </td>
             <td className="px-4 py-2 whitespace-nowrap text-center">
-                <span className="badge-neo bg-blue-50 text-blue-700 text-sm">{player.skill}</span>
+                <div className="flex items-center justify-center min-h-[32px]">
+                    <span className="inline-flex items-center justify-center w-6 h-6 bg-blue-100 text-blue-700 rounded-full text-xs font-bold">
+                        {player.skill}
+                    </span>
+                </div>
             </td>
             <td className="px-4 py-2 whitespace-nowrap text-center">
-                <span className={`badge-neo text-sm ${player.is_defense ? 'bg-purple-50 text-purple-700' : 'bg-emerald-50 text-emerald-700'}`}>
-                    {player.is_defense ? 'Defense' : 'Forward'}
-                </span>
+                <div className="flex items-center justify-center min-h-[32px]">
+                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${
+                        player.is_defense 
+                            ? 'bg-purple-100 text-purple-700' 
+                            : 'bg-green-100 text-green-700'
+                    }`}>
+                        {player.is_defense ? 'Defense' : 'Forward'}
+                    </span>
+                </div>
             </td>
             <td className="px-4 py-2 whitespace-nowrap text-center">
-                <span className={`badge-neo text-sm ${player.is_attending ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
-                    {player.is_attending ? 'Yes' : 'No'}
-                </span>
+                <div className="flex items-center justify-center min-h-[32px]">
+                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${
+                        player.is_attending 
+                            ? 'bg-green-100 text-green-700' 
+                            : 'bg-red-100 text-red-700'
+                    }`}>
+                        {player.is_attending ? 'Attending' : 'Not Attending'}
+                    </span>
+                </div>
             </td>
-            <td className="px-4 py-2 whitespace-nowrap text-center sticky right-0 bg-white">
-                <div className="flex items-center justify-center gap-2">
-                    <button onClick={() => setIsEditing(true)} className="button-neo p-2 text-blue-600" title="Edit"><Edit2 className="h-4 w-4" /></button>
-                    <button onClick={handleDelete} className="button-neo p-2 text-red-600" title="Delete"><Trash2 className="h-4 w-4" /></button>
+            <td className="px-4 py-2 whitespace-nowrap text-center">
+                <div className="flex items-center justify-center gap-1 min-h-[32px]">
+                    <button 
+                        onClick={() => setIsEditing(true)} 
+                        className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" 
+                        title="Edit Player"
+                    >
+                        <Edit2 className="h-4 w-4" />
+                    </button>
+                    <button 
+                        onClick={handleDelete} 
+                        className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors" 
+                        title="Delete Player"
+                    >
+                        <Trash2 className="h-4 w-4" />
+                    </button>
                 </div>
             </td>
         </tr>

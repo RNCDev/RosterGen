@@ -2,7 +2,13 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/Button';
-import { Search, Save, X, Trash2, ShieldCheck, UserPlus, Upload, ArrowLeftRight, Pencil } from 'lucide-react';
+import { 
+    Search, 
+    Save, 
+    X, 
+    Trash2, 
+    ShieldCheck
+} from 'lucide-react';
 
 interface ActionHeaderProps {
     activeTab: 'players' | 'teams';
@@ -27,7 +33,6 @@ interface ActionHeaderProps {
 }
 
 export default function ActionHeader({
-    activeTab,
     groupCode,
     onGroupCodeChange,
     onLoadGroup,
@@ -36,13 +41,6 @@ export default function ActionHeader({
     onDeleteGroup,
     isDirty,
     isLoading,
-    isBulkEditing,
-    onToggleBulkEdit,
-    onAddPlayer,
-    onUploadCsv,
-    onGenerateTeams,
-    playerCount,
-    totalPlayerCount,
 }: ActionHeaderProps) {
 
     const handleLoadWithPrompt = () => {
@@ -65,68 +63,71 @@ export default function ActionHeader({
         }
         onDeleteGroup();
     };
-    
-    const attendingPlayerCount = playerCount; // This will be adjusted later
-
-    const isGroupActive = groupCode.trim().length > 0;
 
     return (
-        <div className="bg-slate-100 border-b border-slate-200 sticky top-[69px] z-30">
-            <div className="max-w-7xl mx-auto px-6 py-3">
-                <div className="flex flex-wrap items-center justify-between gap-4">
-                    
-                    {/* Left side: Contextual Actions */}
-                    <div className="flex items-center gap-2">
-                        {activeTab === 'players' && onAddPlayer && onUploadCsv && onToggleBulkEdit && (
-                            <>
-                                <Button variant="outline" onClick={onAddPlayer} disabled={!isGroupActive}>
-                                    <UserPlus size={16} className="mr-2"/> Add Player
-                                </Button>
-                                <Button variant="outline" onClick={onUploadCsv} disabled={!isGroupActive}>
-                                    <Upload size={16} className="mr-2"/> Upload CSV
-                                </Button>
-                                <Button variant="outline" onClick={onToggleBulkEdit} disabled={totalPlayerCount === 0}>
-                                    <Pencil size={16} className="mr-2"/> {isBulkEditing ? 'Finish Editing' : 'Bulk Edit'}
-                                </Button>
-                            </>
-                        )}
-                    </div>
-                    
-                    {/* Right side: Primary Actions & Group Management */}
-                    <div className="flex items-center gap-2">
-                        <Button 
-                            onClick={onGenerateTeams} 
-                            disabled={attendingPlayerCount < 2 || isBulkEditing}
-                            variant="default"
-                        >
-                            <ArrowLeftRight size={16} className="mr-2" />
-                            {activeTab === 'teams' ? 'Regenerate' : 'Generate Teams'}
-                        </Button>
-                        <div className="flex items-center gap-1 rounded-md shadow-inner bg-white p-1">
-                             <input
-                                type="text"
-                                value={groupCode}
-                                onChange={(e) => onGroupCodeChange(e.target.value)}
-                                onKeyDown={(e) => e.key === 'Enter' && handleLoadWithPrompt()}
-                                placeholder="Group Code"
-                                className="input-neo flex-grow sm:w-40 bg-transparent focus:outline-none px-2 text-sm"
-                                aria-label="Group Code"
-                            />
-                            <Button variant="ghost" size="icon" onClick={handleLoadWithPrompt} disabled={!groupCode.trim() || isLoading} title="Load Group">
-                                <Search size={18} />
-                            </Button>
-                            <Button variant="ghost" size="icon" onClick={onSaveGroup} disabled={!groupCode.trim() || !isDirty || isLoading} title="Save Changes">
-                                {isDirty ? <Save size={18} className="text-green-500 animate-pulse" /> : <ShieldCheck size={18} />}
-                            </Button>
-                            <Button variant="ghost" size="icon" onClick={handleClearWithPrompt} title="Clear Workspace">
-                                <X size={18} />
-                            </Button>
-                             <Button variant="ghost" size="icon" onClick={handleDeleteWithPrompt} disabled={!groupCode.trim() || isLoading} title="Delete Group">
-                                <Trash2 size={18} />
-                            </Button>
+        <div className="bg-white/40 backdrop-blur-md border-b border-white/30 sticky top-16 z-30">
+            <div className="max-w-7xl mx-auto px-8 py-4">
+                <div className="flex items-center justify-center">
+                    <div className="flex items-center gap-4">
+                        {/* Group Code Input */}
+                        <div className="flex items-center gap-2">
+                            <label className="text-sm font-semibold text-gray-700">Group:</label>
+                            <div className="card-modern flex items-center gap-2 px-3 py-2">
+                                <input
+                                    type="text"
+                                    value={groupCode}
+                                    onChange={(e) => onGroupCodeChange(e.target.value)}
+                                    onKeyDown={(e) => e.key === 'Enter' && handleLoadWithPrompt()}
+                                    placeholder="Enter group code"
+                                    className="bg-transparent focus:outline-none px-2 py-1 text-sm font-medium placeholder:text-gray-400 w-40"
+                                    aria-label="Group Code"
+                                />
+                                <button
+                                    onClick={handleLoadWithPrompt}
+                                    disabled={!groupCode.trim() || isLoading}
+                                    className="p-2 hover:bg-blue-50 rounded-md transition-colors disabled:opacity-50"
+                                    title="Load Group"
+                                >
+                                    <Search size={16} className="text-blue-600" />
+                                </button>
+                            </div>
+                        </div>
+                        
+                        {/* Action Buttons */}
+                        <div className="flex items-center gap-1 bg-white/60 backdrop-blur-sm rounded-lg p-1 border border-white/30">
+                            <button
+                                onClick={onSaveGroup}
+                                disabled={!groupCode.trim() || !isDirty || isLoading}
+                                className={`p-2 rounded-md transition-all ${
+                                    isDirty 
+                                        ? 'bg-green-50 text-green-600 hover:bg-green-100' 
+                                        : 'text-gray-400 hover:bg-gray-50'
+                                }`}
+                                title="Save Changes"
+                            >
+                                {isDirty ? (
+                                    <Save size={16} className="animate-pulse" />
+                                ) : (
+                                    <ShieldCheck size={16} />
+                                )}
+                            </button>
+                            <button
+                                onClick={handleClearWithPrompt}
+                                className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-md transition-colors"
+                                title="Clear Workspace"
+                            >
+                                <X size={16} />
+                            </button>
+                            <button
+                                onClick={handleDeleteWithPrompt}
+                                disabled={!groupCode.trim() || isLoading}
+                                className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors disabled:opacity-50"
+                                title="Delete Group"
+                            >
+                                <Trash2 size={16} />
+                            </button>
                         </div>
                     </div>
-
                 </div>
             </div>
         </div>
