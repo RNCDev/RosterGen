@@ -172,5 +172,6 @@ export function useGroupManager() {
         handleClearGroup,
         handleDeleteGroup,
         setError,
+        setLoading,
     };
 }

@@ -50,8 +50,8 @@ export default function UploadCsvDialog({ isOpen, onClose, onUpload }: UploadCsv
                         first_name: String(row.first_name || ''),
                         last_name: String(row.last_name || ''),
                         skill: parseInt(row.skill || '5', 10),
-                        is_defense: String(row.is_defense).toLowerCase() === 'true',
-                        is_attending: String(row.is_attending).toLowerCase() === 'true',
+                        is_defense: ['true', '1'].includes(String(row.is_defense).toLowerCase()),
+                        is_attending: ['true', '1'].includes(String(row.is_attending).toLowerCase()),
                     }));
                     setPlayers(parsedPlayers);
                 },

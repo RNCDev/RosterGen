@@ -23,6 +23,7 @@ export default function Home() {
         players,
         setPlayers,
         loading,
+        setLoading,
         error,
         isDirty,
         handleLoadGroup,
@@ -84,19 +85,40 @@ export default function Home() {
         }
     };
 
-    const handleCsvUpload = async (csvPlayers: any[]) => {
+    const handleCsvUpload = async (csvPlayers: Omit<Player, 'id' | 'group_code' | 'created_at' | 'updated_at'>[]) => {
         if (!groupCode) {
             setError("A group code must be set before uploading a CSV.");
-            throw new Error("Group code not set.");
+            return;
         }
+
         if (isDirty && !window.confirm("You have unsaved changes that will be lost. Are you sure you want to overwrite the current roster?")) {
-            throw new Error("Upload cancelled by user.");
+            return;
         }
-        
-        // This effectively replaces the current players with the CSV data
-        setPlayers(csvPlayers);
-        // The isDirty flag will now be true, user needs to click "Save" in the header
-        setIsBulkEditing(true); // Automatically enter bulk edit mode after CSV upload
+
+        setLoading(true);
+        setError(null);
+
+        try {
+            const response = await fetch('/api/players/bulk', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ groupCode, players: csvPlayers }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error("API Error:", errorData);
+                throw new Error(errorData.error || "Failed to upload CSV data");
+            }
+
+            // Reload the group to get the fresh data
+            await handleLoadGroup(groupCode);
+            setUploadCsvOpen(false); // Close dialog on success
+        } catch (e) {
+            setError(e instanceof Error ? e.message : 'An error occurred during CSV upload.');
+        } finally {
+            setLoading(false);
+        }
     };
     
     const handleGenerateTeams = async () => {
