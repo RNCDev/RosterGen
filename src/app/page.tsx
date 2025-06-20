@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { type Player, type Teams } from '@/types/PlayerTypes';
-import AppHeader from '@/components/AppHeader';
+import FloatingToggle from '@/components/FloatingToggle';
 import ActionHeader from '@/components/ActionHeader';
 import PlayersView from '@/components/PlayersView';
 import TeamsView from '@/components/TeamsView';
@@ -163,7 +163,8 @@ export default function Home() {
 
     return (
         <div className="flex flex-col min-h-screen">
-            <AppHeader
+            {/* Floating toggle for Players/Teams */}
+            <FloatingToggle
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
             />

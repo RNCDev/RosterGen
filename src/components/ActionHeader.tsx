@@ -65,7 +65,7 @@ export default function ActionHeader({
     };
 
     return (
-        <div className="bg-white/40 backdrop-blur-md border-b border-white/30 sticky top-16 z-30">
+        <div className="bg-white/40 backdrop-blur-md border-b border-white/30 sticky top-0 z-30">
             <div className="max-w-7xl mx-auto px-8 py-4">
                 <div className="flex items-center justify-start">
                     <div className="flex items-center gap-4">

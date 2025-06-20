@@ -1,6 +1,6 @@
 {
   "name": "roster-generator",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Roster Generator for Hockey Creating a roster generator with the help of Claude",
   "private": true,
   "scripts": {
