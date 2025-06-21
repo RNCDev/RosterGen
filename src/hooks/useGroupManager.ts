@@ -158,15 +158,55 @@ export function useGroupManager() {
                 throw new Error(errorData.error || 'Failed to update attendance');
             }
             
-            // Refresh attendance data and events (for updated stats)
-            await loadAttendanceForEvent(eventId);
-            await loadEvents(groupCode);
+            // Manually update state for instant feedback
+            
+            // 1. Update attendance data
+            setAttendanceData(prevData => {
+                const newData = [...prevData];
+                updates.forEach(update => {
+                    const playerIndex = newData.findIndex(p => p.id === update.player_id);
+                    if (playerIndex !== -1) {
+                        newData[playerIndex] = { ...newData[playerIndex], is_attending_event: update.is_attending };
+                    }
+                });
+                return newData;
+            });
+            
+            // 2. Update event stats
+            setEvents(prevEvents => {
+                const newEvents = [...prevEvents];
+                const eventIndex = newEvents.findIndex(e => e.id === eventId);
+                
+                if (eventIndex !== -1) {
+                    const eventToUpdate = { ...newEvents[eventIndex] };
+                    
+                    let attendingChange = 0;
+                    updates.forEach(update => {
+                        const player = attendanceData.find(p => p.id === update.player_id);
+                        if (player) {
+                            const wasAttending = player.is_attending_event ?? false;
+                            if (wasAttending !== update.is_attending) {
+                                attendingChange += update.is_attending ? 1 : -1;
+                            }
+                        }
+                    });
+                    
+                    eventToUpdate.attending_count += attendingChange;
+                    eventToUpdate.attendance_rate = eventToUpdate.total_players > 0 ? 
+                        (eventToUpdate.attending_count / eventToUpdate.total_players) * 100 : 0;
+                        
+                    newEvents[eventIndex] = eventToUpdate;
+                }
+                
+                return newEvents;
+            });
+
         } catch (err) {
             const error = err instanceof Error ? err.message : 'Failed to update attendance';
             setError(error);
             throw new Error(error);
         }
-    }, [groupCode, loadAttendanceForEvent, loadEvents]);
+    }, [attendanceData]);
 
     // Delete an event
     const deleteEvent = useCallback(async (eventId: number) => {

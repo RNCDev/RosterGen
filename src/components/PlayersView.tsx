@@ -2,8 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { type Player } from '@/types/PlayerTypes';
-import { Users, ArrowUpDown, UserPlus, Loader2, TrendingUp, Upload, Pencil } from 'lucide-react';
-import EditableRow from '@/components/EditableRow';
+import { Users, UserPlus, Upload, Pencil, Shield, User, ArrowUpDown, ChevronDown, Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 
 interface PlayersViewProps {
@@ -13,41 +12,104 @@ interface PlayersViewProps {
     isBulkEditing: boolean;
     onCreateGroup: () => void;
     groupCode: string;
-    // Player actions
     onAddPlayer: () => void;
     onUploadCsv: () => void;
     onToggleBulkEdit: () => void;
-    onGenerateTeams: () => void;
-    // State
     isDirty: boolean;
-    isGenerating: boolean;
 }
 
 type SortField = 'name' | 'skill' | 'position';
 type SortDirection = 'asc' | 'desc';
 
+// New PlayerCard component
+const PlayerCard = ({ player, onUpdate, isEditing }: { player: Player; onUpdate: (player: Player) => void; isEditing: boolean; }) => {
+
+    const handleFieldChange = (field: keyof Player, value: any) => {
+        onUpdate({ ...player, [field]: value });
+    };
+
+    if (isEditing) {
+        return (
+            <div className="bg-blue-50/30 rounded-lg p-3 border border-blue-200 animate-fade-in">
+                <div className="flex items-center gap-2 mb-2">
+                    <input 
+                        type="text" 
+                        value={player.first_name} 
+                        onChange={(e) => handleFieldChange('first_name', e.target.value)}
+                        className="bg-white/80 border border-gray-200 rounded px-2 py-1 text-sm w-full focus:outline-none focus:ring-1 focus:ring-blue-400"
+                        placeholder="First Name"
+                    />
+                    <input 
+                        type="text" 
+                        value={player.last_name} 
+                        onChange={(e) => handleFieldChange('last_name', e.target.value)}
+                        className="bg-white/80 border border-gray-200 rounded px-2 py-1 text-sm w-full focus:outline-none focus:ring-1 focus:ring-blue-400"
+                        placeholder="Last Name"
+                    />
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1">
+                        <label className="text-xs font-medium text-gray-600">Skill:</label>
+                        <input 
+                            type="number"
+                            min="1"
+                            max="10"
+                            value={player.skill}
+                            onChange={(e) => handleFieldChange('skill', parseInt(e.target.value, 10) || 1)}
+                            className="bg-white/80 border border-gray-200 rounded px-2 py-1 text-sm w-16 focus:outline-none focus:ring-1 focus:ring-blue-400"
+                        />
+                    </div>
+                    <div className="flex items-center gap-1">
+                        <button onClick={() => handleFieldChange('is_defense', false)} className={`px-2 py-1 text-xs rounded-md ${!player.is_defense ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-700'}`}>F</button>
+                        <button onClick={() => handleFieldChange('is_defense', true)} className={`px-2 py-1 text-xs rounded-md ${player.is_defense ? 'bg-purple-500 text-white' : 'bg-gray-200 text-gray-700'}`}>D</button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+    
+    return (
+        <div className="bg-white/50 backdrop-blur-sm rounded-lg p-3 border border-white/40 flex items-center justify-between animate-fade-in">
+            <div className="flex items-center gap-3">
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                    player.is_defense ? 'bg-purple-100' : 'bg-green-100'
+                }`}>
+                    {player.is_defense ? (
+                        <Shield className="w-4 h-4 text-purple-600" />
+                    ) : (
+                        <User className="w-4 h-4 text-green-600" />
+                    )}
+                </div>
+                <div>
+                    <p className="font-semibold text-gray-900 truncate">{player.first_name} {player.last_name}</p>
+                    <p className="text-xs text-gray-500">{player.is_defense ? 'Defense' : 'Forward'}</p>
+                </div>
+            </div>
+            <div className="flex items-center gap-2">
+                <span className="inline-flex items-center justify-center w-6 h-6 bg-blue-100 text-blue-700 rounded-full text-xs font-bold">
+                    {player.skill}
+                </span>
+            </div>
+        </div>
+    );
+};
+
+
 export default function PlayersView({ 
     players, 
     setPlayers, 
-    loading, 
     isBulkEditing, 
     onCreateGroup, 
     groupCode,
     onAddPlayer,
     onUploadCsv,
     onToggleBulkEdit,
-    onGenerateTeams,
-    isDirty,
-    isGenerating
+    isDirty
 }: PlayersViewProps) {
     const [sortConfig, setSortConfig] = useState<{ field: SortField, direction: SortDirection }>({ field: 'name', direction: 'asc' });
 
     const handlePlayerUpdate = (updatedPlayer: Player) => {
         setPlayers(players.map(p => p.id === updatedPlayer.id ? updatedPlayer : p));
-    };
-
-    const handlePlayerDelete = (id: number) => {
-        setPlayers(players.filter(p => p.id !== id));
     };
 
     const handleSort = (field: SortField) => {
@@ -60,201 +122,124 @@ export default function PlayersView({
     const sortedPlayers = useMemo(() => {
         return [...players].sort((a, b) => {
             let comparison = 0;
-            
             switch (sortConfig.field) {
                 case 'name':
-                    const nameA = `${a.first_name} ${a.last_name}`;
-                    const nameB = `${b.first_name} ${b.last_name}`;
-                    comparison = nameA.localeCompare(nameB);
+                    comparison = `${a.first_name} ${a.last_name}`.localeCompare(`${b.first_name} ${b.last_name}`);
                     break;
                 case 'skill':
-                    comparison = a.skill - b.skill;
+                    comparison = b.skill - a.skill; // Default high to low
                     break;
                 case 'position':
                     comparison = a.is_defense === b.is_defense ? 0 : a.is_defense ? 1 : -1;
                     break;
             }
-            
             return sortConfig.direction === 'asc' ? comparison : -comparison;
         });
     }, [players, sortConfig]);
 
-
     const isGroupActive = groupCode.trim().length > 0;
-
-    const SortButton = ({ field, label }: { field: SortField, label: string }) => {
-        const isActive = sortConfig.field === field;
+    
+    if (players.length === 0 && isGroupActive) {
         return (
-            <button 
-                onClick={() => handleSort(field)} 
-                className={`flex items-center gap-2 hover:text-gray-900 transition-colors font-semibold ${
-                    isActive ? 'text-blue-600' : 'text-gray-600'
-                }`}
-            >
-                {label} 
-                <ArrowUpDown className={`h-4 w-4 ${isActive ? 'text-blue-500' : 'text-gray-400'}`} />
-            </button>
-        );
-    };
-
-    if (loading) {
-        return (
-            <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50">
-                <div className="card-elevated p-8 flex flex-col items-center gap-4 animate-fade-in">
-                    <Loader2 className="h-12 w-12 text-blue-600 animate-spin" />
-                    <span className="text-lg font-semibold text-gray-700">Loading players...</span>
-                    <span className="text-sm text-gray-500">This might take a moment</span>
+             <div className="text-center p-12 card-elevated max-w-lg mx-auto animate-slide-up">
+                <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <Users className="w-10 h-10 text-blue-600" />
                 </div>
-            </div>
-        );
-    }
-
-    if (players.length === 0) {
-        return (
-            <div className="flex items-center justify-center min-h-[60vh]">
-                <div className="text-center p-12 card-elevated max-w-lg animate-slide-up">
-                    <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <Users className="w-10 h-10 text-blue-600" />
-                    </div>
-                    {groupCode ? (
-                        <>
-                            <h3 className="heading-secondary mb-3">Group '{groupCode}' is Empty</h3>
-                            <p className="text-gray-500 mb-6 leading-relaxed">
-                                This group doesn't have any players yet. Start building your roster by adding players or importing from a CSV file.
-                            </p>
-                            <div className="flex items-center justify-center gap-3">
-                                <Button onClick={onAddPlayer} className="btn-primary">
-                                    <UserPlus size={16} className="mr-2"/>
-                                    Add Player
-                                </Button>
-                                <Button onClick={onUploadCsv} className="btn-secondary">
-                                    <Upload size={16} className="mr-2"/>
-                                    Upload CSV
-                                </Button>
-                            </div>
-                        </>
-                    ) : (
-                        <>
-                            <h3 className="heading-secondary mb-3">Welcome to Hockey Roster Manager</h3>
-                            <p className="text-gray-500 mb-6 leading-relaxed">
-                                Create a new group to start managing your hockey roster, or load an existing group using a group code.
-                            </p>
-                            <Button 
-                                onClick={onCreateGroup}
-                                className="btn-primary"
-                                size="lg"
-                            >
-                                <UserPlus size={20} className="mr-3"/>
-                                Create New Group
-                            </Button>
-                        </>
-                    )}
+                <h3 className="text-xl font-semibold text-gray-800 mb-3">Group '{groupCode}' is Empty</h3>
+                <p className="text-gray-500 mb-6 leading-relaxed">
+                    This group has no players. Start building your roster by adding players individually or importing them from a CSV file.
+                </p>
+                <div className="flex items-center justify-center gap-3">
+                    <Button onClick={onAddPlayer} className="btn-primary">
+                        <UserPlus size={16} className="mr-2"/>
+                        Add Player
+                    </Button>
+                    <Button onClick={onUploadCsv} className="btn-secondary">
+                        <Upload size={16} className="mr-2"/>
+                        Upload CSV
+                    </Button>
                 </div>
             </div>
         );
     }
     
+    if (!isGroupActive) {
+        return (
+            <div className="text-center p-12 card-elevated max-w-lg mx-auto animate-slide-up">
+                <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <Users className="w-10 h-10 text-blue-600" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-800 mb-3">Welcome to RosterGen</h3>
+                <p className="text-gray-500 mb-6 leading-relaxed">
+                    Load an existing group by entering its code above, or create a new group to start managing your hockey roster.
+                </p>
+                <Button 
+                    onClick={onCreateGroup}
+                    className="btn-primary"
+                    size="lg"
+                >
+                    <UserPlus size={20} className="mr-3"/>
+                    Create New Group
+                </Button>
+            </div>
+        )
+    }
+
     return (
         <div className="space-y-6 animate-fade-in">
-            {/* Stats Summary - De-emphasized */}
-            <div className="grid grid-cols-2 gap-3">
-                <div className="bg-white/50 backdrop-blur-sm rounded-lg border border-white/40 p-3">
-                    <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 bg-blue-100 rounded-md flex items-center justify-center">
-                            <Users className="w-4 h-4 text-blue-600" />
+            {/* Header with Stats and Actions */}
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                    <div className="bg-white/50 backdrop-blur-sm rounded-lg border border-white/40 p-3 flex items-center gap-3">
+                        <div className="w-8 h-8 bg-blue-100 rounded-md flex items-center justify-center">
+                            <Users className="w-5 h-5 text-blue-600" />
                         </div>
                         <div>
                             <p className="text-xs font-medium text-gray-500">Total Players</p>
-                            <p className="text-lg font-bold text-gray-900">{players.length}</p>
+                            <p className="text-xl font-bold text-gray-900">{players.length}</p>
                         </div>
                     </div>
-                </div>
-                
-                <div className="bg-white/50 backdrop-blur-sm rounded-lg border border-white/40 p-3">
-                    <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 bg-purple-100 rounded-md flex items-center justify-center">
-                            <TrendingUp className="w-4 h-4 text-purple-600" />
+                     <div className="bg-white/50 backdrop-blur-sm rounded-lg border border-white/40 p-3 flex items-center gap-3">
+                        <div className="w-8 h-8 bg-purple-100 rounded-md flex items-center justify-center">
+                            <ArrowUpDown className="w-5 h-5 text-purple-600" />
                         </div>
                         <div>
                             <p className="text-xs font-medium text-gray-500">Avg. Skill</p>
-                            <p className="text-lg font-bold text-gray-900">
-                                {players.length > 0 
-                                    ? (players.reduce((sum, p) => sum + p.skill, 0) / players.length).toFixed(1)
-                                    : '0'
-                                }
+                            <p className="text-xl font-bold text-gray-900">
+                                {players.length > 0 ? (players.reduce((sum, p) => sum + p.skill, 0) / players.length).toFixed(1) : '0.0'}
                             </p>
                         </div>
                     </div>
                 </div>
-            </div>
-
-            {/* Actions Bar - Close to Grid */}
-            <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                    <Button 
-                        onClick={onAddPlayer} 
-                        disabled={!isGroupActive}
-                        className="btn-ghost"
-                        size="sm"
-                    >
+                     <Button onClick={onAddPlayer} className="btn-ghost">
                         <UserPlus size={16} className="mr-2"/> 
                         Add Player
                     </Button>
-                    <Button 
-                        onClick={onUploadCsv} 
-                        disabled={!isGroupActive}
-                        className="btn-ghost"
-                        size="sm"
-                    >
+                     <Button onClick={onUploadCsv} className="btn-secondary">
                         <Upload size={16} className="mr-2"/> 
                         Upload CSV
                     </Button>
                     <Button 
                         onClick={onToggleBulkEdit} 
-                        disabled={players.length === 0}
-                        className={`btn-ghost ${isBulkEditing ? 'bg-blue-100 text-blue-700' : ''}`}
-                        size="sm"
+                        className={`btn-primary ${isBulkEditing ? 'bg-green-600 hover:bg-green-700' : ''}`}
                     >
                         <Pencil size={16} className="mr-2"/> 
-                        {isBulkEditing ? (isDirty ? 'Save & Finish' : 'Finish Edit') : 'Bulk Edit'}
+                        {isBulkEditing ? (isDirty ? 'Save & Finish' : 'Finish Editing') : 'Bulk Edit'}
                     </Button>
                 </div>
-                
-
             </div>
-
-            {/* Player Table - More Compact */}
-            <div className="table-modern">
-                <table className="min-w-full">
-                    <thead className="table-header">
-                        <tr>
-                            <th scope="col" className="px-4 py-2 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">
-                                <SortButton field="name" label="Player Name" />
-                            </th>
-                            <th scope="col" className="px-4 py-2 text-center text-sm font-bold text-gray-700 uppercase tracking-wider">
-                                <SortButton field="skill" label="Skill" />
-                            </th>
-                            <th scope="col" className="px-4 py-2 text-center text-sm font-bold text-gray-700 uppercase tracking-wider">
-                                <SortButton field="position" label="Position" />
-                            </th>
-                            <th scope="col" className="px-4 py-2 text-center text-sm font-bold text-gray-700 uppercase tracking-wider">
-                                Actions
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100/50">
-                        {sortedPlayers.map((player, index) => (
-                            <EditableRow
-                                key={player.id}
-                                player={player}
-                                onUpdate={handlePlayerUpdate}
-                                onDelete={handlePlayerDelete}
-                                isBulkEditing={isBulkEditing}
-                                className={`table-row ${index % 2 === 0 ? 'bg-white/30' : 'bg-white/20'}`}
-                            />
-                        ))}
-                    </tbody>
-                </table>
+            
+            {/* Player Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {sortedPlayers.map((player) => (
+                    <PlayerCard
+                        key={player.id}
+                        player={player}
+                        onUpdate={handlePlayerUpdate}
+                        isEditing={isBulkEditing}
+                    />
+                ))}
             </div>
         </div>
     );
