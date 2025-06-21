@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 
 interface ActionHeaderProps {
-    activeTab: 'players' | 'teams';
+    activeTab: 'players' | 'events';
     // Group props
     groupCode: string;
     onGroupCodeChange: (code: string) => void;

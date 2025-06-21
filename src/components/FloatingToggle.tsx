@@ -1,12 +1,12 @@
-    'use client';
+'use client';
 
 import React from 'react';
-import { Users, ArrowRightLeft } from 'lucide-react';
+import { Users, Calendar } from 'lucide-react';
 import packageJson from '../../package.json';
 
 interface FloatingToggleProps {
-    activeTab: 'players' | 'teams';
-    setActiveTab: (tab: 'players' | 'teams') => void;
+    activeTab: 'players' | 'events';
+    setActiveTab: (tab: 'players' | 'events') => void;
 }
 
 export default function FloatingToggle({ activeTab, setActiveTab }: FloatingToggleProps) {
@@ -24,12 +24,12 @@ export default function FloatingToggle({ activeTab, setActiveTab }: FloatingTogg
                 </button>
                 <div className="w-full h-px bg-white/40" />
                 <button
-                    onClick={() => setActiveTab('teams')}
+                    onClick={() => setActiveTab('events')}
                     className={`flex items-center gap-2 px-6 py-3 font-semibold transition-colors w-full
-                        ${activeTab === 'teams' ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white' : 'hover:bg-white/40 text-gray-700'}`}
+                        ${activeTab === 'events' ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white' : 'hover:bg-white/40 text-gray-700'}`}
                 >
-                    <ArrowRightLeft className="w-5 h-5" />
-                    Teams
+                    <Calendar className="w-5 h-5" />
+                    Events
                 </button>
             </div>
             {/* Version badge */}

@@ -1,8 +1,12 @@
 import { type Player, type Teams } from '@/types/PlayerTypes';
 import _ from 'lodash';
 
-export function generateTeams(players: Player[], groupCode: string): Teams {
-    const attendingPlayers = players.filter(p => p.is_attending && p.group_code === groupCode);
+export function generateTeams(players: Player[], groupCode: string, eventBased: boolean = false): Teams {
+    // For event-based generation, players are already filtered by attendance
+    // For legacy generation, filter by is_attending flag
+    const attendingPlayers = eventBased 
+        ? players.filter(p => p.group_code === groupCode)
+        : players.filter(p => p.is_attending && p.group_code === groupCode);
 
     // Shuffle players to ensure randomness for tie-breaking, then sort by skill
     const sortedPlayers = _.orderBy(_.shuffle(attendingPlayers), 'skill', 'desc');

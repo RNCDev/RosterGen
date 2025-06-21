@@ -1,21 +1,19 @@
 'use client';
 
 import { useState } from 'react';
-import { type Player, type Teams } from '@/types/PlayerTypes';
+import { type Player } from '@/types/PlayerTypes';
 import FloatingToggle from '@/components/FloatingToggle';
 import ActionHeader from '@/components/ActionHeader';
 import PlayersView from '@/components/PlayersView';
-import TeamsView from '@/components/TeamsView';
+import EventsView from '@/components/EventsView';
 import ErrorAlert from '@/components/ErrorAlert';
 import AddPlayerDialog from '@/components/dialogs/AddPlayerDialog';
 import UploadCsvDialog from '@/components/dialogs/UploadCsvDialog';
 import CreateGroupDialog from '@/components/dialogs/CreateGroupDialog';
-import { generateTeams } from '@/lib/teamGenerator';
 import { useGroupManager } from '@/hooks/useGroupManager';
 
 export default function Home() {
-    const [activeTab, setActiveTab] = useState<'players' | 'teams'>('players');
-    const [isGeneratingTeams, setIsGeneratingTeams] = useState(false);
+    const [activeTab, setActiveTab] = useState<'players' | 'events'>('players');
     const {
         groupCode,
         setGroupCode,
@@ -31,16 +29,17 @@ export default function Home() {
         handleClearGroup,
         handleDeleteGroup,
         setError,
+        // New event-related properties
+        events,
+        selectedEvent,
+        attendanceData,
+        eventsLoading,
+        attendanceLoading,
+        createEvent,
+        updateAttendance,
+        deleteEvent,
+        selectEvent,
     } = useGroupManager();
-
-    const [teams, setTeams] = useState<Teams>({
-        red: { forwards: [], defensemen: [] },
-        white: { forwards: [], defensemen: [] },
-    });
-    const [teamNames, setTeamNames] = useState({
-        team1: 'Red',
-        team2: 'White'
-    });
     
     // Dialog states
     const [isAddPlayerOpen, setAddPlayerOpen] = useState(false);
@@ -121,23 +120,7 @@ export default function Home() {
         }
     };
     
-    const handleGenerateTeams = async () => {
-        const attendingPlayers = players.filter((p: Player) => p.is_attending);
-        if (attendingPlayers.length < 2) {
-            setError("You need at least two attending players to generate teams.");
-            return;
-        }
-        
-        setIsGeneratingTeams(true);
-        
-        // Add a slight delay for the loading animation
-        setTimeout(() => {
-            const generated = generateTeams(attendingPlayers, groupCode);
-            setTeams(generated);
-            setIsGeneratingTeams(false);
-            setActiveTab('teams');
-        }, 800);
-    };
+
 
     // New handler for creating a group
     const handleCreateGroup = async (newGroupCode: string) => {
@@ -205,35 +188,14 @@ export default function Home() {
                 onToggleBulkEdit={handleToggleBulkEdit}
                 onAddPlayer={() => setAddPlayerOpen(true)}
                 onUploadCsv={() => setUploadCsvOpen(true)}
-                onGenerateTeams={handleGenerateTeams}
-                playerCount={attendingPlayerCount}
+                onGenerateTeams={() => {}} // No longer needed
+                playerCount={0} // Will be handled in EventsView
                 totalPlayerCount={players.length}
             />
 
             <main className="flex-1 bg-gradient-to-br from-blue-50/30 to-indigo-50/30 relative overflow-hidden">
                 <div className="max-w-7xl mx-auto px-8 py-8">
                     {error && <ErrorAlert message={error} onDismiss={() => setError(null)} />}
-
-                    {/* Generate Teams Loading Overlay */}
-                    {isGeneratingTeams && (
-                        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
-                            <div className="bg-white/90 backdrop-blur-md rounded-2xl p-8 flex flex-col items-center gap-6 animate-fade-in shadow-2xl">
-                                <div className="relative">
-                                    <div className="w-16 h-16 border-4 border-blue-200 rounded-full"></div>
-                                    <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin absolute top-0 left-0"></div>
-                                </div>
-                                <div className="text-center">
-                                    <h3 className="text-lg font-semibold text-gray-800 mb-2">Generating Teams...</h3>
-                                    <p className="text-sm text-gray-600">Balancing players by skill and position</p>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce"></div>
-                                    <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                                    <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                                </div>
-                            </div>
-                        </div>
-                    )}
 
                     <div className="relative">
                         {activeTab === 'players' ? (
@@ -248,20 +210,24 @@ export default function Home() {
                                     onAddPlayer={() => setAddPlayerOpen(true)}
                                     onUploadCsv={() => setUploadCsvOpen(true)}
                                     onToggleBulkEdit={handleToggleBulkEdit}
-                                    onGenerateTeams={handleGenerateTeams}
+                                    onGenerateTeams={() => {}} // No longer needed
                                     isDirty={isDirty}
-                                    isGenerating={isGeneratingTeams}
+                                    isGenerating={false}
                                 />
                             </div>
                         ) : (
-                            <div key="teams" className="animate-slide-in-right">
-                                <TeamsView 
-                                    teams={teams}
-                                    teamNames={teamNames}
-                                    setTeamNames={setTeamNames}
-                                    onGenerateTeams={handleGenerateTeams}
-                                    attendingPlayerCount={attendingPlayerCount}
-                                    isGenerating={isGeneratingTeams}
+                            <div key="events" className="animate-slide-in-right">
+                                <EventsView
+                                    events={events}
+                                    selectedEvent={selectedEvent}
+                                    attendanceData={attendanceData}
+                                    onEventSelect={selectEvent}
+                                    onCreateEvent={createEvent}
+                                    onDeleteEvent={deleteEvent}
+                                    onUpdateAttendance={updateAttendance}
+                                    groupCode={loadedGroupCode}
+                                    eventsLoading={eventsLoading}
+                                    attendanceLoading={attendanceLoading}
                                 />
                             </div>
                         )}

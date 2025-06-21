@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { type Player } from '@/types/PlayerTypes';
-import { Users, ArrowUpDown, UserPlus, Loader2, TrendingUp, Upload, Pencil, ArrowLeftRight, Activity } from 'lucide-react';
+import { Users, ArrowUpDown, UserPlus, Loader2, TrendingUp, Upload, Pencil } from 'lucide-react';
 import EditableRow from '@/components/EditableRow';
 import { Button } from '@/components/ui/Button';
 
@@ -23,7 +23,7 @@ interface PlayersViewProps {
     isGenerating: boolean;
 }
 
-type SortField = 'name' | 'skill' | 'position' | 'attendance';
+type SortField = 'name' | 'skill' | 'position';
 type SortDirection = 'asc' | 'desc';
 
 export default function PlayersView({ 
@@ -73,16 +73,13 @@ export default function PlayersView({
                 case 'position':
                     comparison = a.is_defense === b.is_defense ? 0 : a.is_defense ? 1 : -1;
                     break;
-                case 'attendance':
-                    comparison = a.is_attending === b.is_attending ? 0 : a.is_attending ? -1 : 1;
-                    break;
             }
             
             return sortConfig.direction === 'asc' ? comparison : -comparison;
         });
     }, [players, sortConfig]);
 
-    const attendingCount = players.filter(p => p.is_attending).length;
+
     const isGroupActive = groupCode.trim().length > 0;
 
     const SortButton = ({ field, label }: { field: SortField, label: string }) => {
@@ -160,7 +157,7 @@ export default function PlayersView({
     return (
         <div className="space-y-6 animate-fade-in">
             {/* Stats Summary - De-emphasized */}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3">
                 <div className="bg-white/50 backdrop-blur-sm rounded-lg border border-white/40 p-3">
                     <div className="flex items-center gap-2">
                         <div className="w-7 h-7 bg-blue-100 rounded-md flex items-center justify-center">
@@ -169,18 +166,6 @@ export default function PlayersView({
                         <div>
                             <p className="text-xs font-medium text-gray-500">Total Players</p>
                             <p className="text-lg font-bold text-gray-900">{players.length}</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <div className="bg-white/50 backdrop-blur-sm rounded-lg border border-white/40 p-3">
-                    <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 bg-green-100 rounded-md flex items-center justify-center">
-                            <Activity className="w-4 h-4 text-green-600" />
-                        </div>
-                        <div>
-                            <p className="text-xs font-medium text-gray-500">Attending</p>
-                            <p className="text-lg font-bold text-gray-900">{attendingCount}</p>
                         </div>
                     </div>
                 </div>
@@ -235,14 +220,7 @@ export default function PlayersView({
                     </Button>
                 </div>
                 
-                <Button 
-                    onClick={onGenerateTeams} 
-                    disabled={attendingCount < 2 || isBulkEditing || isGenerating}
-                    className="btn-primary"
-                >
-                    <ArrowLeftRight size={16} className="mr-2" />
-                    Generate Teams
-                </Button>
+
             </div>
 
             {/* Player Table - More Compact */}
@@ -258,9 +236,6 @@ export default function PlayersView({
                             </th>
                             <th scope="col" className="px-4 py-2 text-center text-sm font-bold text-gray-700 uppercase tracking-wider">
                                 <SortButton field="position" label="Position" />
-                            </th>
-                            <th scope="col" className="px-4 py-2 text-center text-sm font-bold text-gray-700 uppercase tracking-wider">
-                                <SortButton field="attendance" label="Attending" />
                             </th>
                             <th scope="col" className="px-4 py-2 text-center text-sm font-bold text-gray-700 uppercase tracking-wider">
                                 Actions

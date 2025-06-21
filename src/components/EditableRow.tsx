@@ -114,21 +114,7 @@ export default function EditableRow({ player, onUpdate, onDelete, isBulkEditing,
                         </button>
                     </div>
                 </td>
-                <td className="px-4 py-2 whitespace-nowrap text-center">
-                    <div className="flex items-center justify-center min-h-[32px]">
-                        <button
-                            type="button"
-                            onClick={() => handleFieldChange('is_attending', !data.is_attending)}
-                            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold transition-colors min-h-[32px] ${
-                                data.is_attending 
-                                    ? 'bg-green-100 text-green-700 hover:bg-green-200' 
-                                    : 'bg-red-100 text-red-700 hover:bg-red-200'
-                            }`}
-                        >
-                            {data.is_attending ? 'Attending' : 'Not Attending'}
-                        </button>
-                    </div>
-                </td>
+
                 <td className="px-4 py-2 whitespace-nowrap text-center">
                     <div className="flex items-center justify-center min-h-[32px]">
                         {!isBulkEditing && (
@@ -191,17 +177,7 @@ export default function EditableRow({ player, onUpdate, onDelete, isBulkEditing,
                     </span>
                 </div>
             </td>
-            <td className="px-4 py-2 whitespace-nowrap text-center">
-                <div className="flex items-center justify-center min-h-[32px]">
-                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${
-                        player.is_attending 
-                            ? 'bg-green-100 text-green-700' 
-                            : 'bg-red-100 text-red-700'
-                    }`}>
-                        {player.is_attending ? 'Attending' : 'Not Attending'}
-                    </span>
-                </div>
-            </td>
+
             <td className="px-4 py-2 whitespace-nowrap text-center">
                 <div className="flex items-center justify-center gap-1 min-h-[32px]">
                     <button 
