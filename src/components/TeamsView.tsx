@@ -5,6 +5,7 @@ import { type Teams, type Player } from '@/types/PlayerTypes';
 import { Clipboard, Users, BarChart2, Hash, Trophy, Zap, Shield, Target, RefreshCw } from 'lucide-react';
 import _ from 'lodash';
 import { Button } from '@/components/ui/Button';
+import { toBlob } from 'html-to-image';
 
 interface TeamsViewProps {
     teams: Teams;
@@ -155,16 +156,27 @@ export default function TeamsView({ teams, teamNames, setTeamNames, onGenerateTe
     const teamsContainerRef = useRef<HTMLDivElement>(null);
 
     const handleCopyToClipboard = () => {
-        if (teamsContainerRef.current) {
-            const textToCopy = teamsContainerRef.current.innerText;
-            navigator.clipboard.writeText(textToCopy).then(() => {
-                // Could add a toast notification here
-                alert('Teams copied to clipboard!');
-            }).catch(err => {
-                console.error('Failed to copy teams: ', err);
-                alert('Failed to copy teams.');
-            });
+        if (teamsContainerRef.current === null) {
+            return;
         }
+
+        toBlob(teamsContainerRef.current, { cacheBust: true })
+            .then((blob) => {
+                if (blob) {
+                    navigator.clipboard.write([
+                        new ClipboardItem({ 'image/png': blob })
+                    ]).then(() => {
+                        alert('Teams image copied to clipboard!');
+                    }).catch(err => {
+                        console.error('Failed to copy image: ', err);
+                        alert('Failed to copy image to clipboard.');
+                    });
+                }
+            })
+            .catch((err) => {
+                console.error('Failed to convert HTML to image: ', err);
+                alert('Failed to create image of teams.');
+            });
     };
     
     const totalPlayers = teams.red.forwards.length + teams.red.defensemen.length + teams.white.forwards.length + teams.white.defensemen.length;
