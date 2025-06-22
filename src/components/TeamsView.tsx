@@ -13,6 +13,7 @@ interface TeamsViewProps {
     onGenerateTeams: () => void;
     attendingPlayerCount: number;
     isGenerating: boolean;
+    onBack: () => void;
 }
 
 // Helper to calculate team stats
@@ -150,7 +151,7 @@ const TeamCard = ({
     );
 };
 
-export default function TeamsView({ teams, teamNames, setTeamNames, onGenerateTeams, attendingPlayerCount, isGenerating }: TeamsViewProps) {
+export default function TeamsView({ teams, teamNames, setTeamNames, onGenerateTeams, attendingPlayerCount, isGenerating, onBack }: TeamsViewProps) {
     const teamsContainerRef = useRef<HTMLDivElement>(null);
 
     const handleCopyToClipboard = () => {
@@ -193,6 +194,17 @@ export default function TeamsView({ teams, teamNames, setTeamNames, onGenerateTe
 
     return (
         <div className="space-y-6 animate-fade-in">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <Trophy className="w-6 h-6 text-gray-700" />
+                    <h2 className="text-xl font-bold text-gray-800">Generated Teams</h2>
+                </div>
+                <Button variant="outline" onClick={onBack}>
+                    Back to Attendance
+                </Button>
+            </div>
+
             {/* Header Stats - De-emphasized */}
             <div className="grid grid-cols-3 gap-3">
                 <div className="bg-white/50 backdrop-blur-sm rounded-lg border border-white/40 p-3">

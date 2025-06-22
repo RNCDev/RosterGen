@@ -133,17 +133,19 @@ export async function getEventsByGroup(groupCode: string): Promise<EventWithStat
     const { rows } = await sql<EventWithStats>`
         SELECT 
             e.*,
-            COUNT(a.id) as total_players,
+            COUNT(p.id) as total_players,
             COUNT(CASE WHEN a.is_attending = true THEN 1 END) as attending_count,
             COUNT(CASE WHEN a.is_attending = false THEN 1 END) as not_attending_count,
-            COUNT(CASE WHEN a.is_attending IS NULL THEN 1 END) as no_response_count,
-            ROUND(
-                COUNT(CASE WHEN a.is_attending = true THEN 1 END) * 100.0 / NULLIF(COUNT(a.id), 0), 
-                1
-            ) as attendance_rate
+            (COUNT(p.id) - COUNT(a.id)) as no_response_count,
+            (
+                ROUND(
+                    CAST(COUNT(CASE WHEN a.is_attending = true THEN 1 END) AS DECIMAL) * 100.0 / 
+                    NULLIF(COUNT(p.id), 0), 
+                1)
+            )::float as attendance_rate
         FROM events e
-        LEFT JOIN attendance a ON e.id = a.event_id
-        LEFT JOIN players p ON a.player_id = p.id AND p.is_active = true
+        LEFT JOIN players p ON e.group_code = p.group_code AND p.is_active = true
+        LEFT JOIN attendance a ON e.id = a.event_id AND p.id = a.player_id
         WHERE e.group_code = ${groupCode} AND e.is_active = true
         GROUP BY e.id
         ORDER BY e.event_date DESC, e.event_time DESC
