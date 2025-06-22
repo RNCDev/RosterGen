@@ -10,7 +10,7 @@ import {
     DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/Button';
-import { UserPlus, User, Shield, Star, CheckCircle, X } from 'lucide-react';
+import { UserPlus, User, Shield, Star } from 'lucide-react';
 import { Player } from '@/types/PlayerTypes';
 
 type NewPlayerData = Omit<Player, 'id' | 'group_code' | 'created_at' | 'updated_at'>;
@@ -207,53 +207,7 @@ export default function AddPlayerDialog({ isOpen, onClose, onAddPlayer }: AddPla
                         </div>
                     </div>
 
-                    {/* Attendance */}
-                    <div className="space-y-2">
-                        <label htmlFor="is_attending" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                            <CheckCircle className="w-4 h-4" />
-                            Attendance Status
-                        </label>
-                        <div className="grid grid-cols-2 gap-3">
-                            <label className={`card-modern p-4 cursor-pointer transition-all ${
-                                player.is_attending ? 'ring-2 ring-green-500 bg-green-50/50' : ''
-                            }`}>
-                                <input
-                                    type="radio"
-                                    name="is_attending"
-                                    value="true"
-                                    checked={player.is_attending}
-                                    onChange={handleChange}
-                                    className="sr-only"
-                                />
-                                <div className="flex items-center gap-3">
-                                    <CheckCircle className="w-5 h-5 text-green-600" />
-                                    <div>
-                                        <div className="font-semibold text-gray-900">Attending</div>
-                                        <div className="text-xs text-gray-500">Available for games</div>
-                                    </div>
-                                </div>
-                            </label>
-                            <label className={`card-modern p-4 cursor-pointer transition-all ${
-                                !player.is_attending ? 'ring-2 ring-red-500 bg-red-50/50' : ''
-                            }`}>
-                                <input
-                                    type="radio"
-                                    name="is_attending"
-                                    value="false"
-                                    checked={!player.is_attending}
-                                    onChange={handleChange}
-                                    className="sr-only"
-                                />
-                                <div className="flex items-center gap-3">
-                                    <X className="w-5 h-5 text-red-600" />
-                                    <div>
-                                        <div className="font-semibold text-gray-900">Not Attending</div>
-                                        <div className="text-xs text-gray-500">Not available</div>
-                                    </div>
-                                </div>
-                            </label>
-                        </div>
-                    </div>
+
 
                     <DialogFooter className="pt-6">
                         <div className="flex items-center gap-3 w-full">
