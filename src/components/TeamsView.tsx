@@ -77,7 +77,7 @@ const TeamCard = ({
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className={`w-8 h-8 bg-gradient-to-br ${colors.gradient} rounded-lg flex items-center justify-center shadow-sm`}>
-                            <Trophy className="w-4 h-4 text-white" />
+                            <Shield className="w-4 h-4 text-white" />
                         </div>
                         <input
                             type="text"
@@ -196,96 +196,44 @@ export default function TeamsView({ teams, teamNames, setTeamNames, onGenerateTe
         <div className="space-y-6 animate-fade-in">
             {/* Header */}
             <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                    <Trophy className="w-6 h-6 text-gray-700" />
-                    <h2 className="text-xl font-bold text-gray-800">Generated Teams</h2>
+                <div className="flex items-center gap-4 text-sm text-gray-600">
+                    <span><strong className="text-gray-800">{totalPlayers}</strong> Players</span>
+                    <span className="h-4 w-px bg-gray-300"></span>
+                    <span>Skill Diff: <strong className="text-gray-800">{skillDifference}</strong></span>
+                    <span className="h-4 w-px bg-gray-300"></span>
+                     <span>Balance: <strong className="text-gray-800">{skillDifference <= 2 ? 'Excellent' : skillDifference <= 5 ? 'Good' : 'Fair'}</strong></span>
                 </div>
                 <Button variant="outline" onClick={onBack}>
                     Back to Attendance
                 </Button>
             </div>
-
-            {/* Header Stats - De-emphasized */}
-            <div className="grid grid-cols-3 gap-3">
-                <div className="bg-white/50 backdrop-blur-sm rounded-lg border border-white/40 p-3">
-                    <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 bg-blue-100 rounded-md flex items-center justify-center">
-                            <Users className="w-4 h-4 text-blue-600" />
-                        </div>
-                        <div>
-                            <p className="text-xs font-medium text-gray-500">Total Players</p>
-                            <p className="text-lg font-bold text-gray-900">{totalPlayers}</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <div className="bg-white/50 backdrop-blur-sm rounded-lg border border-white/40 p-3">
-                    <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 bg-green-100 rounded-md flex items-center justify-center">
-                            <BarChart2 className="w-4 h-4 text-green-600" />
-                        </div>
-                        <div>
-                            <p className="text-xs font-medium text-gray-500">Skill Difference</p>
-                            <p className="text-lg font-bold text-gray-900">{skillDifference}</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <div className="bg-white/50 backdrop-blur-sm rounded-lg border border-white/40 p-3">
-                    <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 bg-purple-100 rounded-md flex items-center justify-center">
-                            <Trophy className="w-4 h-4 text-purple-600" />
-                        </div>
-                        <div>
-                            <p className="text-xs font-medium text-gray-500">Balance Score</p>
-                            <p className="text-lg font-bold text-gray-900">
-                                {skillDifference <= 2 ? 'Excellent' : skillDifference <= 5 ? 'Good' : 'Fair'}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
             
             {/* Action Bar */}
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                    <Trophy className="w-5 h-5 text-gray-600" />
-                    <h2 className="text-lg font-semibold text-gray-800">Generated Teams</h2>
-                </div>
-                <div className="flex items-center gap-3">
-                    <Button 
-                        onClick={onGenerateTeams} 
-                        disabled={attendingPlayerCount < 2 || isGenerating}
-                        className={`btn-primary ${isGenerating ? 'animate-pulse' : ''}`}
-                    >
-                        <RefreshCw size={16} className={`mr-2 ${isGenerating ? 'animate-spin' : ''}`} /> 
-                        {isGenerating ? 'Generating...' : 'Regenerate Teams'}
-                    </Button>
-                    <Button onClick={handleCopyToClipboard} variant="outline" className="btn-secondary">
-                        <Clipboard size={16} className="mr-2" /> 
-                        Copy to Clipboard
-                    </Button>
-                </div>
+            <div className="flex items-center justify-end gap-2">
+                <Button onClick={onGenerateTeams} disabled={isGenerating}>
+                    <RefreshCw className={`w-4 h-4 mr-2 ${isGenerating ? 'animate-spin' : ''}`} />
+                    {isGenerating ? 'Generating...' : 'Regenerate Teams'}
+                </Button>
+                <Button variant="outline" onClick={handleCopyToClipboard}>
+                    <Clipboard className="w-4 h-4 mr-2" />
+                    Copy to Clipboard
+                </Button>
             </div>
-            
+
             {/* Teams Grid */}
-            <div ref={teamsContainerRef} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="animate-slide-up" style={{ animationDelay: '0.1s' }}>
-                    <TeamCard
-                        name={teamNames.team1}
-                        team={teams.red}
-                        onNameChange={(name) => setTeamNames({ ...teamNames, team1: name })}
-                        teamColor="red"
-                    />
-                </div>
-                <div className="animate-slide-up" style={{ animationDelay: '0.2s' }}>
-                    <TeamCard
-                        name={teamNames.team2}
-                        team={teams.white}
-                        onNameChange={(name) => setTeamNames({ ...teamNames, team2: name })}
-                        teamColor="blue"
-                    />
-                </div>
+            <div ref={teamsContainerRef} className="grid md:grid-cols-2 gap-4 items-start">
+                <TeamCard
+                    name={teamNames.team1}
+                    team={teams.red}
+                    onNameChange={(name) => setTeamNames({ ...teamNames, team1: name })}
+                    teamColor="red"
+                />
+                <TeamCard
+                    name={teamNames.team2}
+                    team={teams.white}
+                    onNameChange={(name) => setTeamNames({ ...teamNames, team2: name })}
+                    teamColor="blue"
+                />
             </div>
         </div>
     );
