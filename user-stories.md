@@ -30,6 +30,7 @@ This document outlines the user stories for the RosterGen application, covering 
 -   [x] **EV06: Bulk Attendance Edit Mode:** As a user viewing an event, I want to enter a "Bulk Edit" mode so I can efficiently update attendance for multiple players using checkboxes.
 -   [x] **EV07: Save Bulk Attendance:** As a user in "Bulk Edit" mode, I want to click "Save Changes" to commit all my updates in a single action.
 -   [x] **EV08: Cancel Bulk Attendance:** As a user in "Bulk Edit" mode, I want a "Cancel" button to discard all my attendance changes and exit the mode.
+-   [x] **EV09: Smart Attendance Defaults:** As a user creating a new event, I want the system to automatically default each player's attendance to their attendance status from the most recent previous event, so I don't have to manually set attendance for regular attendees every time.
 
 ## Feedback & State Management
 

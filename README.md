@@ -14,6 +14,7 @@ This is a Next.js application designed to help organize hockey games and manage 
     -   View attendance status for each player for a selected event.
     -   Toggle individual player attendance with an instant UI update (no page reloads!).
     -   **New! Bulk Edit Mode**: Efficiently update attendance for multiple players at once using a simple checkbox interface.
+    -   **Smart Attendance Defaults**: When creating a new event, player attendance automatically defaults to their attendance status from the most recent previous event, saving time for groups with consistent attendance patterns.
 -   **Automatic Team Generation**: Generate balanced teams for an event based on the skill level and position of attending players.
 
 ## Tech Stack
