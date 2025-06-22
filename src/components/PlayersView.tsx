@@ -52,17 +52,17 @@ const PlayerTable = ({
                 <table className="w-full text-sm">
                     <thead className="bg-gray-50/50">
                         <tr>
-                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th className="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Player
                             </th>
-                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th className="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Position
                             </th>
-                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th className="px-3 py-1 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Skill
                             </th>
                             {isEditing && (
-                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th className="px-3 py-1 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Actions
                                 </th>
                             )}
@@ -70,7 +70,7 @@ const PlayerTable = ({
                     </thead>
                     <tbody className="divide-y divide-gray-200/50">
                         {players.map((player) => (
-                            <tr key={player.id} className="h-12 hover:bg-gray-50/30 transition-colors">
+                            <tr key={player.id} className="h-10 hover:bg-gray-50/30 transition-colors">
                                 <td className="px-3 whitespace-nowrap">
                                     {isEditing ? (
                                         <div className="flex items-center gap-2">
@@ -78,33 +78,37 @@ const PlayerTable = ({
                                                 type="text"
                                                 value={player.first_name}
                                                 onChange={(e) => onUpdate({ ...player, first_name: e.target.value })}
-                                                className="w-24 text-sm border border-gray-200 rounded px-2 py-1 bg-white/80 focus:outline-none focus:ring-1 focus:ring-blue-400"
+                                                className="w-32 text-sm border border-gray-200 rounded px-2 py-1 bg-white/80 focus:outline-none focus:ring-1 focus:ring-blue-400"
                                             />
                                             <input
                                                 type="text"
                                                 value={player.last_name}
                                                 onChange={(e) => onUpdate({ ...player, last_name: e.target.value })}
-                                                className="w-24 text-sm border border-gray-200 rounded px-2 py-1 bg-white/80 focus:outline-none focus:ring-1 focus:ring-blue-400"
+                                                className="w-32 text-sm border border-gray-200 rounded px-2 py-1 bg-white/80 focus:outline-none focus:ring-1 focus:ring-blue-400"
                                             />
                                         </div>
                                     ) : (
-                                        <span className="font-medium text-gray-900">
-                                            {player.first_name} {player.last_name}
-                                        </span>
+                                        <div className="flex items-center gap-3">
+                                            <User className="w-5 h-5 text-gray-400" />
+                                            <span className="font-medium text-gray-900">
+                                                {player.first_name} {player.last_name}
+                                            </span>
+                                        </div>
                                     )}
                                 </td>
                                 <td className="px-3">
                                     {isEditing ? (
-                                        <div className="flex items-center gap-1">
+                                        <div className="flex items-center border border-gray-200 rounded-md overflow-hidden">
                                             <button
                                                 onClick={() => onUpdate({ ...player, is_defense: false })}
-                                                className={`px-2 py-0.5 text-xs rounded ${!player.is_defense ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-700'}`}
+                                                className={`w-7 h-7 flex-shrink-0 flex items-center justify-center text-xs transition-colors ${!player.is_defense ? 'bg-green-500 text-white' : 'bg-transparent text-gray-600 hover:bg-gray-100'}`}
                                             >
                                                 F
                                             </button>
+                                            <div className="w-px bg-gray-200 h-full"></div>
                                             <button
                                                 onClick={() => onUpdate({ ...player, is_defense: true })}
-                                                className={`px-2 py-0.5 text-xs rounded ${player.is_defense ? 'bg-purple-500 text-white' : 'bg-gray-200 text-gray-700'}`}
+                                                className={`w-7 h-7 flex-shrink-0 flex items-center justify-center text-xs transition-colors ${player.is_defense ? 'bg-purple-500 text-white' : 'bg-transparent text-gray-600 hover:bg-gray-100'}`}
                                             >
                                                 D
                                             </button>
@@ -139,13 +143,13 @@ const PlayerTable = ({
                                 </td>
                                 {isEditing && (
                                     <td className="px-3">
-                                        <div className="flex items-center">
+                                        <div className="flex items-center justify-center">
                                             <button
                                                 onClick={() => onDeletePlayer(player.id)}
-                                                className="text-red-600 hover:text-red-800 text-sm flex items-center gap-1"
+                                                className="text-gray-400 hover:text-red-600 transition-colors"
+                                                title="Delete Player"
                                             >
-                                                <Trash2 className="w-3 h-3" />
-                                                Delete
+                                                <Trash2 className="w-4 h-4" />
                                             </button>
                                         </div>
                                     </td>

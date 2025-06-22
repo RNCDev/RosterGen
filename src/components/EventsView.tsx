@@ -409,64 +409,65 @@ function AttendanceTable({
     stagedChanges: Map<number, boolean>;
     onStagedChange: (playerId: number, isAttending: boolean) => void;
 }) {
-     return (
+    return (
         <div className="bg-white/50 backdrop-blur-sm rounded-lg border border-white/40 overflow-hidden">
-            <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                    <thead className="bg-gray-50/50">
-                        <tr>
-                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Player</th>
-                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Position</th>
-                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Skill</th>
-                            <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Attending</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200/50">
-                        {players.map(player => (
-                            <tr key={player.id} className="h-12 hover:bg-gray-50/30 transition-colors">
-                                <td className="px-3 whitespace-nowrap">
+            <table className="w-full text-sm">
+                <thead className="bg-gray-50/50">
+                    <tr>
+                        <th className="px-4 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Player</th>
+                        <th className="px-4 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Position</th>
+                        <th className="px-4 py-1 text-center font-medium text-gray-500 uppercase tracking-wider">Skill</th>
+                        <th className="px-4 py-1 text-center font-medium text-gray-500 uppercase tracking-wider">Attending</th>
+                    </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200/50">
+                    {players.map((player) => (
+                        <tr key={player.id} className="h-10 hover:bg-gray-50/30 transition-colors">
+                            <td className="px-4 whitespace-nowrap">
+                                <div className="flex items-center gap-3">
+                                    <Users className="w-5 h-5 text-gray-400" />
                                     <span className="font-medium text-gray-900">{player.first_name} {player.last_name}</span>
-                                </td>
-                                <td>
-                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                                        player.is_defense ? 'bg-purple-100 text-purple-800' : 'bg-green-100 text-green-800'
-                                    }`}>
-                                        {player.is_defense ? 'Defense' : 'Forward'}
+                                </div>
+                            </td>
+                            <td>
+                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                                    player.is_defense ? 'bg-purple-100 text-purple-800' : 'bg-green-100 text-green-800'
+                                }`}>
+                                    {player.is_defense ? 'Defense' : 'Forward'}
+                                </span>
+                            </td>
+                            <td>
+                                <div className="flex justify-start items-center">
+                                    <span className="inline-flex items-center justify-center w-6 h-6 bg-blue-100 text-blue-700 rounded-full text-xs font-bold">
+                                        {player.skill}
                                     </span>
-                                </td>
-                                <td>
-                                    <div className="flex justify-start items-center">
-                                        <span className="inline-flex items-center justify-center w-6 h-6 bg-blue-100 text-blue-700 rounded-full text-xs font-bold">
-                                            {player.skill}
-                                        </span>
-                                    </div>
-                                </td>
-                                <td className="text-center">
-                                     {isBulkEditMode ? (
-                                        <input
-                                            type="checkbox"
-                                            checked={stagedChanges.get(player.id) ?? false}
-                                            onChange={(e) => onStagedChange(player.id, e.target.checked)}
-                                            className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                                        />
-                                    ) : (
-                                        <button
-                                            onClick={() => onAttendanceToggle(player.id)}
-                                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium transition-colors ${
-                                                player.is_attending_event
-                                                    ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                                                    : 'bg-red-100 text-red-800 hover:bg-red-200'
-                                            }`}
-                                        >
-                                            {player.is_attending_event ? 'Attending' : 'Not Attending'}
-                                        </button>
-                                    )}
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
+                                </div>
+                            </td>
+                            <td className="text-center">
+                                 {isBulkEditMode ? (
+                                    <input
+                                        type="checkbox"
+                                        checked={stagedChanges.get(player.id) ?? false}
+                                        onChange={(e) => onStagedChange(player.id, e.target.checked)}
+                                        className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                    />
+                                ) : (
+                                    <button
+                                        onClick={() => onAttendanceToggle(player.id)}
+                                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium transition-colors ${
+                                            player.is_attending_event
+                                                ? 'bg-green-100 text-green-800 hover:bg-green-200'
+                                                : 'bg-red-100 text-red-800 hover:bg-red-200'
+                                        }`}
+                                    >
+                                        {player.is_attending_event ? 'Attending' : 'Not Attending'}
+                                    </button>
+                                )}
+                            </td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
         </div>
     );
 }
