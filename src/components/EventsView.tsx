@@ -17,7 +17,9 @@ import {
     type EventDB, 
     type PlayerWithAttendance, 
     type AttendanceInput,
-    type Teams
+    type Teams,
+    type Group,
+    type EventInput
 } from '@/types/PlayerTypes';
 import CreateEventDialog from './dialogs/CreateEventDialog';
 import TeamsView from './TeamsView';
@@ -25,13 +27,13 @@ import { Button } from './ui/Button';
 
 interface EventsViewProps {
     events: EventWithStats[];
-    selectedEvent: EventDB | null;
+    selectedEvent: EventWithStats | null;
     attendanceData: PlayerWithAttendance[];
-    onEventSelect: (event: EventDB) => void;
-    onCreateEvent: (eventData: any) => Promise<EventDB>;
+    onEventSelect: (event: EventWithStats) => void;
+    onCreateEvent: (eventData: Omit<EventInput, 'group_id'>) => Promise<void>;
     onDeleteEvent: (eventId: number) => Promise<void>;
     onUpdateAttendance: (eventId: number, updates: AttendanceInput[]) => Promise<void>;
-    groupCode: string;
+    group: Group | null;
     eventsLoading: boolean;
     attendanceLoading: boolean;
 }
@@ -44,7 +46,7 @@ export default function EventsView({
     onCreateEvent,
     onDeleteEvent,
     onUpdateAttendance,
-    groupCode,
+    group,
     eventsLoading,
     attendanceLoading
 }: EventsViewProps) {
@@ -111,7 +113,7 @@ export default function EventsView({
     };
 
     const handleGenerateTeams = async () => {
-        if (!selectedEvent) return;
+        if (!selectedEvent || !group) return;
         setIsGeneratingTeams(true);
         try {
             const response = await fetch(`/api/teams?action=generate`, {
@@ -119,7 +121,7 @@ export default function EventsView({
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
                     event_id: selectedEvent.id, 
-                    group_code: groupCode 
+                    group_id: group.id 
                 }),
             });
 
@@ -192,7 +194,7 @@ export default function EventsView({
         }
     };
     
-    if (!groupCode) {
+    if (!group) {
         return (
             <div className="text-center py-16">
                 <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
@@ -344,7 +346,7 @@ export default function EventsView({
                 isOpen={isCreateEventOpen}
                 onClose={() => setCreateEventOpen(false)}
                 onCreateEvent={onCreateEvent}
-                groupCode={groupCode}
+                group={group}
             />
         </div>
     );

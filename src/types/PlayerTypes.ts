@@ -7,7 +7,7 @@ export interface PlayerDB {
     skill: number;
     is_defense: boolean;
     is_attending: boolean;
-    group_code: string;
+    group_id: number;
     is_active: boolean;
     created_at?: Date;
     updated_at?: Date;
@@ -19,7 +19,7 @@ export interface PlayerInput {
     skill: number;
     is_defense: boolean;
     is_attending: boolean;
-    group_code: string;
+    group_id: number;
 }
 
 export interface FormPlayer {
@@ -28,7 +28,14 @@ export interface FormPlayer {
     skill: number;
     defense: boolean;
     attending: boolean;
-    groupCode: string;
+    groupId: number;
+}
+
+// Group types
+export interface Group {
+    id: number;
+    code: string;
+    created_at: Date;
 }
 
 // Event types
@@ -39,7 +46,7 @@ export interface EventDB {
     event_date: Date;
     event_time?: string;
     location?: string;
-    group_code: string;
+    group_id: number;
     is_active: boolean;
     created_at: Date;
     updated_at: Date;
@@ -51,7 +58,7 @@ export interface EventInput {
     event_date: Date;
     event_time?: string;
     location?: string;
-    group_code: string;
+    group_id: number;
     is_active?: boolean;
 }
 
@@ -125,7 +132,7 @@ export const toDatabase = (formData: FormPlayer): PlayerInput => ({
     skill: formData.skill,
     is_defense: formData.defense,
     is_attending: formData.attending,
-    group_code: formData.groupCode
+    group_id: formData.groupId
 });
 
 export const fromDatabase = (player: PlayerDB): FormPlayer => ({
@@ -134,7 +141,7 @@ export const fromDatabase = (player: PlayerDB): FormPlayer => ({
     skill: player.skill,
     defense: player.is_defense,
     attending: player.is_attending,
-    groupCode: player.group_code
+    groupId: player.group_id
 });
 
 // Event transformation functions
@@ -146,12 +153,12 @@ export const eventToForm = (event: EventDB): EventForm => ({
     location: event.location || ''
 });
 
-export const formToEventInput = (formData: EventForm, groupCode: string): EventInput => ({
+export const formToEventInput = (formData: EventForm, groupId: number): EventInput => ({
     name: formData.name,
     description: formData.description || undefined,
     event_date: new Date(formData.date),
     event_time: formData.time || undefined,
     location: formData.location || undefined,
-    group_code: groupCode,
+    group_id: groupId,
     is_active: true
 });

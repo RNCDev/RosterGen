@@ -9,11 +9,11 @@ import { type AttendanceInput } from '@/types/PlayerTypes';
 export async function GET(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url);
-        const eventId = searchParams.get('event_id');
+        const eventId = searchParams.get('eventId');
 
         if (!eventId) {
             return NextResponse.json(
-                { error: 'event_id parameter is required' },
+                { error: 'eventId parameter is required' },
                 { status: 400 }
             );
         }

@@ -23,10 +23,7 @@ interface PlayersViewProps {
     players: Player[];
     setPlayers: (players: Player[]) => void;
     loading: boolean;
-    isBulkEditing: boolean;
-    onToggleBulkEdit: () => void;
     isDirty: boolean;
-    onStagedChange?: (playerId: number, isAttending: boolean) => void;
 }
 
 type SortField = 'name' | 'skill' | 'position';
@@ -216,11 +213,11 @@ const BulkActions = ({
 
 // A simple empty state component for when a group has no players.
 const EmptyState = () => (
-    <div className="text-center py-20 bg-white/40 backdrop-blur-sm rounded-lg border border-white/40">
-        <Users className="mx-auto h-12 w-12 text-gray-400" />
-        <h3 className="mt-2 text-xl font-semibold text-gray-900">No Players in Roster</h3>
+    <div className="text-center py-12">
+        <Users size={48} className="mx-auto text-gray-400" />
+        <h3 className="mt-4 text-lg font-semibold text-gray-700">No Players in Roster</h3>
         <p className="mt-1 text-sm text-gray-500">
-            Get started by clicking "Add Player" or "Upload CSV" above.
+            Click &quot;Add Player&quot; or &quot;Upload CSV&quot; to get started.
         </p>
     </div>
 );
@@ -228,26 +225,25 @@ const EmptyState = () => (
 export default function PlayersView({ 
     players, 
     setPlayers, 
-    isBulkEditing, 
-    onToggleBulkEdit,
-    isDirty,
-    onStagedChange
+    loading,
+    isDirty
 }: PlayersViewProps) {
+    const [isEditing, setIsEditing] = useState(false);
     const [sortConfig, setSortConfig] = useState<{ field: SortField, direction: SortDirection }>({ field: 'name', direction: 'asc' });
     const [positionFilter, setPositionFilter] = useState('all');
     const [skillFilter, setSkillFilter] = useState('all');
-    const [selectedPlayers, setSelectedPlayers] = useState<Player[]>([]);
+    const [selectedPlayerIds, setSelectedPlayerIds] = useState<Set<number>>(new Set());
+    
+    // Pagination state
     const [currentPage, setCurrentPage] = useState(1);
-    const PAGE_SIZE = 20;
+    const [rowsPerPage, setRowsPerPage] = useState(25);
 
     const handlePlayerUpdate = (updatedPlayer: Player) => {
-        setPlayers(players.map(p => p.id === updatedPlayer.id ? updatedPlayer : p));
+        setPlayers(players.map(p => (p.id === updatedPlayer.id ? updatedPlayer : p)));
     };
 
     const handleDeletePlayer = (playerId: number) => {
-        if (window.confirm('Are you sure you want to delete this player?')) {
-            setPlayers(players.filter(p => p.id !== playerId));
-        }
+        setPlayers(players.filter(p => p.id !== playerId));
     };
 
     const handleSort = (field: SortField) => {
@@ -259,60 +255,59 @@ export default function PlayersView({
 
     const handleBulkUpdate = (updates: Partial<Player>) => {
         const updatedPlayers = players.map(player => 
-            selectedPlayers.some(selected => selected.id === player.id) 
-                ? { ...player, ...updates }
-                : player
+            selectedPlayerIds.has(player.id) ? { ...player, ...updates } : player
         );
         setPlayers(updatedPlayers);
+        setSelectedPlayerIds(new Set());
     };
 
     const handleClearSelection = () => {
-        setSelectedPlayers([]);
+        setSelectedPlayerIds(new Set());
     };
 
-    const filteredAndSortedPlayers = useMemo(() => {
+    const filteredPlayers = useMemo(() => {
         let filtered = [...players];
-        
+
         if (positionFilter !== 'all') {
-            filtered = filtered.filter(player => 
-                positionFilter === 'forward' ? !player.is_defense : player.is_defense
-            );
+            filtered = filtered.filter(p => (p.is_defense ? 'defense' : 'forward') === positionFilter);
         }
-        
         if (skillFilter !== 'all') {
-            const [min, max] = skillFilter.split('-').map(Number);
-            filtered = filtered.filter(player => player.skill >= min && player.skill <= max);
+            filtered = filtered.filter(p => p.skill === parseInt(skillFilter));
         }
-        
-        if (sortConfig.field) {
-            filtered.sort((a, b) => {
-                let aValue, bValue;
 
-                if (sortConfig.field === 'name') {
-                    aValue = `${a.first_name} ${a.last_name}`;
-                    bValue = `${b.first_name} ${b.last_name}`;
-                } else if (sortConfig.field === 'position') {
-                    aValue = a.is_defense ? 'Defense' : 'Forward';
-                    bValue = b.is_defense ? 'Defense' : 'Forward';
-                } else { // skill
-                    aValue = a.skill;
-                    bValue = b.skill;
-                }
+        filtered.sort((a, b) => {
+            let valA: string | number, valB: string | number;
 
-                if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
-                if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
-                return 0;
-            });
-        }
+            switch (sortConfig.field) {
+                case 'name':
+                    valA = `${a.first_name} ${a.last_name}`;
+                    valB = `${b.first_name} ${b.last_name}`;
+                    break;
+                case 'skill':
+                    valA = a.skill;
+                    valB = b.skill;
+                    break;
+                case 'position':
+                    valA = a.is_defense ? 1 : 0;
+                    valB = b.is_defense ? 1 : 0;
+                    break;
+            }
+            
+            if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1;
+            if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1;
+            return 0;
+        });
+
         return filtered;
     }, [players, positionFilter, skillFilter, sortConfig]);
 
     const paginatedPlayers = useMemo(() => {
-        const start = (currentPage - 1) * PAGE_SIZE;
-        return filteredAndSortedPlayers.slice(start, start + PAGE_SIZE);
-    }, [filteredAndSortedPlayers, currentPage]);
+        const start = (currentPage - 1) * rowsPerPage;
+        const end = start + rowsPerPage;
+        return filteredPlayers.slice(start, end);
+    }, [filteredPlayers, currentPage, rowsPerPage]);
     
-    const totalPages = Math.ceil(filteredAndSortedPlayers.length / PAGE_SIZE);
+    const totalPages = Math.ceil(filteredPlayers.length / rowsPerPage);
 
     const handlePageChange = (page: number) => {
         if (page >= 1 && page <= totalPages) {
@@ -320,105 +315,114 @@ export default function PlayersView({
         }
     };
 
-    if (players.length === 0) {
-        return <EmptyState />;
+    if (loading) {
+        return (
+            <div className="text-center py-12">
+                <Users size={48} className="mx-auto text-gray-400" />
+                <h3 className="mt-4 text-lg font-semibold text-gray-700">Loading...</h3>
+            </div>
+        );
     }
 
     return (
-        <div className="space-y-6">
-            <div className="flex flex-col md:flex-row gap-6 animate-slide-in-from-left">
-                <div className="w-full md:w-72 lg:w-80 flex-shrink-0 space-y-6 animate-slide-in-from-left">
-                    <Button 
-                        onClick={onToggleBulkEdit} 
-                        className={`w-full justify-start btn-primary ${isBulkEditing ? 'bg-green-600 hover:bg-green-700' : ''}`}
+        <div className="animate-fade-in">
+            {isEditing && selectedPlayerIds.size > 0 && (
+                <BulkActions
+                    selectedPlayers={players.filter(p => selectedPlayerIds.has(p.id))}
+                    onBulkUpdate={handleBulkUpdate}
+                    onClearSelection={() => setSelectedPlayerIds(new Set())}
+                />
+            )}
+            <div className="flex justify-between items-center mb-4">
+                <div className="flex items-center gap-2">
+                    <select 
+                        value={positionFilter} 
+                        onChange={(e) => setPositionFilter(e.target.value)}
+                        className="text-sm border-gray-300 rounded-md"
                     >
-                        <Pencil size={16} className="mr-2"/> 
-                        {isBulkEditing ? 'Finish & Save' : 'Bulk Edit Players'}
-                    </Button>
-
-                    <div className="space-y-4">
-                        <h4 className="font-semibold text-gray-700">Sort by</h4>
-                        <div className="flex items-center gap-2">
-                            {['name', 'skill', 'position'].map((field) => (
-                                <Button
-                                    key={field}
-                                    variant={sortConfig.field === field ? 'secondary' : 'outline'}
-                                    size="sm"
-                                    onClick={() => handleSort(field as SortField)}
-                                    className="flex-1"
-                                >
-                                    {field.charAt(0).toUpperCase() + field.slice(1)}
-                                    {sortConfig.field === field && (
-                                        <ChevronDown className={`ml-1 h-4 w-4 transition-transform ${sortConfig.direction === 'desc' ? 'rotate-180' : ''}`} />
-                                    )}
-                                </Button>
-                            ))}
-                        </div>
-                    </div>
-                    <div className="space-y-2">
-                        <h4 className="font-semibold text-gray-700">Filter Position</h4>
-                        <select
-                            value={positionFilter}
-                            onChange={(e) => setPositionFilter(e.target.value)}
-                            className="w-full p-2 border border-gray-300 rounded-md bg-white/80"
-                        >
-                            <option value="all">All Positions</option>
-                            <option value="forward">Forwards</option>
-                            <option value="defense">Defense</option>
-                        </select>
-                    </div>
-                    <div className="space-y-2">
-                        <h4 className="font-semibold text-gray-700">Filter Skill</h4>
-                        <select
-                            value={skillFilter}
-                            onChange={(e) => setSkillFilter(e.target.value)}
-                            className="w-full p-2 border border-gray-300 rounded-md bg-white/80"
-                        >
-                            <option value="all">All Skills</option>
-                            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(s => <option key={s} value={s}>{s}</option>)}
-                        </select>
-                    </div>
+                        <option value="all">All Positions</option>
+                        <option value="forward">Forwards</option>
+                        <option value="defense">Defense</option>
+                    </select>
+                    <select 
+                        value={skillFilter} 
+                        onChange={(e) => setSkillFilter(e.target.value)}
+                        className="text-sm border-gray-300 rounded-md"
+                    >
+                        <option value="all">All Skills</option>
+                        {Array.from({ length: 10 }, (_, i) => i + 1).map(skill => (
+                            <option key={skill} value={skill}>{skill}</option>
+                        ))}
+                    </select>
                 </div>
-
-                <div className="flex-1 animate-slide-in-from-right">
-                    {isBulkEditing && selectedPlayers.length > 0 && (
-                        <BulkActions
-                            selectedPlayers={selectedPlayers}
-                            onBulkUpdate={handleBulkUpdate}
-                            onClearSelection={handleClearSelection}
-                        />
-                    )}
-
-                    <PlayerTable 
-                        players={paginatedPlayers} 
-                        onUpdate={handlePlayerUpdate} 
-                        isEditing={isBulkEditing}
-                        onDeletePlayer={handleDeletePlayer}
-                    />
-
-                    <div className="mt-4 flex items-center justify-between">
-                        <div className="text-sm text-gray-500">
-                            Showing {Math.min(filteredAndSortedPlayers.length > 0 ? ((currentPage - 1) * PAGE_SIZE) + 1 : 0, filteredAndSortedPlayers.length)}
-                            - {Math.min(currentPage * PAGE_SIZE, filteredAndSortedPlayers.length)} of {filteredAndSortedPlayers.length} players
-                        </div>
-                        <div className="flex items-center gap-1">
-                            <Button size="sm" variant="outline" onClick={() => handlePageChange(1)} disabled={currentPage === 1}>
-                                <ChevronsLeft className="w-4 h-4" />
-                            </Button>
-                            <Button size="sm" variant="outline" onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1}>
-                                <ChevronLeft className="w-4 h-4" />
-                            </Button>
-                            <span className="text-sm font-medium px-4">{currentPage} / {totalPages}</span>
-                            <Button size="sm" variant="outline" onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages}>
-                                <ChevronRight className="w-4 h-4" />
-                            </Button>
-                            <Button size="sm" variant="outline" onClick={() => handlePageChange(totalPages)} disabled={currentPage === totalPages}>
-                                <ChevronsRight className="w-4 h-4" />
-                            </Button>
-                        </div>
-                    </div>
-                </div>
+                <Button 
+                    onClick={() => setIsEditing(!isEditing)} 
+                    variant={isEditing ? 'default' : 'outline'}
+                >
+                    {isEditing ? 'Done Editing' : 'Edit Roster'}
+                </Button>
             </div>
+            
+            {players.length === 0 ? (
+                <EmptyState />
+            ) : (
+                <div className="space-y-6">
+                    <div className="flex flex-col md:flex-row gap-6 animate-slide-in-from-left">
+                        <div className="w-full md:w-72 lg:w-80 flex-shrink-0 space-y-6 animate-slide-in-from-left">
+                            <div className="space-y-4">
+                                <h4 className="font-semibold text-gray-700">Sort by</h4>
+                                <div className="flex items-center gap-2">
+                                    {['name', 'skill', 'position'].map((field) => (
+                                        <Button
+                                            key={field}
+                                            variant={sortConfig.field === field ? 'secondary' : 'outline'}
+                                            size="sm"
+                                            onClick={() => handleSort(field as SortField)}
+                                            className="flex-1"
+                                        >
+                                            {field.charAt(0).toUpperCase() + field.slice(1)}
+                                            {sortConfig.field === field && (
+                                                <ChevronDown className={`ml-1 h-4 w-4 transition-transform ${sortConfig.direction === 'desc' ? 'rotate-180' : ''}`} />
+                                            )}
+                                        </Button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex-1 animate-slide-in-from-right">
+                            <PlayerTable 
+                                players={paginatedPlayers} 
+                                onUpdate={handlePlayerUpdate} 
+                                isEditing={isEditing}
+                                onDeletePlayer={handleDeletePlayer}
+                            />
+
+                            <div className="mt-4 flex items-center justify-between">
+                                <div className="text-sm text-gray-500">
+                                    Showing {Math.min(filteredPlayers.length > 0 ? ((currentPage - 1) * rowsPerPage) + 1 : 0, filteredPlayers.length)}
+                                    - {Math.min(currentPage * rowsPerPage, filteredPlayers.length)} of {filteredPlayers.length} players
+                                </div>
+                                <div className="flex items-center gap-1">
+                                    <Button size="sm" variant="outline" onClick={() => handlePageChange(1)} disabled={currentPage === 1}>
+                                        <ChevronsLeft className="w-4 h-4" />
+                                    </Button>
+                                    <Button size="sm" variant="outline" onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1}>
+                                        <ChevronLeft className="w-4 h-4" />
+                                    </Button>
+                                    <span className="text-sm font-medium px-4">{currentPage} / {totalPages}</span>
+                                    <Button size="sm" variant="outline" onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages}>
+                                        <ChevronRight className="w-4 h-4" />
+                                    </Button>
+                                    <Button size="sm" variant="outline" onClick={() => handlePageChange(totalPages)} disabled={currentPage === totalPages}>
+                                        <ChevronsRight className="w-4 h-4" />
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 } 

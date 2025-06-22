@@ -11,12 +11,12 @@ import { type EventInput } from '@/types/PlayerTypes';
 export async function GET(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url);
-        const groupCode = searchParams.get('group_code');
-        const eventId = searchParams.get('event_id');
+        const groupId = searchParams.get('groupId');
+        const eventId = searchParams.get('eventId');
 
-        if (!groupCode && !eventId) {
+        if (!groupId && !eventId) {
             return NextResponse.json(
-                { error: 'Either group_code or event_id parameter is required' },
+                { error: 'Either groupId or eventId parameter is required' },
                 { status: 400 }
             );
         }
@@ -32,8 +32,8 @@ export async function GET(request: NextRequest) {
             return NextResponse.json(event);
         }
 
-        if (groupCode) {
-            const events = await getEventsByGroup(groupCode);
+        if (groupId) {
+            const events = await getEventsByGroup(parseInt(groupId));
             return NextResponse.json(events);
         }
 
@@ -51,9 +51,9 @@ export async function POST(request: NextRequest) {
         const eventData: EventInput = await request.json();
 
         // Validate required fields
-        if (!eventData.name || !eventData.event_date || !eventData.group_code) {
+        if (!eventData.name || !eventData.event_date || !eventData.group_id) {
             return NextResponse.json(
-                { error: 'Name, event_date, and group_code are required' },
+                { error: 'Name, event_date, and group_id are required' },
                 { status: 400 }
             );
         }
@@ -78,11 +78,11 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url);
-        const eventId = searchParams.get('event_id');
+        const eventId = searchParams.get('eventId');
 
         if (!eventId) {
             return NextResponse.json(
-                { error: 'event_id parameter is required' },
+                { error: 'eventId parameter is required' },
                 { status: 400 }
             );
         }
@@ -109,11 +109,11 @@ export async function PUT(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url);
-        const eventId = searchParams.get('event_id');
+        const eventId = searchParams.get('eventId');
 
         if (!eventId) {
             return NextResponse.json(
-                { error: 'event_id parameter is required' },
+                { error: 'eventId parameter is required' },
                 { status: 400 }
             );
         }

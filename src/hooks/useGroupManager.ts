@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { 
     type Player, 
+    type Group,
     type EventDB, 
     type EventWithStats, 
     type PlayerWithAttendance, 
@@ -12,81 +13,104 @@ import {
 import _ from 'lodash';
 
 export function useGroupManager() {
-    const [groupCode, setGroupCode] = useState<string>('');
-    const [loadedGroupCode, setLoadedGroupCode] = useState<string>('');
+    const [groupCodeInput, setGroupCodeInput] = useState<string>(''); // User's input
+    const [activeGroup, setActiveGroup] = useState<Group | null>(null);
     const [players, setPlayers] = useState<Player[]>([]);
     const [originalPlayers, setOriginalPlayers] = useState<Player[]>([]);
-    const [loading, setLoading] = useState<boolean>(true);
+    const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
 
-    // New event-related state
+    // Event-related state
     const [events, setEvents] = useState<EventWithStats[]>([]);
-    const [selectedEvent, setSelectedEvent] = useState<EventDB | null>(null);
+    const [selectedEvent, setSelectedEvent] = useState<EventWithStats | null>(null);
     const [attendanceData, setAttendanceData] = useState<PlayerWithAttendance[]>([]);
     const [eventsLoading, setEventsLoading] = useState<boolean>(false);
     const [attendanceLoading, setAttendanceLoading] = useState<boolean>(false);
+    
+    // Initial load from localStorage
+    useEffect(() => {
+        const savedGroupCode = localStorage.getItem('activeGroupCode');
+        if (savedGroupCode) {
+            setGroupCodeInput(savedGroupCode);
+            handleLoadGroup(savedGroupCode);
+        }
+    }, []);
 
-    // Using a callback for handleLoadGroup to use it in useEffect
+    const clearGroupState = () => {
+        setActiveGroup(null);
+        setPlayers([]);
+        setOriginalPlayers([]);
+        setEvents([]);
+        setSelectedEvent(null);
+        setAttendanceData([]);
+        localStorage.removeItem('activeGroupCode');
+    };
+    
     const handleLoadGroup = useCallback(async (code: string) => {
         if (!code) {
-            setPlayers([]);
-            setOriginalPlayers([]);
-            setLoadedGroupCode('');
-            setEvents([]);
-            setSelectedEvent(null);
-            setAttendanceData([]);
-            setLoading(false);
+            clearGroupState();
             return;
         }
 
         setLoading(true);
         setError(null);
         try {
-            const response = await fetch(`/api/groups?groupCode=${code}`);
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to fetch players');
+            // 1. Fetch the group by code
+            const groupResponse = await fetch(`/api/groups?code=${code}`);
+            if (!groupResponse.ok) {
+                if (groupResponse.status === 404) {
+                    throw new Error('Group not found. Check the code or create a new one.');
+                }
+                const errorData = await groupResponse.json();
+                throw new Error(errorData.error || 'Failed to fetch group');
             }
-            const data: Player[] = await response.json();
-            setPlayers(data);
-            setOriginalPlayers(data); // Set original state after fetching
-            setLoadedGroupCode(code);
-            localStorage.setItem('groupCode', code);
-            
-            // Load events for this group
-            await loadEvents(code);
+            const groupData: Group = await groupResponse.json();
+            setActiveGroup(groupData);
+            setGroupCodeInput(groupData.code); // Sync input field with loaded code
+            localStorage.setItem('activeGroupCode', groupData.code);
+
+            // 2. Fetch players for the group
+            const playersResponse = await fetch(`/api/players?groupId=${groupData.id}`);
+            if (!playersResponse.ok) {
+                // It's okay if a new group has no players yet (404), but other errors should fail.
+                if (playersResponse.status !== 404) {
+                    throw new Error('Failed to fetch players');
+                }
+            }
+            const playersData: Player[] = playersResponse.ok ? await playersResponse.json() : [];
+            setPlayers(playersData);
+            setOriginalPlayers(playersData);
+
+            // 3. Fetch events for the group
+            await loadEvents(groupData.id);
+
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to load players');
-            setPlayers([]);
-            setOriginalPlayers([]);
-            setLoadedGroupCode('');
-            setEvents([]);
-            setSelectedEvent(null);
+            setError(err instanceof Error ? err.message : 'Failed to load group');
+            clearGroupState();
             console.error(err);
         } finally {
             setLoading(false);
         }
     }, []);
 
-    // Load events for a group
-    const loadEvents = useCallback(async (code: string) => {
-        if (!code) return;
-        
+    const loadEvents = useCallback(async (groupId: number) => {
+        if (!groupId) return;
         setEventsLoading(true);
         try {
-            const response = await fetch(`/api/events?group_code=${code}`);
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to fetch events');
-            }
+            const response = await fetch(`/api/events?groupId=${groupId}`);
+            if (!response.ok) throw new Error('Failed to fetch events');
             const eventsData: EventWithStats[] = await response.json();
             setEvents(eventsData);
-            
-            // Auto-select most recent upcoming event
-            const upcomingEvent = eventsData.find(e => new Date(e.event_date) >= new Date());
-            if (upcomingEvent && !selectedEvent) {
-                setSelectedEvent(upcomingEvent);
-                await loadAttendanceForEvent(upcomingEvent.id);
+
+            if (eventsData.length > 0) {
+                // Auto-select the most recent event if none is selected
+                const eventToSelect = selectedEvent 
+                    ? eventsData.find(e => e.id === selectedEvent.id) || eventsData[0]
+                    : eventsData[0];
+                await selectEvent(eventToSelect);
+            } else {
+                setSelectedEvent(null);
+                setAttendanceData([]);
             }
         } catch (err) {
             console.error('Failed to load events:', err);
@@ -96,17 +120,13 @@ export function useGroupManager() {
         }
     }, [selectedEvent]);
 
-    // Load attendance for a specific event
     const loadAttendanceForEvent = useCallback(async (eventId: number) => {
         setAttendanceLoading(true);
         try {
-            const response = await fetch(`/api/attendance?event_id=${eventId}`);
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to fetch attendance');
-            }
-            const attendanceData: PlayerWithAttendance[] = await response.json();
-            setAttendanceData(attendanceData);
+            const response = await fetch(`/api/attendance?eventId=${eventId}`);
+            if (!response.ok) throw new Error('Failed to fetch attendance');
+            const data: PlayerWithAttendance[] = await response.json();
+            setAttendanceData(data);
         } catch (err) {
             console.error('Failed to load attendance:', err);
             setError(err instanceof Error ? err.message : 'Failed to load attendance');
@@ -114,253 +134,164 @@ export function useGroupManager() {
             setAttendanceLoading(false);
         }
     }, []);
-
-    // Create a new event
-    const createEvent = useCallback(async (eventData: EventInput) => {
-        try {
-            const response = await fetch('/api/events', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(eventData)
-            });
-            
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to create event');
-            }
-            
-            const newEvent: EventDB = await response.json();
-            setEvents(prev => [newEvent as EventWithStats, ...prev]);
-            setSelectedEvent(newEvent);
-            
-            // Load attendance for the new event
-            await loadAttendanceForEvent(newEvent.id);
-            
-            return newEvent;
-        } catch (err) {
-            const error = err instanceof Error ? err.message : 'Failed to create event';
-            setError(error);
-            throw new Error(error);
-        }
-    }, [loadAttendanceForEvent]);
-
-    // Update attendance for an event
-    const updateAttendance = useCallback(async (eventId: number, updates: AttendanceInput[]) => {
-        try {
-            const response = await fetch('/api/attendance?bulk=true', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(updates)
-            });
-            
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to update attendance');
-            }
-            
-            // After a successful update, refetch the events to get updated stats
-            await loadEvents(loadedGroupCode);
-            
-            // Also refetch the attendance for the currently selected event
-            if (selectedEvent && selectedEvent.id === eventId) {
-                await loadAttendanceForEvent(eventId);
-            }
-
-        } catch (err) {
-            const error = err instanceof Error ? err.message : 'Failed to update attendance';
-            setError(error);
-            throw new Error(error);
-        }
-    }, [loadedGroupCode, selectedEvent, loadEvents, loadAttendanceForEvent]);
-
-    // Delete an event
-    const deleteEvent = useCallback(async (eventId: number) => {
-        try {
-            const response = await fetch(`/api/events?event_id=${eventId}`, {
-                method: 'DELETE'
-            });
-            
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to delete event');
-            }
-            
-            setEvents(prev => prev.filter(e => e.id !== eventId));
-            
-            // If we deleted the selected event, clear selection
-            if (selectedEvent?.id === eventId) {
-                setSelectedEvent(null);
-                setAttendanceData([]);
-            }
-        } catch (err) {
-            const error = err instanceof Error ? err.message : 'Failed to delete event';
-            setError(error);
-            throw new Error(error);
-        }
-    }, [selectedEvent]);
-
-    // Update selected event and load its attendance
-    const selectEvent = useCallback(async (event: EventDB) => {
+    
+    const selectEvent = useCallback(async (event: EventWithStats) => {
         setSelectedEvent(event);
         await loadAttendanceForEvent(event.id);
     }, [loadAttendanceForEvent]);
 
-    const isDirty = !_.isEqual(players, originalPlayers);
-    const isGroupNameDirty = loadedGroupCode.trim() !== '' && groupCode.trim() !== '' && groupCode !== loadedGroupCode;
-
-    const handleSaveGroup = useCallback(async () => {
-        if (!loadedGroupCode) {
-            setError('A group must be loaded before saving changes.');
-            return;
-        }
-
-        setLoading(true);
-        setError(null);
-
-        // Determine which players need to be created, updated, or deleted
-        const playersToUpdate = players.filter(p => {
-            const original = originalPlayers.find(op => op.id === p.id);
-            return original && !_.isEqual(p, original);
+    const handleCreateGroup = async (newGroupCode: string): Promise<Group> => {
+        const response = await fetch('/api/groups', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code: newGroupCode })
         });
-
-        const playersToCreate = players.filter(p => !originalPlayers.some(op => op.id === p.id));
-        const playersToDelete = originalPlayers.filter(op => !players.some(p => p.id === op.id)).map(p => p.id);
-        
-        try {
-            const response = await fetch('/api/players', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    groupCode: loadedGroupCode,
-                    playersToUpdate,
-                    playersToCreate,
-                    playersToDelete,
-                }),
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || "Failed to save changes");
-            }
-            
-            // Refresh state from server
-            await handleLoadGroup(loadedGroupCode);
-
-        } catch (e) {
-            setError(e instanceof Error ? e.message : 'An error occurred while saving.');
-        } finally {
-            setLoading(false);
+        if (!response.ok) {
+            const { error } = await response.json();
+            throw new Error(error || 'Failed to create group.');
         }
-    }, [loadedGroupCode, players, originalPlayers, handleLoadGroup]);
-
-    const handleRenameGroup = useCallback(async () => {
-        if (!isGroupNameDirty) return;
-
-        setLoading(true);
-        setError(null);
-
+        const newGroup: Group = await response.json();
+        await handleLoadGroup(newGroup.code);
+        return newGroup;
+    };
+    
+    const handleRenameGroup = useCallback(async (newCode: string) => {
+        if (!activeGroup || !isGroupNameDirty) return;
         try {
             const response = await fetch('/api/groups', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ oldGroupCode: loadedGroupCode, newGroupCode: groupCode }),
+                body: JSON.stringify({ groupId: activeGroup.id, newCode })
             });
-
-            const result = await response.json();
-
             if (!response.ok) {
-                throw new Error(result.error || "Failed to rename group.");
+                const { error } = await response.json();
+                throw new Error(error || 'Failed to rename group');
             }
-
-            // On success, update the loaded code and local storage
-            setLoadedGroupCode(groupCode);
-            localStorage.setItem('groupCode', groupCode);
-            await handleLoadGroup(groupCode); // Reload to confirm changes
-
-        } catch (e) {
-            setError(e instanceof Error ? e.message : 'An error occurred during rename.');
-            // Revert input field to the original name on failure
-            setGroupCode(loadedGroupCode);
-        } finally {
-            setLoading(false);
+            const updatedGroup: Group = await response.json();
+            setActiveGroup(updatedGroup);
+            setGroupCodeInput(updatedGroup.code);
+            localStorage.setItem('activeGroupCode', updatedGroup.code);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to rename group');
+            // Revert input to the last saved code
+            setGroupCodeInput(activeGroup.code);
         }
-    }, [groupCode, loadedGroupCode, isGroupNameDirty, handleLoadGroup]);
-
-    const handleToggleBulkEdit = useCallback(async (isEditing: boolean, doSave: boolean) => {
-        if (isEditing && doSave) {
-            await handleSaveGroup();
-        }
-    }, [handleSaveGroup]);
-
-    // Load initial group code from localStorage
-    useEffect(() => {
-        const savedGroupCode = localStorage.getItem('groupCode');
-        if (savedGroupCode) {
-            setGroupCode(savedGroupCode);
-            handleLoadGroup(savedGroupCode);
-        } else {
-            setLoading(false);
-        }
-    }, [handleLoadGroup]);
-
-    const handleClearGroup = () => {
-        setGroupCode('');
-        setLoadedGroupCode('');
-        setPlayers([]);
-        setOriginalPlayers([]);
-        setEvents([]);
-        setSelectedEvent(null);
-        setAttendanceData([]);
-        localStorage.removeItem('groupCode');
-        setError(null);
-    };
+    }, [activeGroup]);
 
     const handleDeleteGroup = async () => {
-        if (!loadedGroupCode) return;
-
+        if (!activeGroup) return;
         try {
-            const response = await fetch(`/api/groups?groupCode=${loadedGroupCode}`, {
-                method: 'DELETE',
-            });
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to delete group');
-            }
-            handleClearGroup();
+            const response = await fetch(`/api/groups?groupId=${activeGroup.id}`, { method: 'DELETE' });
+            if (!response.ok) throw new Error('Failed to delete group');
+            setGroupCodeInput('');
+            clearGroupState();
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to delete group');
         }
     };
+    
+    const handleAddPlayer = async (playerData: Omit<Player, 'id' | 'group_id'>) => {
+        if (!activeGroup) throw new Error('No active group');
+        const response = await fetch('/api/players', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...playerData, group_id: activeGroup.id })
+        });
+        if (!response.ok) {
+            const { error } = await response.json();
+            throw new Error(error || 'Failed to add player');
+        }
+        await handleLoadGroup(activeGroup.code); // Reload all data
+    };
+    
+    const handleCsvUpload = async (csvPlayers: Omit<Player, 'id' | 'group_id'>[]) => {
+        if (!activeGroup) throw new Error('No active group');
+        const response = await fetch('/api/players/bulk', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ groupId: activeGroup.id, players: csvPlayers })
+        });
+        if (!response.ok) {
+            const { error } = await response.json();
+            throw new Error(error || 'Failed to upload CSV');
+        }
+        await handleLoadGroup(activeGroup.code); // Reload all data
+    };
+
+    const createEvent = useCallback(async (eventData: Omit<EventInput, 'group_id'>) => {
+        if (!activeGroup) throw new Error('No active group selected');
+        const response = await fetch('/api/events', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...eventData, group_id: activeGroup.id })
+        });
+        if (!response.ok) {
+            const { error } = await response.json();
+            throw new Error(error || 'Failed to create event');
+        }
+        await loadEvents(activeGroup.id);
+    }, [activeGroup, loadEvents]);
+
+    const deleteEvent = useCallback(async (eventId: number) => {
+        if (!activeGroup) return;
+        try {
+            const response = await fetch(`/api/events?eventId=${eventId}`, { method: 'DELETE' });
+            if (!response.ok) throw new Error('Failed to delete event');
+            await loadEvents(activeGroup.id); // Reload events
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to delete event');
+        }
+    }, [activeGroup, loadEvents]);
+
+    const updateAttendance = useCallback(async (eventId: number, updates: AttendanceInput[]) => {
+        if (!activeGroup) return;
+        try {
+            await fetch('/api/attendance?bulk=true', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updates)
+            });
+            await loadEvents(activeGroup.id); // Refetch events for updated stats
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to update attendance');
+        }
+    }, [activeGroup, loadEvents]);
+
+    const isDirty = !_.isEqual(players, originalPlayers);
+    const isGroupNameDirty = activeGroup ? activeGroup.code !== groupCodeInput : false;
+
+    const handleClearGroup = () => {
+        setGroupCodeInput('');
+        clearGroupState();
+    };
 
     return {
-        groupCode,
-        setGroupCode,
-        loadedGroupCode,
+        groupCodeInput,
+        setGroupCodeInput,
+        activeGroup,
         players,
         setPlayers,
-        originalPlayers,
         loading,
         error,
+        setError,
         isDirty,
         isGroupNameDirty,
         handleLoadGroup,
-        handleSaveGroup,
         handleClearGroup,
+        handleCreateGroup,
+        handleRenameGroup,
         handleDeleteGroup,
-        setError,
-        setLoading,
-        // New event-related returns
+        handleAddPlayer,
+        handleCsvUpload,
+        // Events
         events,
         selectedEvent,
         attendanceData,
         eventsLoading,
         attendanceLoading,
-        loadEvents,
         createEvent,
         updateAttendance,
         deleteEvent,
-        selectEvent,
-        handleToggleBulkEdit,
-        handleRenameGroup,
+        selectEvent
     };
 }

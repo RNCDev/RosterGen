@@ -2,20 +2,20 @@
 
 import React, { useState } from 'react';
 import { X, Calendar, Clock, MapPin, FileText } from 'lucide-react';
-import { type EventForm, formToEventInput } from '@/types/PlayerTypes';
+import { type EventForm, formToEventInput, type Group, type EventInput } from '@/types/PlayerTypes';
 
 interface CreateEventDialogProps {
     isOpen: boolean;
     onClose: () => void;
-    onCreateEvent: (eventData: any) => Promise<any>;
-    groupCode: string;
+    onCreateEvent: (eventData: Omit<EventInput, 'group_id'>) => Promise<void>;
+    group: Group;
 }
 
 export default function CreateEventDialog({ 
     isOpen, 
     onClose, 
     onCreateEvent, 
-    groupCode 
+    group 
 }: CreateEventDialogProps) {
     const [eventForm, setEventForm] = useState<EventForm>({
         name: '',
@@ -39,7 +39,7 @@ export default function CreateEventDialog({
         setError(null);
 
         try {
-            const eventData = formToEventInput(eventForm, groupCode);
+            const eventData = formToEventInput(eventForm, group.id);
             await onCreateEvent(eventData);
             
             // Reset form and close dialog

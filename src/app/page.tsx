@@ -28,21 +28,33 @@ const WelcomeScreen = ({ onCreateGroup }: { onCreateGroup: () => void }) => (
     </div>
 );
 
+const LoadingState = () => (
+    <div className="text-center">
+        <Users size={48} className="mx-auto text-gray-400 animate-pulse" />
+        <h2 className="mt-4 text-2xl font-semibold text-gray-800">Loading Group...</h2>
+        <p className="mt-2 text-gray-500">Please wait while we fetch the details.</p>
+    </div>
+);
+
 export default function Home() {
     const {
-        groupCode,
-        setGroupCode,
-        loadedGroupCode,
+        groupCodeInput,
+        setGroupCodeInput,
+        activeGroup,
         players,
         setPlayers,
         loading,
         error,
-        isDirty,
-        handleLoadGroup,
-        handleSaveGroup,
-        handleClearGroup,
-        handleDeleteGroup,
         setError,
+        isDirty,
+        isGroupNameDirty,
+        handleLoadGroup,
+        handleClearGroup,
+        handleCreateGroup,
+        handleRenameGroup,
+        handleDeleteGroup,
+        handleAddPlayer,
+        handleCsvUpload,
         events,
         selectedEvent,
         attendanceData,
@@ -51,123 +63,63 @@ export default function Home() {
         createEvent,
         updateAttendance,
         deleteEvent,
-        selectEvent,
-        handleToggleBulkEdit,
-        isGroupNameDirty,
-        handleRenameGroup,
+        selectEvent
     } = useGroupManager();
     
-    // Dialog states
     const [isAddPlayerOpen, setAddPlayerOpen] = useState(false);
     const [isUploadCsvOpen, setUploadCsvOpen] = useState(false);
     const [isCreateGroupOpen, setCreateGroupOpen] = useState(false);
-    
-    // Bulk editing state for PlayersView
-    const [isBulkEditing, setIsBulkEditing] = useState(false);
 
-    const handleAddPlayer = async (newPlayerData: Omit<Player, 'id' | 'group_code' | 'created_at' | 'updated_at'>) => {
-        if (!loadedGroupCode) {
-            setError("A group must be loaded before adding players.");
-            return;
-        }
-        
-        const playerWithGroupCode = { ...newPlayerData, group_code: loadedGroupCode };
-
-        // Optimistic UI update
-        const tempId = Date.now();
-        const playerToAdd = { ...playerWithGroupCode, id: tempId };
-        setPlayers([...players, playerToAdd]);
-
-        // API call
+    const onAddPlayer = async (playerData: Omit<Player, 'id' | 'group_id' | 'created_at' | 'updated_at'>) => {
         try {
-            const response = await fetch('/api/players', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(playerWithGroupCode)
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || "Failed to add player");
-            }
-            // Refresh data from server to get correct ID
-            await handleLoadGroup(loadedGroupCode); 
-        } catch (e) {
-            setError(e instanceof Error ? e.message : 'An error occurred.');
-            // Revert optimistic update
-            setPlayers(players.filter(p => p.id !== tempId));
-        }
-    };
-
-    const handleCsvUpload = async (csvPlayers: Omit<Player, 'id' | 'group_code' | 'created_at' | 'updated_at'>[]) => {
-        if (!loadedGroupCode) {
-            setError("A group must be loaded before uploading a CSV.");
-            return;
-        }
-
-        if (isDirty && !window.confirm("You have unsaved changes that will be lost. Are you sure you want to overwrite the current roster?")) {
-            return;
-        }
-
-        try {
-            const response = await fetch('/api/players/bulk', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ groupCode: loadedGroupCode, players: csvPlayers }),
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || "Failed to upload CSV data");
-            }
-
-            await handleLoadGroup(loadedGroupCode);
-            setUploadCsvOpen(false);
-        } catch (e) {
-            setError(e instanceof Error ? e.message : 'An error occurred during CSV upload.');
-        }
-    };
-
-    const handleCreateGroup = async (newGroupCode: string) => {
-        try {
-            const response = await fetch('/api/groups', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ groupCode: newGroupCode })
-            });
-
-            if (!response.ok) {
-                const { error } = await response.json();
-                throw new Error(error || "Failed to create group.");
-            }
-
-            setGroupCode(newGroupCode);
-            await handleLoadGroup(newGroupCode); // Load the newly created group
-            setCreateGroupOpen(false);
-
+            await handleAddPlayer(playerData);
+            setAddPlayerOpen(false);
         } catch (e: any) {
-            throw e; // Re-throw to be caught by the dialog
+            setError(e.message);
+        }
+    };
+    
+    const onCsvUpload = async (csvPlayers: Omit<Player, 'id' | 'group_id' | 'created_at' | 'updated_at'>[]) => {
+        try {
+            await handleCsvUpload(csvPlayers);
+            setUploadCsvOpen(false);
+        } catch (e: any) {
+            setError(e.message);
+        }
+    };
+
+    const onCreateGroup = async (newGroupCode: string) => {
+        try {
+            await handleCreateGroup(newGroupCode);
+            setCreateGroupOpen(false);
+        } catch (e: any) {
+            // Let the dialog handle its own error state
+            throw e;
         }
     };
 
     return (
         <div className="flex flex-col min-h-screen bg-gray-50">
             <ActionHeader
-                groupCode={groupCode}
-                onGroupCodeChange={setGroupCode}
-                onLoadGroup={() => handleLoadGroup(groupCode)}
-                onSaveGroup={handleRenameGroup}
+                groupCode={groupCodeInput}
+                onGroupCodeChange={setGroupCodeInput}
+                onLoadGroup={() => handleLoadGroup(groupCodeInput)}
+                onSaveGroup={() => handleRenameGroup(groupCodeInput)}
                 onClearGroup={handleClearGroup}
                 onDeleteGroup={handleDeleteGroup}
-                isDirty={isGroupNameDirty}
+                isGroupNameDirty={isGroupNameDirty}
+                isPlayerListDirty={isDirty}
                 isLoading={loading}
+                isGroupLoaded={!!activeGroup}
             />
 
             <main className="flex-1">
                 <div className="max-w-7xl mx-auto px-8 py-8">
                     {error && <ErrorAlert message={error} onDismiss={() => setError(null)} />}
 
-                    {!loadedGroupCode ? (
+                    {loading ? (
+                        <LoadingState />
+                    ) : !activeGroup ? (
                          <WelcomeScreen onCreateGroup={() => setCreateGroupOpen(true)} />
                     ) : (
                         <Tabs defaultValue="roster" className="w-full">
@@ -178,7 +130,7 @@ export default function Home() {
                             <TabsContent value="roster" className="mt-4 animate-fade-in">
                                 <div className="bg-white/40 backdrop-blur-md border border-white/30 rounded-lg p-4 mb-4 flex items-center justify-between animate-slide-in-from-left">
                                     <h2 className="text-lg font-semibold text-gray-800">
-                                        Roster Management
+                                        Roster Management {activeGroup ? `- ${activeGroup.code}` : ''}
                                     </h2>
                                     <div className="flex items-center gap-2">
                                         <Button variant="outline" onClick={() => setAddPlayerOpen(true)}>
@@ -193,11 +145,6 @@ export default function Home() {
                                     players={players}
                                     setPlayers={setPlayers}
                                     loading={loading}
-                                    isBulkEditing={isBulkEditing}
-                                    onToggleBulkEdit={async () => {
-                                        await handleToggleBulkEdit(isBulkEditing, isDirty);
-                                        setIsBulkEditing(!isBulkEditing);
-                                    }}
                                     isDirty={isDirty}
                                 />
                             </TabsContent>
@@ -210,7 +157,7 @@ export default function Home() {
                                     onCreateEvent={createEvent}
                                     onDeleteEvent={deleteEvent}
                                     onUpdateAttendance={updateAttendance}
-                                    groupCode={loadedGroupCode}
+                                    group={activeGroup}
                                     eventsLoading={eventsLoading}
                                     attendanceLoading={attendanceLoading}
                                 />
@@ -223,19 +170,19 @@ export default function Home() {
             <AddPlayerDialog
                 isOpen={isAddPlayerOpen}
                 onClose={() => setAddPlayerOpen(false)}
-                onAddPlayer={handleAddPlayer}
+                onAddPlayer={onAddPlayer}
             />
             
             <UploadCsvDialog
                 isOpen={isUploadCsvOpen}
                 onClose={() => setUploadCsvOpen(false)}
-                onUpload={handleCsvUpload}
+                onUpload={onCsvUpload}
             />
 
             <CreateGroupDialog
                 isOpen={isCreateGroupOpen}
                 onClose={() => setCreateGroupOpen(false)}
-                onCreate={handleCreateGroup}
+                onCreate={onCreateGroup}
             />
         </div>
     );

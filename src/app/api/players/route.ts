@@ -1,7 +1,12 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { z } from 'zod';
-import { bulkUpdatePlayers, createPlayer, deletePlayer, updatePlayer } from '@/lib/db';
+import { 
+    getPlayersByGroup,
+    createPlayer, 
+    deletePlayer, 
+    updatePlayer 
+} from '@/lib/db';
 
 // Zod schema for validating a single player
 const playerSchema = z.object({
@@ -11,47 +16,45 @@ const playerSchema = z.object({
     skill: z.number().int().min(1).max(10),
     is_defense: z.boolean(),
     is_attending: z.boolean().default(true),
-    group_code: z.string().trim().min(1),
-});
-
-const bulkUpdatePayloadSchema = z.object({
-    groupCode: z.string().trim().min(1),
-    playersToCreate: z.array(playerSchema.omit({ id: true })).optional(),
-    playersToUpdate: z.array(playerSchema.required({ id: true })).optional(),
-    playersToDelete: z.array(z.number().int()).optional(),
+    group_id: z.number().int().positive(),
 });
 
 /**
+ * GET /api/players?groupId=...
+ * Fetches all active players for a given group ID.
+ */
+export async function GET(request: NextRequest) {
+    const { searchParams } = new URL(request.url);
+    const groupId = searchParams.get('groupId');
+
+    if (!groupId) {
+        return NextResponse.json({ error: 'Group ID is required' }, { status: 400 });
+    }
+
+    try {
+        const players = await getPlayersByGroup(parseInt(groupId));
+        return NextResponse.json(players);
+    } catch (error) {
+        console.error(`Failed to fetch players for group ${groupId}:`, error);
+        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    }
+}
+
+/**
  * POST /api/players
- * Handles bulk updates and single player creation.
- * If the payload matches the bulk update schema, it performs a bulk update.
- * Otherwise, it attempts to create a single player.
+ * Creates a single player for a group.
  */
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-
-        // Check if this is a bulk update request
-        const bulkUpdateCheck = bulkUpdatePayloadSchema.safeParse(body);
-        if (bulkUpdateCheck.success) {
-            const { groupCode, playersToCreate = [], playersToUpdate = [], playersToDelete = [] } = bulkUpdateCheck.data;
-            
-            const fullPlayersToUpdate = playersToUpdate.map(p => ({ ...p, is_active: true }));
-
-            await bulkUpdatePlayers(groupCode, playersToCreate, fullPlayersToUpdate, playersToDelete);
-
-            return NextResponse.json({ message: 'Bulk update successful' }, { status: 200 });
-        }
         
-        // Fallback to single player creation
         const singlePlayerCheck = playerSchema.safeParse(body);
-        if (singlePlayerCheck.success) {
-            const newPlayer = await createPlayer(singlePlayerCheck.data);
-            return NextResponse.json(newPlayer, { status: 201 });
+        if (!singlePlayerCheck.success) {
+            return NextResponse.json({ error: 'Invalid player data', details: singlePlayerCheck.error.flatten() }, { status: 400 });
         }
 
-        // If neither schema matches, return an error
-        return NextResponse.json({ error: 'Invalid request payload' }, { status: 400 });
+        const newPlayer = await createPlayer(singlePlayerCheck.data);
+        return NextResponse.json(newPlayer, { status: 201 });
 
     } catch (error) {
         console.error('Error in POST /api/players:', error);
@@ -87,21 +90,18 @@ export async function PUT(request: NextRequest) {
 
 /**
  * DELETE /api/players
- * Deletes a single player by their ID.
+ * Soft deletes a single player by their ID.
  */
 export async function DELETE(request: NextRequest) {
     try {
-        const { id, groupCode } = await request.json();
-        const validation = z.object({
-            id: z.number().int().positive(),
-            groupCode: z.string().trim().min(1)
-        }).safeParse({ id, groupCode });
+        const { id } = await request.json();
+        const validation = z.object({ id: z.number().int().positive() }).safeParse({ id });
 
         if (!validation.success) {
-            return NextResponse.json({ error: 'Invalid player ID or group code' }, { status: 400 });
+            return NextResponse.json({ error: 'A valid player ID is required' }, { status: 400 });
         }
 
-        const success = await deletePlayer(validation.data.id, validation.data.groupCode);
+        const success = await deletePlayer(validation.data.id);
         
         if (!success) {
             return NextResponse.json({ error: 'Player not found or not deleted' }, { status: 404 });

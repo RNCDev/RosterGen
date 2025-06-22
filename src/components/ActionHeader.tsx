@@ -18,8 +18,10 @@ interface ActionHeaderProps {
     onSaveGroup: () => void;
     onClearGroup: () => void;
     onDeleteGroup: () => void;
-    isDirty: boolean;
+    isGroupNameDirty: boolean;
+    isPlayerListDirty: boolean;
     isLoading: boolean;
+    isGroupLoaded: boolean;
 }
 
 export default function ActionHeader({
@@ -29,19 +31,21 @@ export default function ActionHeader({
     onSaveGroup,
     onClearGroup,
     onDeleteGroup,
-    isDirty,
+    isGroupNameDirty,
+    isPlayerListDirty,
     isLoading,
+    isGroupLoaded
 }: ActionHeaderProps) {
 
     const handleLoadWithPrompt = () => {
-        if (isDirty && !window.confirm('You have unsaved changes. Are you sure you want to load a new group? Your current changes will be lost.')) {
+        if (isPlayerListDirty && !window.confirm('You have unsaved changes to your roster. Are you sure you want to load a new group? Your current changes will be lost.')) {
             return;
         }
         onLoadGroup();
     };
     
     const handleClearWithPrompt = () => {
-        if (isDirty && !window.confirm('You have unsaved changes. Are you sure you want to clear the workspace?')) {
+        if (isPlayerListDirty && !window.confirm('You have unsaved changes to your roster. Are you sure you want to clear the workspace?')) {
             return;
         }
         onClearGroup();
@@ -87,15 +91,15 @@ export default function ActionHeader({
                         <div className="flex items-center gap-1 bg-white/60 backdrop-blur-sm rounded-lg p-1 border border-white/30">
                             <button
                                 onClick={onSaveGroup}
-                                disabled={!isDirty || isLoading}
+                                disabled={!isGroupNameDirty || isLoading || !isGroupLoaded}
                                 className={`p-2 rounded-md transition-all ${
-                                    isDirty
+                                    isGroupNameDirty && isGroupLoaded
                                         ? 'bg-green-50 text-green-600 hover:bg-green-100 animate-pulse'
                                         : 'text-gray-400'
                                 }`}
-                                title={isDirty ? "Save New Group Name" : "Group Name Saved"}
+                                title={isGroupNameDirty ? "Save New Group Name" : "Group Name Saved"}
                             >
-                                {isDirty ? (
+                                {isGroupNameDirty ? (
                                     <Save size={16} />
                                 ) : (
                                     <ShieldCheck size={16} />
@@ -110,7 +114,7 @@ export default function ActionHeader({
                             </button>
                             <button
                                 onClick={handleDeleteWithPrompt}
-                                disabled={!groupCode.trim() || isLoading}
+                                disabled={!groupCode.trim() || isLoading || !isGroupLoaded}
                                 className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors disabled:opacity-50"
                                 title="Delete Group"
                             >

@@ -102,9 +102,16 @@ This project uses Vercel Postgres. You will need to create a Postgres database o
     ```
 
 6.  **Database Schema**:
-    You will need to create the `players`, `events`, and `attendance` tables in your database. You can use the following SQL commands:
+    You will need to create the `groups`, `players`, `events`, and `attendance` tables in your database. You can use the following SQL commands:
 
     ```sql
+    -- Stores group information
+    CREATE TABLE groups (
+        id SERIAL PRIMARY KEY,
+        code VARCHAR(255) UNIQUE NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    );
+
     -- Stores all player information and their default settings
     CREATE TABLE players (
         id SERIAL PRIMARY KEY,
@@ -113,7 +120,7 @@ This project uses Vercel Postgres. You will need to create a Postgres database o
         skill INTEGER NOT NULL,
         is_defense BOOLEAN NOT NULL,
         is_attending BOOLEAN NOT NULL DEFAULT true, -- Default status, not event-specific
-        group_code VARCHAR(255) NOT NULL,
+        group_id INTEGER NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
         is_active BOOLEAN NOT NULL DEFAULT true,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
@@ -127,7 +134,7 @@ This project uses Vercel Postgres. You will need to create a Postgres database o
         event_date DATE NOT NULL,
         event_time TIME,
         location VARCHAR(255),
-        group_code VARCHAR(255) NOT NULL,
+        group_id INTEGER NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
         is_active BOOLEAN NOT NULL DEFAULT true,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
