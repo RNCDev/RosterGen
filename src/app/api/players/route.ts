@@ -1,118 +1,87 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { sql } from '@vercel/postgres';
 import { z } from 'zod';
+import { bulkUpdatePlayers, createPlayer, deletePlayer, updatePlayer } from '@/lib/db';
 
 // Zod schema for validating a single player
 const playerSchema = z.object({
+    id: z.number().optional(), // Optional for creation
     first_name: z.string().trim().min(1),
     last_name: z.string().trim().min(1),
     skill: z.number().int().min(1).max(10),
     is_defense: z.boolean(),
-    is_attending: z.boolean(),
+    is_attending: z.boolean().default(true),
     group_code: z.string().trim().min(1),
 });
 
-// Zod schema for updating a single player (includes ID)
-const playerUpdateSchema = playerSchema.extend({
-    id: z.number().int(),
+const bulkUpdatePayloadSchema = z.object({
+    groupCode: z.string().trim().min(1),
+    playersToCreate: z.array(playerSchema.omit({ id: true })).optional(),
+    playersToUpdate: z.array(playerSchema.required({ id: true })).optional(),
+    playersToDelete: z.array(z.number().int()).optional(),
 });
 
 /**
  * POST /api/players
- * Creates a new single player in a group.
+ * Handles bulk updates and single player creation.
+ * If the payload matches the bulk update schema, it performs a bulk update.
+ * Otherwise, it attempts to create a single player.
  */
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        const validation = playerSchema.safeParse(body);
 
-        if (!validation.success) {
-            return NextResponse.json({ error: 'Invalid player data', details: validation.error.flatten() }, { status: 400 });
+        // Check if this is a bulk update request
+        const bulkUpdateCheck = bulkUpdatePayloadSchema.safeParse(body);
+        if (bulkUpdateCheck.success) {
+            const { groupCode, playersToCreate = [], playersToUpdate = [], playersToDelete = [] } = bulkUpdateCheck.data;
+            
+            const fullPlayersToUpdate = playersToUpdate.map(p => ({ ...p, is_active: true }));
+
+            await bulkUpdatePlayers(groupCode, playersToCreate, fullPlayersToUpdate, playersToDelete);
+
+            return NextResponse.json({ message: 'Bulk update successful' }, { status: 200 });
         }
         
-        const { first_name, last_name, skill, is_defense, is_attending, group_code } = validation.data;
+        // Fallback to single player creation
+        const singlePlayerCheck = playerSchema.safeParse(body);
+        if (singlePlayerCheck.success) {
+            const newPlayer = await createPlayer(singlePlayerCheck.data);
+            return NextResponse.json(newPlayer, { status: 201 });
+        }
 
-        const { rows } = await sql`
-            INSERT INTO players (first_name, last_name, skill, is_defense, is_attending, group_code)
-            VALUES (${first_name}, ${last_name}, ${skill}, ${is_defense}, ${is_attending}, ${group_code})
-            RETURNING *;
-        `;
-        
-        return NextResponse.json(rows[0], { status: 201 });
+        // If neither schema matches, return an error
+        return NextResponse.json({ error: 'Invalid request payload' }, { status: 400 });
+
     } catch (error) {
-        console.error('Failed to create player:', error);
+        console.error('Error in POST /api/players:', error);
+        if (error instanceof z.ZodError) {
+            return NextResponse.json({ error: 'Invalid data', details: error.flatten() }, { status: 400 });
+        }
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }
 
 /**
  * PUT /api/players
- * Handles bulk updates of players for a given group code.
- * This is used for the "Save All" and "Bulk Edit" features.
+ * Updates a single player.
  */
 export async function PUT(request: NextRequest) {
     try {
         const body = await request.json();
-        console.log('PUT /api/players received body:', body);
-        
-        const { groupCode, players } = z.object({
-            groupCode: z.string().trim().min(1),
-            players: z.array(playerUpdateSchema)
-        }).parse(body);
+        const validation = playerSchema.required({ id: true }).safeParse(body);
 
-        console.log(`Updating ${players.length} players for group: ${groupCode}`);
-
-        const updatedPlayers = [];
-        
-        // Process each player update
-        for (let i = 0; i < players.length; i++) {
-            const player = players[i];
-            console.log(`Updating player ${i + 1}/${players.length}: ${player.first_name} ${player.last_name} (ID: ${player.id})`);
-            
-            try {
-                const result = await sql`
-                    UPDATE players
-                    SET 
-                        first_name = ${player.first_name},
-                        last_name = ${player.last_name},
-                        skill = ${player.skill},
-                        is_defense = ${player.is_defense},
-                        is_attending = ${player.is_attending}
-                    WHERE id = ${player.id} AND group_code = ${groupCode}
-                    RETURNING *;
-                `;
-                
-                console.log(`Update result for player ${player.id}:`, result.rows);
-                
-                if (result.rows && result.rows[0]) {
-                    updatedPlayers.push(result.rows[0]);
-                } else {
-                    console.warn(`No rows returned for player ${player.id} - may not exist or group code mismatch`);
-                }
-            } catch (playerError) {
-                console.error(`Error updating player ${player.id}:`, playerError);
-                throw playerError;
-            }
+        if (!validation.success) {
+            return NextResponse.json({ error: 'Invalid player data', details: validation.error.flatten() }, { status: 400 });
         }
-
-        console.log(`Successfully updated ${updatedPlayers.length} players`);
-        return NextResponse.json(updatedPlayers);
+        
+        const playerData = { ...validation.data, is_active: true };
+        const updatedPlayer = await updatePlayer(playerData);
+        return NextResponse.json(updatedPlayer);
         
     } catch (error) {
-        console.error('Failed to bulk update players:', error);
-        if (error instanceof z.ZodError) {
-            return NextResponse.json({ 
-                error: 'Invalid data for bulk update', 
-                details: error.flatten(),
-                received: error.message 
-            }, { status: 400 });
-        }
-        return NextResponse.json({ 
-            error: 'Internal Server Error', 
-            message: error instanceof Error ? error.message : 'Unknown error',
-            stack: error instanceof Error ? error.stack : undefined
-        }, { status: 500 });
+        console.error('Failed to update player:', error);
+        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }
 
@@ -122,19 +91,20 @@ export async function PUT(request: NextRequest) {
  */
 export async function DELETE(request: NextRequest) {
     try {
-        const { id } = await request.json();
-        const validation = z.number().int().positive().safeParse(id);
+        const { id, groupCode } = await request.json();
+        const validation = z.object({
+            id: z.number().int().positive(),
+            groupCode: z.string().trim().min(1)
+        }).safeParse({ id, groupCode });
 
         if (!validation.success) {
-            return NextResponse.json({ error: 'Invalid player ID' }, { status: 400 });
+            return NextResponse.json({ error: 'Invalid player ID or group code' }, { status: 400 });
         }
 
-        const { rowCount } = await sql`
-            DELETE FROM players WHERE id = ${validation.data};
-        `;
+        const success = await deletePlayer(validation.data.id, validation.data.groupCode);
         
-        if (rowCount === 0) {
-            return NextResponse.json({ error: 'Player not found' }, { status: 404 });
+        if (!success) {
+            return NextResponse.json({ error: 'Player not found or not deleted' }, { status: 404 });
         }
 
         return new NextResponse(null, { status: 204 }); // No Content

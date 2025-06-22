@@ -14,7 +14,8 @@ import {
     ChevronsLeft,
     ChevronLeft,
     ChevronRight,
-    ChevronsRight
+    ChevronsRight,
+    Plus
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 
@@ -23,12 +24,9 @@ interface PlayersViewProps {
     setPlayers: (players: Player[]) => void;
     loading: boolean;
     isBulkEditing: boolean;
-    onCreateGroup: () => void;
-    groupCode: string;
-    onAddPlayer: () => void;
-    onUploadCsv: () => void;
     onToggleBulkEdit: () => void;
     isDirty: boolean;
+    onStagedChange?: (playerId: number, isAttending: boolean) => void;
 }
 
 type SortField = 'name' | 'skill' | 'position';
@@ -52,26 +50,29 @@ const PlayerTable = ({
                 <table className="w-full text-sm">
                     <thead className="bg-gray-50/50">
                         <tr>
-                            <th className="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th className="px-3 py-0.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Player
                             </th>
-                            <th className="px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th className="px-3 py-0.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Position
                             </th>
-                            <th className="px-3 py-1 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th className="px-3 py-0.5 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Skill
                             </th>
                             {isEditing && (
-                                <th className="px-3 py-1 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th className="px-3 py-0.5 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Actions
                                 </th>
                             )}
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200/50">
-                        {players.map((player) => (
-                            <tr key={player.id} className="h-10 hover:bg-gray-50/30 transition-colors">
-                                <td className="px-3 whitespace-nowrap">
+                        {players.map((player, index) => (
+                            <tr 
+                                key={player.id} 
+                                className="hover:bg-gray-100/50 transition-colors"
+                            >
+                                <td className="px-3 py-1 whitespace-nowrap">
                                     {isEditing ? (
                                         <div className="flex items-center gap-2">
                                             <input
@@ -88,15 +89,14 @@ const PlayerTable = ({
                                             />
                                         </div>
                                     ) : (
-                                        <div className="flex items-center gap-3">
-                                            <User className="w-5 h-5 text-gray-400" />
+                                        <div className="flex items-center">
                                             <span className="font-medium text-gray-900">
                                                 {player.first_name} {player.last_name}
                                             </span>
                                         </div>
                                     )}
                                 </td>
-                                <td className="px-3">
+                                <td className="px-3 py-1">
                                     {isEditing ? (
                                         <div className="flex items-center border border-gray-200 rounded-md overflow-hidden">
                                             <button
@@ -121,7 +121,7 @@ const PlayerTable = ({
                                         </span>
                                     )}
                                 </td>
-                                <td className="px-3">
+                                <td className="px-3 py-1">
                                     {isEditing ? (
                                         <div className="flex items-center justify-center">
                                             <input
@@ -142,7 +142,7 @@ const PlayerTable = ({
                                     )}
                                 </td>
                                 {isEditing && (
-                                    <td className="px-3">
+                                    <td className="px-3 py-1">
                                         <div className="flex items-center justify-center">
                                             <button
                                                 onClick={() => onDeletePlayer(player.id)}
@@ -214,16 +214,24 @@ const BulkActions = ({
     );
 };
 
+// A simple empty state component for when a group has no players.
+const EmptyState = () => (
+    <div className="text-center py-20 bg-white/40 backdrop-blur-sm rounded-lg border border-white/40">
+        <Users className="mx-auto h-12 w-12 text-gray-400" />
+        <h3 className="mt-2 text-xl font-semibold text-gray-900">No Players in Roster</h3>
+        <p className="mt-1 text-sm text-gray-500">
+            Get started by clicking "Add Player" or "Upload CSV" above.
+        </p>
+    </div>
+);
+
 export default function PlayersView({ 
     players, 
     setPlayers, 
     isBulkEditing, 
-    onCreateGroup, 
-    groupCode,
-    onAddPlayer,
-    onUploadCsv,
     onToggleBulkEdit,
-    isDirty
+    isDirty,
+    onStagedChange
 }: PlayersViewProps) {
     const [sortConfig, setSortConfig] = useState<{ field: SortField, direction: SortDirection }>({ field: 'name', direction: 'asc' });
     const [positionFilter, setPositionFilter] = useState('all');
@@ -262,26 +270,8 @@ export default function PlayersView({
         setSelectedPlayers([]);
     };
 
-    const sortedPlayers = useMemo(() => {
-        return [...players].sort((a, b) => {
-            let comparison = 0;
-            switch (sortConfig.field) {
-                case 'name':
-                    comparison = `${a.first_name} ${a.last_name}`.localeCompare(`${b.first_name} ${b.last_name}`);
-                    break;
-                case 'skill':
-                    comparison = b.skill - a.skill; // Default high to low
-                    break;
-                case 'position':
-                    comparison = a.is_defense === b.is_defense ? 0 : a.is_defense ? 1 : -1;
-                    break;
-            }
-            return sortConfig.direction === 'asc' ? comparison : -comparison;
-        });
-    }, [players, sortConfig]);
-
-    const filteredPlayers = useMemo(() => {
-        let filtered = sortedPlayers;
+    const filteredAndSortedPlayers = useMemo(() => {
+        let filtered = [...players];
         
         if (positionFilter !== 'all') {
             filtered = filtered.filter(player => 
@@ -294,15 +284,35 @@ export default function PlayersView({
             filtered = filtered.filter(player => player.skill >= min && player.skill <= max);
         }
         
-        return filtered;
-    }, [sortedPlayers, positionFilter, skillFilter]);
+        if (sortConfig.field) {
+            filtered.sort((a, b) => {
+                let aValue, bValue;
 
-    const totalPages = Math.ceil(filteredPlayers.length / PAGE_SIZE);
+                if (sortConfig.field === 'name') {
+                    aValue = `${a.first_name} ${a.last_name}`;
+                    bValue = `${b.first_name} ${b.last_name}`;
+                } else if (sortConfig.field === 'position') {
+                    aValue = a.is_defense ? 'Defense' : 'Forward';
+                    bValue = b.is_defense ? 'Defense' : 'Forward';
+                } else { // skill
+                    aValue = a.skill;
+                    bValue = b.skill;
+                }
+
+                if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+                if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+                return 0;
+            });
+        }
+        return filtered;
+    }, [players, positionFilter, skillFilter, sortConfig]);
+
     const paginatedPlayers = useMemo(() => {
         const start = (currentPage - 1) * PAGE_SIZE;
-        const end = start + PAGE_SIZE;
-        return filteredPlayers.slice(start, end);
-    }, [filteredPlayers, currentPage]);
+        return filteredAndSortedPlayers.slice(start, start + PAGE_SIZE);
+    }, [filteredAndSortedPlayers, currentPage]);
+    
+    const totalPages = Math.ceil(filteredAndSortedPlayers.length / PAGE_SIZE);
 
     const handlePageChange = (page: number) => {
         if (page >= 1 && page <= totalPages) {
@@ -310,187 +320,102 @@ export default function PlayersView({
         }
     };
 
-    const isGroupActive = groupCode.trim().length > 0;
-    
-    if (players.length === 0 && isGroupActive) {
-        return (
-             <div className="text-center p-12 card-elevated max-w-lg mx-auto animate-slide-up">
-                <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <Users className="w-10 h-10 text-blue-600" />
-                </div>
-                <h3 className="text-xl font-semibold text-gray-800 mb-3">Group '{groupCode}' is Empty</h3>
-                <p className="text-gray-500 mb-6 leading-relaxed">
-                    This group has no players. Start building your roster by adding players individually or importing them from a CSV file.
-                </p>
-                <div className="flex items-center justify-center gap-3">
-                    <Button onClick={onAddPlayer} className="btn-primary">
-                        <UserPlus size={16} className="mr-2"/>
-                        Add Player
-                    </Button>
-                    <Button onClick={onUploadCsv} className="btn-secondary">
-                        <Upload size={16} className="mr-2"/>
-                        Upload CSV
-                    </Button>
-                </div>
-            </div>
-        );
-    }
-    
-    if (!isGroupActive) {
-        return (
-            <div className="text-center p-12 card-elevated max-w-lg mx-auto animate-slide-up">
-                <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <Users className="w-10 h-10 text-blue-600" />
-                </div>
-                <h3 className="text-xl font-semibold text-gray-800 mb-3">Welcome to RosterGen</h3>
-                <p className="text-gray-500 mb-6 leading-relaxed">
-                    Load an existing group by entering its code above, or create a new group to start managing your hockey roster.
-                </p>
-                <Button 
-                    onClick={onCreateGroup}
-                    className="btn-primary"
-                    size="lg"
-                >
-                    <UserPlus size={20} className="mr-3"/>
-                    Create New Group
-                </Button>
-            </div>
-        )
+    if (players.length === 0) {
+        return <EmptyState />;
     }
 
     return (
-        <div className="flex flex-col md:flex-row gap-6 animate-fade-in">
-            {/* Left Column: Controls */}
-            <div className="w-full md:w-72 lg:w-80 flex-shrink-0 space-y-6">
-                {/* Actions */}
-                <div className="space-y-2">
-                    <h3 className="text-lg font-semibold text-gray-800">Actions</h3>
-                    <Button onClick={onAddPlayer} className="w-full justify-start btn-ghost">
-                        <UserPlus size={16} className="mr-2"/> Add Player
-                    </Button>
-                    <Button onClick={onUploadCsv} className="w-full justify-start btn-secondary">
-                        <Upload size={16} className="mr-2"/> Upload CSV
-                    </Button>
+        <div className="space-y-6">
+            <div className="flex flex-col md:flex-row gap-6 animate-slide-in-from-left">
+                <div className="w-full md:w-72 lg:w-80 flex-shrink-0 space-y-6 animate-slide-in-from-left">
                     <Button 
                         onClick={onToggleBulkEdit} 
                         className={`w-full justify-start btn-primary ${isBulkEditing ? 'bg-green-600 hover:bg-green-700' : ''}`}
                     >
                         <Pencil size={16} className="mr-2"/> 
-                        {isBulkEditing ? (isDirty ? 'Save & Finish' : 'Finish Editing') : 'Bulk Edit'}
+                        {isBulkEditing ? 'Finish & Save' : 'Bulk Edit Players'}
                     </Button>
-                </div>
 
-                {/* Sort and Filter Controls */}
-                <div className="space-y-4">
-                    <h3 className="text-lg font-semibold text-gray-800">View Options</h3>
-                     {/* Sort Controls */}
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-600">Sort by</label>
+                    <div className="space-y-4">
+                        <h4 className="font-semibold text-gray-700">Sort by</h4>
                         <div className="flex items-center gap-2">
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleSort('name')}
-                                className={`flex-1 justify-center flex items-center gap-1 ${sortConfig.field === 'name' ? 'bg-blue-100 text-blue-700' : ''}`}
-                            >
-                                Name
-                                {sortConfig.field === 'name' && (
-                                    <ChevronDown className={`w-3 h-3 transition-transform ${sortConfig.direction === 'desc' ? 'rotate-180' : ''}`} />
-                                )}
-                            </Button>
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleSort('skill')}
-                                className={`flex-1 justify-center flex items-center gap-1 ${sortConfig.field === 'skill' ? 'bg-blue-100 text-blue-700' : ''}`}
-                            >
-                                Skill
-                                {sortConfig.field === 'skill' && (
-                                    <ChevronDown className={`w-3 h-3 transition-transform ${sortConfig.direction === 'desc' ? 'rotate-180' : ''}`} />
-                                )}
-                            </Button>
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleSort('position')}
-                                className={`flex-1 justify-center flex items-center gap-1 ${sortConfig.field === 'position' ? 'bg-blue-100 text-blue-700' : ''}`}
-                            >
-                                Position
-                                {sortConfig.field === 'position' && (
-                                    <ChevronDown className={`w-3 h-3 transition-transform ${sortConfig.direction === 'desc' ? 'rotate-180' : ''}`} />
-                                )}
-                            </Button>
+                            {['name', 'skill', 'position'].map((field) => (
+                                <Button
+                                    key={field}
+                                    variant={sortConfig.field === field ? 'secondary' : 'outline'}
+                                    size="sm"
+                                    onClick={() => handleSort(field as SortField)}
+                                    className="flex-1"
+                                >
+                                    {field.charAt(0).toUpperCase() + field.slice(1)}
+                                    {sortConfig.field === field && (
+                                        <ChevronDown className={`ml-1 h-4 w-4 transition-transform ${sortConfig.direction === 'desc' ? 'rotate-180' : ''}`} />
+                                    )}
+                                </Button>
+                            ))}
                         </div>
                     </div>
-                    
-                    {/* Filter Controls */}
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-600">Filter Position</label>
-                        <select 
-                            value={positionFilter} 
+                        <h4 className="font-semibold text-gray-700">Filter Position</h4>
+                        <select
+                            value={positionFilter}
                             onChange={(e) => setPositionFilter(e.target.value)}
-                            className="w-full text-sm border border-gray-200 rounded px-2 py-1.5 bg-white/80"
+                            className="w-full p-2 border border-gray-300 rounded-md bg-white/80"
                         >
                             <option value="all">All Positions</option>
-                            <option value="forward">Forwards Only</option>
-                            <option value="defense">Defense Only</option>
+                            <option value="forward">Forwards</option>
+                            <option value="defense">Defense</option>
                         </select>
                     </div>
-                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-600">Filter Skill</label>
-                        <select 
-                            value={skillFilter} 
+                    <div className="space-y-2">
+                        <h4 className="font-semibold text-gray-700">Filter Skill</h4>
+                        <select
+                            value={skillFilter}
                             onChange={(e) => setSkillFilter(e.target.value)}
-                            className="w-full text-sm border border-gray-200 rounded px-2 py-1.5 bg-white/80"
+                            className="w-full p-2 border border-gray-300 rounded-md bg-white/80"
                         >
                             <option value="all">All Skills</option>
-                            <option value="1-3">Skill 1-3</option>
-                            <option value="4-6">Skill 4-6</option>
-                            <option value="7-10">Skill 7-10</option>
+                            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(s => <option key={s} value={s}>{s}</option>)}
                         </select>
                     </div>
                 </div>
-            </div>
 
-            {/* Right Column: Content */}
-            <div className="flex-1 space-y-4">
-                 {/* Bulk Actions */}
-                {isBulkEditing && selectedPlayers.length > 0 && (
-                    <BulkActions
-                        selectedPlayers={selectedPlayers}
-                        onBulkUpdate={handleBulkUpdate}
-                        onClearSelection={handleClearSelection}
+                <div className="flex-1 animate-slide-in-from-right">
+                    {isBulkEditing && selectedPlayers.length > 0 && (
+                        <BulkActions
+                            selectedPlayers={selectedPlayers}
+                            onBulkUpdate={handleBulkUpdate}
+                            onClearSelection={handleClearSelection}
+                        />
+                    )}
+
+                    <PlayerTable 
+                        players={paginatedPlayers} 
+                        onUpdate={handlePlayerUpdate} 
+                        isEditing={isBulkEditing}
+                        onDeletePlayer={handleDeletePlayer}
                     />
-                )}
 
-                {/* Player Table */}
-                <PlayerTable
-                    players={paginatedPlayers}
-                    onUpdate={handlePlayerUpdate}
-                    isEditing={isBulkEditing}
-                    onDeletePlayer={handleDeletePlayer}
-                />
-
-                {/* Pagination */}
-                <div className="flex items-center justify-between">
-                    <div className="text-sm text-gray-500">
-                        Showing {Math.min(filteredPlayers.length > 0 ? ((currentPage - 1) * PAGE_SIZE) + 1 : 0, filteredPlayers.length)}
-                        - {Math.min(currentPage * PAGE_SIZE, filteredPlayers.length)} of {filteredPlayers.length} players
-                    </div>
-                    <div className="flex items-center gap-1">
-                         <Button variant="ghost" size="sm" onClick={() => handlePageChange(1)} disabled={currentPage === 1}>
-                            <ChevronsLeft className="w-4 h-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1}>
-                            <ChevronLeft className="w-4 h-4" />
-                        </Button>
-                        <span className="text-sm px-2">Page {currentPage} of {totalPages}</span>
-                        <Button variant="ghost" size="sm" onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages}>
-                            <ChevronRight className="w-4 h-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handlePageChange(totalPages)} disabled={currentPage === totalPages}>
-                            <ChevronsRight className="w-4 h-4" />
-                        </Button>
+                    <div className="mt-4 flex items-center justify-between">
+                        <div className="text-sm text-gray-500">
+                            Showing {Math.min(filteredAndSortedPlayers.length > 0 ? ((currentPage - 1) * PAGE_SIZE) + 1 : 0, filteredAndSortedPlayers.length)}
+                            - {Math.min(currentPage * PAGE_SIZE, filteredAndSortedPlayers.length)} of {filteredAndSortedPlayers.length} players
+                        </div>
+                        <div className="flex items-center gap-1">
+                            <Button size="sm" variant="outline" onClick={() => handlePageChange(1)} disabled={currentPage === 1}>
+                                <ChevronsLeft className="w-4 h-4" />
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1}>
+                                <ChevronLeft className="w-4 h-4" />
+                            </Button>
+                            <span className="text-sm font-medium px-4">{currentPage} / {totalPages}</span>
+                            <Button size="sm" variant="outline" onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages}>
+                                <ChevronRight className="w-4 h-4" />
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={() => handlePageChange(totalPages)} disabled={currentPage === totalPages}>
+                                <ChevronsRight className="w-4 h-4" />
+                            </Button>
+                        </div>
                     </div>
                 </div>
             </div>

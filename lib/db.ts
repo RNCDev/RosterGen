@@ -146,17 +146,53 @@ export async function bulkInsertPlayers(groupCode: string, players: PlayerInput[
     }
 }
 
-export async function deleteGroup(groupCode: string): Promise<number> {
-    const { rowCount } = await sql`
-        UPDATE players 
-        SET is_active = false, updated_at = CURRENT_TIMESTAMP
-        WHERE group_code = ${groupCode};
-    `;
-    return rowCount;
+export async function deleteGroup(groupCode: string): Promise<void> {
+    const client = await sql.connect();
+    try {
+        await client.query('BEGIN');
+        // Note: The 'attendance' table has 'ON DELETE CASCADE' for player_id and event_id.
+        // Deleting players and events will automatically cascade to delete attendance records.
+        await client.query('DELETE FROM events WHERE group_code = $1', [groupCode]);
+        await client.query('DELETE FROM players WHERE group_code = $1', [groupCode]);
+        await client.query('COMMIT');
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Error in deleteGroup transaction:', error);
+        throw error;
+    } finally {
+        client.release();
+    }
 }
 
-// ===== EVENT OPERATIONS =====
+export async function renameGroup(oldGroupCode: string, newGroupCode: string): Promise<void> {
+    const client = await sql.connect();
+    try {
+        await client.query('BEGIN');
 
+        // Check if the new group code already exists to prevent conflicts
+        const { rows } = await client.query('SELECT 1 FROM players WHERE group_code = $1 LIMIT 1', [newGroupCode]);
+        if (rows.length > 0) {
+            throw new Error(`Group code "${newGroupCode}" is already in use.`);
+        }
+
+        await client.query('UPDATE players SET group_code = $1 WHERE group_code = $2', [newGroupCode, oldGroupCode]);
+        await client.query('UPDATE events SET group_code = $1 WHERE group_code = $2', [newGroupCode, oldGroupCode]);
+        
+        await client.query('COMMIT');
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Error in renameGroup transaction:', error);
+        throw error;
+    } finally {
+        client.release();
+    }
+}
+
+// EVENT-RELATED FUNCTIONS
+
+/**
+ * Creates a new event for a group.
+ */
 export async function createEvent(event: EventInput): Promise<EventDB> {
     const { rows } = await sql<EventDB>`
         INSERT INTO events (name, description, event_date, event_time, location, group_code, is_active)
@@ -171,6 +207,9 @@ export async function createEvent(event: EventInput): Promise<EventDB> {
     return newEvent;
 }
 
+/**
+ * Retrieves all events for a group.
+ */
 export async function getEventsByGroup(groupCode: string): Promise<EventWithStats[]> {
     const { rows } = await sql<EventWithStats>`
         SELECT 
@@ -190,6 +229,9 @@ export async function getEventsByGroup(groupCode: string): Promise<EventWithStat
     return rows;
 }
 
+/**
+ * Retrieves an event by its ID.
+ */
 export async function getEventById(eventId: number): Promise<EventDB | null> {
     const { rows } = await sql<EventDB>`
         SELECT * FROM events 
@@ -198,6 +240,9 @@ export async function getEventById(eventId: number): Promise<EventDB | null> {
     return rows[0] || null;
 }
 
+/**
+ * Updates an event.
+ */
 export async function updateEvent(eventId: number, event: Partial<EventInput>): Promise<EventDB> {
     // Dynamically build the SET clause
     const fields = Object.keys(event) as (keyof typeof event)[];
@@ -217,6 +262,9 @@ export async function updateEvent(eventId: number, event: Partial<EventInput>): 
     return rows[0];
 }
 
+/**
+ * Deletes an event.
+ */
 export async function deleteEvent(eventId: number): Promise<boolean> {
     const { rowCount } = await sql`
         UPDATE events 
@@ -270,8 +318,6 @@ async function createAttendanceRecordsForEvent(eventId: number, groupCode: strin
         ON CONFLICT (player_id, event_id) DO NOTHING;
     `;
 }
-
-// ===== ATTENDANCE OPERATIONS =====
 
 export async function getAttendanceForEvent(eventId: number): Promise<PlayerWithAttendance[]> {
     const { rows } = await sql<PlayerWithAttendance>`
@@ -330,4 +376,4 @@ export async function getAttendingPlayersForEvent(eventId: number): Promise<Play
         ORDER BY p.is_defense, p.skill DESC;
     `;
     return rows;
-}
+} 

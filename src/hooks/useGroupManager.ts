@@ -158,55 +158,20 @@ export function useGroupManager() {
                 throw new Error(errorData.error || 'Failed to update attendance');
             }
             
-            // Manually update state for instant feedback
+            // After a successful update, refetch the events to get updated stats
+            await loadEvents(loadedGroupCode);
             
-            // 1. Update attendance data
-            setAttendanceData(prevData => {
-                const newData = [...prevData];
-                updates.forEach(update => {
-                    const playerIndex = newData.findIndex(p => p.id === update.player_id);
-                    if (playerIndex !== -1) {
-                        newData[playerIndex] = { ...newData[playerIndex], is_attending_event: update.is_attending };
-                    }
-                });
-                return newData;
-            });
-            
-            // 2. Update event stats
-            setEvents(prevEvents => {
-                const newEvents = [...prevEvents];
-                const eventIndex = newEvents.findIndex(e => e.id === eventId);
-                
-                if (eventIndex !== -1) {
-                    const eventToUpdate = { ...newEvents[eventIndex] };
-                    
-                    let attendingChange = 0;
-                    updates.forEach(update => {
-                        const player = attendanceData.find(p => p.id === update.player_id);
-                        if (player) {
-                            const wasAttending = player.is_attending_event ?? false;
-                            if (wasAttending !== update.is_attending) {
-                                attendingChange += update.is_attending ? 1 : -1;
-                            }
-                        }
-                    });
-                    
-                    eventToUpdate.attending_count += attendingChange;
-                    eventToUpdate.attendance_rate = eventToUpdate.total_players > 0 ? 
-                        (eventToUpdate.attending_count / eventToUpdate.total_players) * 100 : 0;
-                        
-                    newEvents[eventIndex] = eventToUpdate;
-                }
-                
-                return newEvents;
-            });
+            // Also refetch the attendance for the currently selected event
+            if (selectedEvent && selectedEvent.id === eventId) {
+                await loadAttendanceForEvent(eventId);
+            }
 
         } catch (err) {
             const error = err instanceof Error ? err.message : 'Failed to update attendance';
             setError(error);
             throw new Error(error);
         }
-    }, [attendanceData]);
+    }, [loadedGroupCode, selectedEvent, loadEvents, loadAttendanceForEvent]);
 
     // Delete an event
     const deleteEvent = useCallback(async (eventId: number) => {
@@ -240,6 +205,93 @@ export function useGroupManager() {
         await loadAttendanceForEvent(event.id);
     }, [loadAttendanceForEvent]);
 
+    const isDirty = !_.isEqual(players, originalPlayers);
+    const isGroupNameDirty = loadedGroupCode.trim() !== '' && groupCode.trim() !== '' && groupCode !== loadedGroupCode;
+
+    const handleSaveGroup = useCallback(async () => {
+        if (!loadedGroupCode) {
+            setError('A group must be loaded before saving changes.');
+            return;
+        }
+
+        setLoading(true);
+        setError(null);
+
+        // Determine which players need to be created, updated, or deleted
+        const playersToUpdate = players.filter(p => {
+            const original = originalPlayers.find(op => op.id === p.id);
+            return original && !_.isEqual(p, original);
+        });
+
+        const playersToCreate = players.filter(p => !originalPlayers.some(op => op.id === p.id));
+        const playersToDelete = originalPlayers.filter(op => !players.some(p => p.id === op.id)).map(p => p.id);
+        
+        try {
+            const response = await fetch('/api/players', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    groupCode: loadedGroupCode,
+                    playersToUpdate,
+                    playersToCreate,
+                    playersToDelete,
+                }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || "Failed to save changes");
+            }
+            
+            // Refresh state from server
+            await handleLoadGroup(loadedGroupCode);
+
+        } catch (e) {
+            setError(e instanceof Error ? e.message : 'An error occurred while saving.');
+        } finally {
+            setLoading(false);
+        }
+    }, [loadedGroupCode, players, originalPlayers, handleLoadGroup]);
+
+    const handleRenameGroup = useCallback(async () => {
+        if (!isGroupNameDirty) return;
+
+        setLoading(true);
+        setError(null);
+
+        try {
+            const response = await fetch('/api/groups', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ oldGroupCode: loadedGroupCode, newGroupCode: groupCode }),
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || "Failed to rename group.");
+            }
+
+            // On success, update the loaded code and local storage
+            setLoadedGroupCode(groupCode);
+            localStorage.setItem('groupCode', groupCode);
+            await handleLoadGroup(groupCode); // Reload to confirm changes
+
+        } catch (e) {
+            setError(e instanceof Error ? e.message : 'An error occurred during rename.');
+            // Revert input field to the original name on failure
+            setGroupCode(loadedGroupCode);
+        } finally {
+            setLoading(false);
+        }
+    }, [groupCode, loadedGroupCode, isGroupNameDirty, handleLoadGroup]);
+
+    const handleToggleBulkEdit = useCallback(async (isEditing: boolean, doSave: boolean) => {
+        if (isEditing && doSave) {
+            await handleSaveGroup();
+        }
+    }, [handleSaveGroup]);
+
     // Load initial group code from localStorage
     useEffect(() => {
         const savedGroupCode = localStorage.getItem('groupCode');
@@ -250,59 +302,6 @@ export function useGroupManager() {
             setLoading(false);
         }
     }, [handleLoadGroup]);
-
-    const isDirty = !_.isEqual(players, originalPlayers);
-
-    const handleSaveGroup = async () => {
-        if (!groupCode) {
-            setError('Please enter a group code to save.');
-            return;
-        }
-
-        setLoading(true);
-        setError(null);
-        try {
-            // If we have a loaded group (existing group), update the players
-            if (loadedGroupCode && loadedGroupCode === groupCode) {
-                const response = await fetch('/api/players', {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ groupCode, players }),
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || 'Failed to update players');
-                }
-
-                const savedPlayers: Player[] = await response.json();
-                setPlayers(savedPlayers);
-                setOriginalPlayers(savedPlayers); // Update original state after saving
-            } else {
-                // If this is a new group, use the groups endpoint
-                const response = await fetch('/api/groups', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ groupCode, players }),
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || 'Failed to save group');
-                }
-
-                const savedPlayers: Player[] = await response.json();
-                setPlayers(savedPlayers);
-                setOriginalPlayers(savedPlayers); // Update original state after saving
-                setLoadedGroupCode(groupCode);
-            }
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to save group');
-            console.error(err);
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const handleClearGroup = () => {
         setGroupCode('');
@@ -317,40 +316,19 @@ export function useGroupManager() {
     };
 
     const handleDeleteGroup = async () => {
-        if (!groupCode) {
-            setError('No group code selected to delete.');
-            return;
-        }
+        if (!loadedGroupCode) return;
 
-        setLoading(true);
-        setError(null);
         try {
-            const response = await fetch('/api/groups', {
+            const response = await fetch(`/api/groups?groupCode=${loadedGroupCode}`, {
                 method: 'DELETE',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ groupCode }),
             });
-
             if (!response.ok) {
-                // If there's an error, try to parse JSON, but handle cases where it might not be
-                let errorMessage = 'Failed to delete group';
-                try {
-                    const errorData = await response.json();
-                    errorMessage = errorData.error || errorMessage;
-                } catch (e) {
-                    // Response was not JSON, use status text
-                    errorMessage = `${response.status} ${response.statusText}`;
-                }
-                throw new Error(errorMessage);
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to delete group');
             }
-
-            // On success (e.g., 204 No Content), just clear the group
             handleClearGroup();
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to delete group');
-            console.error(err);
-        } finally {
-            setLoading(false);
         }
     };
 
@@ -364,6 +342,7 @@ export function useGroupManager() {
         loading,
         error,
         isDirty,
+        isGroupNameDirty,
         handleLoadGroup,
         handleSaveGroup,
         handleClearGroup,
@@ -381,6 +360,7 @@ export function useGroupManager() {
         updateAttendance,
         deleteEvent,
         selectEvent,
-        loadAttendanceForEvent
+        handleToggleBulkEdit,
+        handleRenameGroup,
     };
 }

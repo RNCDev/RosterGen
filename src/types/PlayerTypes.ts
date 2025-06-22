@@ -92,6 +92,8 @@ export interface EventWithStats extends EventDB {
     not_attending_count: number;
     no_response_count: number;
     attendance_rate: number;
+    forwards_count: number;
+    defensemen_count: number;
 }
 
 // Type aliases for clarity

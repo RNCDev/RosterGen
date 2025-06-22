@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { sql } from '@vercel/postgres';
 import { z } from 'zod';
+import { renameGroup, deleteGroup } from '../../../../lib/db';
 
 // Zod schema for a player received from the client
 // Does not include server-generated fields like `id`
@@ -75,23 +76,49 @@ export async function POST(request: NextRequest) {
  * Deletes an entire group by its code.
  */
 export async function DELETE(request: NextRequest) {
-    let groupCode;
+    const { searchParams } = new URL(request.url);
+    const groupCode = searchParams.get('groupCode');
+    
     try {
-        const body = await request.json();
-        groupCode = body.groupCode;
-
         if (!groupCode) {
             return NextResponse.json({ error: 'Group code is required' }, { status: 400 });
         }
 
-        await sql`
-            DELETE FROM players WHERE group_code = ${groupCode};
-        `;
+        await deleteGroup(groupCode);
 
         return new NextResponse(null, { status: 204 }); // No Content
 
     } catch (error) {
         console.error(`Failed to delete group ${groupCode}:`, error);
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    }
+}
+
+/**
+ * PUT /api/groups
+ * Renames a group.
+ */
+export async function PUT(request: NextRequest) {
+    try {
+        const { oldGroupCode, newGroupCode } = await request.json();
+
+        if (!oldGroupCode || !newGroupCode) {
+            return NextResponse.json({ error: 'Both old and new group codes are required.' }, { status: 400 });
+        }
+        
+        if (oldGroupCode === newGroupCode) {
+            return NextResponse.json({ message: 'No change detected.' }, { status: 200 });
+        }
+
+        await renameGroup(oldGroupCode, newGroupCode);
+
+        return NextResponse.json({ message: `Group successfully renamed from "${oldGroupCode}" to "${newGroupCode}".` }, { status: 200 });
+    } catch (e: any) {
+        console.error('Error in PUT /api/groups:', e);
+        // Check for the specific error message from our db function
+        if (e.message.includes('is already in use')) {
+            return NextResponse.json({ error: e.message }, { status: 409 }); // Conflict
+        }
+        return NextResponse.json({ error: 'An unexpected error occurred during rename.' }, { status: 500 });
     }
 }

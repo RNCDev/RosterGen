@@ -11,7 +11,6 @@ import {
 } from 'lucide-react';
 
 interface ActionHeaderProps {
-    activeTab: 'players' | 'events';
     // Group props
     groupCode: string;
     onGroupCodeChange: (code: string) => void;
@@ -21,14 +20,6 @@ interface ActionHeaderProps {
     onDeleteGroup: () => void;
     isDirty: boolean;
     isLoading: boolean;
-    // Player view props
-    isBulkEditing?: boolean;
-    onToggleBulkEdit?: () => void;
-    onAddPlayer?: () => void;
-    onUploadCsv?: () => void;
-    // Both views
-    playerCount: number;
-    totalPlayerCount: number;
 }
 
 export default function ActionHeader({
@@ -96,16 +87,16 @@ export default function ActionHeader({
                         <div className="flex items-center gap-1 bg-white/60 backdrop-blur-sm rounded-lg p-1 border border-white/30">
                             <button
                                 onClick={onSaveGroup}
-                                disabled={!groupCode.trim() || !isDirty || isLoading}
+                                disabled={!isDirty || isLoading}
                                 className={`p-2 rounded-md transition-all ${
-                                    isDirty 
-                                        ? 'bg-green-50 text-green-600 hover:bg-green-100' 
-                                        : 'text-gray-400 hover:bg-gray-50'
+                                    isDirty
+                                        ? 'bg-green-50 text-green-600 hover:bg-green-100 animate-pulse'
+                                        : 'text-gray-400'
                                 }`}
-                                title="Save Changes"
+                                title={isDirty ? "Save New Group Name" : "Group Name Saved"}
                             >
                                 {isDirty ? (
-                                    <Save size={16} className="animate-pulse" />
+                                    <Save size={16} />
                                 ) : (
                                     <ShieldCheck size={16} />
                                 )}

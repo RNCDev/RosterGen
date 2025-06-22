@@ -353,43 +353,43 @@ export default function EventsView({
 // Compact Event Card
 function EventCard({ event, isSelected, onClick, onDelete }: { event: EventWithStats; isSelected: boolean; onClick: () => void; onDelete: () => void; }) {
     const handleDelete = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        onDelete();
+        e.stopPropagation(); // Prevent card from being selected
+        if (window.confirm(`Are you sure you want to delete the event "${event.name}"?`)) {
+            onDelete();
+        }
     };
 
+    const cardBaseClasses = "w-full rounded-lg border p-3 cursor-pointer transition-all duration-200 ease-in-out transform";
+    const cardStateClasses = isSelected
+        ? "bg-blue-900/95 border-blue-700 text-white shadow-lg -translate-y-1"
+        : "bg-white/60 border-white/40 text-gray-800 hover:border-gray-300/80 hover:-translate-y-0.5";
+
     return (
-        <div 
-            onClick={onClick}
-            className={`cursor-pointer p-3 rounded-lg border-2 transition-all ${
-                isSelected ? 'border-blue-500 bg-blue-50' : 'border-gray-200 bg-white hover:border-blue-300'
-            }`}
-        >
+        <div onClick={onClick} className={`${cardBaseClasses} ${cardStateClasses}`}>
             <div className="flex justify-between items-start">
                 <div className="flex-1">
-                    <p className={`font-semibold ${isSelected ? 'text-blue-800' : 'text-gray-800'}`}>{event.name}</p>
-                    <p className="text-sm text-gray-500">{new Date(event.event_date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' })}</p>
+                    <p className={`font-bold text-lg ${isSelected ? 'text-white' : 'text-gray-900'}`}>{event.name}</p>
+                    <p className={`text-sm ${isSelected ? 'text-blue-200' : 'text-gray-600'}`}>
+                        {new Date(event.event_date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' })}
+                    </p>
                 </div>
                 <button
                     onClick={handleDelete}
-                    className={`p-1 rounded-md transition-colors ${
-                        isSelected 
-                            ? 'text-blue-600 hover:bg-blue-100 hover:text-blue-800' 
-                            : 'text-gray-400 hover:bg-red-100 hover:text-red-600'
-                    }`}
+                    className={`p-1.5 rounded-full transition-colors ${isSelected ? 'text-blue-300 hover:bg-blue-800/50' : 'text-gray-400 hover:bg-gray-200/80'}`}
+                    title="Delete Event"
                 >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 size={16} />
                 </button>
             </div>
-            <div className="mt-3">
-                <div className="flex justify-between items-center text-xs text-gray-600 mb-1">
-                    <span>{event.attending_count} / {event.total_players} Attending</span>
-                    <span>{event.attendance_rate.toFixed(0)}%</span>
+            <div className={`my-3 h-px ${isSelected ? 'bg-blue-700/50' : 'bg-gray-200/80'}`}></div>
+            <div className="flex justify-between items-center text-sm">
+                <div className={`flex items-center gap-1.5 ${isSelected ? 'text-blue-200' : 'text-gray-600'}`}>
+                    <Users size={14} />
+                    <span>{event.attending_count || 0} Attending</span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-1.5">
-                    <div 
-                        className="bg-green-500 h-1.5 rounded-full" 
-                        style={{ width: `${event.attendance_rate}%` }}
-                    ></div>
+                <div className={`flex items-center gap-1.5 ${isSelected ? 'text-blue-200' : 'text-gray-600'}`}>
+                    <span className="font-semibold text-green-400">{event.forwards_count || 0} F</span>
+                    <span className="font-semibold text-purple-400">{event.defensemen_count || 0} D</span>
                 </div>
             </div>
         </div>
@@ -411,63 +411,56 @@ function AttendanceTable({
 }) {
     return (
         <div className="bg-white/50 backdrop-blur-sm rounded-lg border border-white/40 overflow-hidden">
-            <table className="w-full text-sm">
-                <thead className="bg-gray-50/50">
-                    <tr>
-                        <th className="px-4 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Player</th>
-                        <th className="px-4 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Position</th>
-                        <th className="px-4 py-1 text-center font-medium text-gray-500 uppercase tracking-wider">Skill</th>
-                        <th className="px-4 py-1 text-center font-medium text-gray-500 uppercase tracking-wider">Attending</th>
-                    </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200/50">
-                    {players.map((player) => (
-                        <tr key={player.id} className="h-10 hover:bg-gray-50/30 transition-colors">
-                            <td className="px-4 whitespace-nowrap">
-                                <div className="flex items-center gap-3">
-                                    <Users className="w-5 h-5 text-gray-400" />
-                                    <span className="font-medium text-gray-900">{player.first_name} {player.last_name}</span>
-                                </div>
-                            </td>
-                            <td>
-                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                                    player.is_defense ? 'bg-purple-100 text-purple-800' : 'bg-green-100 text-green-800'
-                                }`}>
-                                    {player.is_defense ? 'Defense' : 'Forward'}
-                                </span>
-                            </td>
-                            <td>
-                                <div className="flex justify-start items-center">
-                                    <span className="inline-flex items-center justify-center w-6 h-6 bg-blue-100 text-blue-700 rounded-full text-xs font-bold">
-                                        {player.skill}
-                                    </span>
-                                </div>
-                            </td>
-                            <td className="text-center">
-                                 {isBulkEditMode ? (
-                                    <input
-                                        type="checkbox"
-                                        checked={stagedChanges.get(player.id) ?? false}
-                                        onChange={(e) => onStagedChange(player.id, e.target.checked)}
-                                        className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                                    />
-                                ) : (
-                                    <button
-                                        onClick={() => onAttendanceToggle(player.id)}
-                                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium transition-colors ${
-                                            player.is_attending_event
-                                                ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                                                : 'bg-red-100 text-red-800 hover:bg-red-200'
-                                        }`}
-                                    >
-                                        {player.is_attending_event ? 'Attending' : 'Not Attending'}
-                                    </button>
-                                )}
-                            </td>
+            <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200/50">
+                    <thead className="bg-gray-50/50">
+                        <tr>
+                            <th scope="col" className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Player
+                            </th>
+                            <th scope="col" className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Position
+                            </th>
+                            <th scope="col" className="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Status
+                            </th>
                         </tr>
-                    ))}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200/50">
+                        {players.map((player) => {
+                            const isAttending = isBulkEditMode ? (stagedChanges.get(player.id) ?? false) : (player.is_attending_event ?? false);
+                            
+                            return (
+                                <tr key={player.id} className="hover:bg-gray-100/50 transition-colors">
+                                    <td className="px-4 py-1 whitespace-nowrap">
+                                        <div className="text-sm font-medium text-gray-900">{player.first_name} {player.last_name}</div>
+                                    </td>
+                                    <td className="px-4 py-1 whitespace-nowrap">
+                                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                                            player.is_defense ? 'bg-purple-100 text-purple-800' : 'bg-green-100 text-green-800'
+                                        }`}>
+                                            {player.is_defense ? 'Defense' : 'Forward'}
+                                        </span>
+                                    </td>
+                                    <td className="px-4 py-1 whitespace-nowrap text-center">
+                                        <input
+                                            type="checkbox"
+                                            checked={isAttending}
+                                            onChange={(e) => {
+                                                if (isBulkEditMode) {
+                                                    onStagedChange(player.id, e.target.checked)
+                                                }
+                                            }}
+                                            disabled={!isBulkEditMode}
+                                            className="h-5 w-5 rounded text-blue-600 focus:ring-blue-500 border-gray-300 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
+                                        />
+                                    </td>
+                                </tr>
+                            );
+                        })}
+                    </tbody>
+                </table>
+            </div>
         </div>
     );
 }

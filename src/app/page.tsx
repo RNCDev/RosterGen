@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { type Player } from '@/types/PlayerTypes';
-import FloatingToggle from '@/components/FloatingToggle';
 import ActionHeader from '@/components/ActionHeader';
 import PlayersView from '@/components/PlayersView';
 import EventsView from '@/components/EventsView';
@@ -11,9 +10,25 @@ import AddPlayerDialog from '@/components/dialogs/AddPlayerDialog';
 import UploadCsvDialog from '@/components/dialogs/UploadCsvDialog';
 import CreateGroupDialog from '@/components/dialogs/CreateGroupDialog';
 import { useGroupManager } from '@/hooks/useGroupManager';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/Button';
+import { Plus, Upload, Users } from 'lucide-react';
+
+// A simple welcome screen component to guide new users.
+const WelcomeScreen = ({ onCreateGroup }: { onCreateGroup: () => void }) => (
+    <div className="text-center">
+        <Users size={48} className="mx-auto text-gray-400" />
+        <h2 className="mt-4 text-2xl font-semibold text-gray-800">Welcome to RosterGen</h2>
+        <p className="mt-2 text-gray-500">
+            To get started, load an existing group using the code above, or create a new one.
+        </p>
+        <Button onClick={onCreateGroup} className="mt-6">
+            Create New Group
+        </Button>
+    </div>
+);
 
 export default function Home() {
-    const [activeTab, setActiveTab] = useState<'players' | 'events'>('players');
     const {
         groupCode,
         setGroupCode,
@@ -21,7 +36,6 @@ export default function Home() {
         players,
         setPlayers,
         loading,
-        setLoading,
         error,
         isDirty,
         handleLoadGroup,
@@ -29,7 +43,6 @@ export default function Home() {
         handleClearGroup,
         handleDeleteGroup,
         setError,
-        // New event-related properties
         events,
         selectedEvent,
         attendanceData,
@@ -39,6 +52,9 @@ export default function Home() {
         updateAttendance,
         deleteEvent,
         selectEvent,
+        handleToggleBulkEdit,
+        isGroupNameDirty,
+        handleRenameGroup,
     } = useGroupManager();
     
     // Dialog states
@@ -46,16 +62,16 @@ export default function Home() {
     const [isUploadCsvOpen, setUploadCsvOpen] = useState(false);
     const [isCreateGroupOpen, setCreateGroupOpen] = useState(false);
     
-    // Bulk editing state
+    // Bulk editing state for PlayersView
     const [isBulkEditing, setIsBulkEditing] = useState(false);
 
     const handleAddPlayer = async (newPlayerData: Omit<Player, 'id' | 'group_code' | 'created_at' | 'updated_at'>) => {
-        if (!groupCode) {
-            setError("A group code must be set before adding players.");
+        if (!loadedGroupCode) {
+            setError("A group must be loaded before adding players.");
             return;
         }
         
-        const playerWithGroupCode = { ...newPlayerData, group_code: groupCode };
+        const playerWithGroupCode = { ...newPlayerData, group_code: loadedGroupCode };
 
         // Optimistic UI update
         const tempId = Date.now();
@@ -67,16 +83,15 @@ export default function Home() {
             const response = await fetch('/api/players', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(playerWithGroupCode) // Send the correct object
+                body: JSON.stringify(playerWithGroupCode)
             });
 
             if (!response.ok) {
                 const errorData = await response.json();
-                console.error("API Error:", errorData);
                 throw new Error(errorData.error || "Failed to add player");
             }
             // Refresh data from server to get correct ID
-            handleLoadGroup(groupCode); 
+            await handleLoadGroup(loadedGroupCode); 
         } catch (e) {
             setError(e instanceof Error ? e.message : 'An error occurred.');
             // Revert optimistic update
@@ -85,8 +100,8 @@ export default function Home() {
     };
 
     const handleCsvUpload = async (csvPlayers: Omit<Player, 'id' | 'group_code' | 'created_at' | 'updated_at'>[]) => {
-        if (!groupCode) {
-            setError("A group code must be set before uploading a CSV.");
+        if (!loadedGroupCode) {
+            setError("A group must be loaded before uploading a CSV.");
             return;
         }
 
@@ -94,35 +109,25 @@ export default function Home() {
             return;
         }
 
-        setLoading(true);
-        setError(null);
-
         try {
             const response = await fetch('/api/players/bulk', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ groupCode, players: csvPlayers }),
+                body: JSON.stringify({ groupCode: loadedGroupCode, players: csvPlayers }),
             });
 
             if (!response.ok) {
                 const errorData = await response.json();
-                console.error("API Error:", errorData);
                 throw new Error(errorData.error || "Failed to upload CSV data");
             }
 
-            // Reload the group to get the fresh data
-            await handleLoadGroup(groupCode);
-            setUploadCsvOpen(false); // Close dialog on success
+            await handleLoadGroup(loadedGroupCode);
+            setUploadCsvOpen(false);
         } catch (e) {
             setError(e instanceof Error ? e.message : 'An error occurred during CSV upload.');
-        } finally {
-            setLoading(false);
         }
     };
-    
 
-
-    // New handler for creating a group
     const handleCreateGroup = async (newGroupCode: string) => {
         try {
             const response = await fetch('/api/groups', {
@@ -136,85 +141,68 @@ export default function Home() {
                 throw new Error(error || "Failed to create group.");
             }
 
-            // On success, set the new group code, clear players, and close the dialog
             setGroupCode(newGroupCode);
-            setPlayers([]);
-            setError(null);
+            await handleLoadGroup(newGroupCode); // Load the newly created group
             setCreateGroupOpen(false);
 
         } catch (e: any) {
-            console.error(e);
-            // Re-throw to be caught by the dialog
-            throw e;
-        }
-    };
-
-    const attendingPlayerCount = players.filter((p: Player) => p.is_attending).length;
-
-    const handleToggleBulkEdit = async () => {
-        if (isBulkEditing && isDirty) {
-            // If exiting bulk edit mode with unsaved changes, save first
-            try {
-                await handleSaveGroup();
-                setIsBulkEditing(false);
-            } catch (error) {
-                // If save fails, don't exit bulk edit mode
-                console.error('Failed to save changes:', error);
-            }
-        } else {
-            setIsBulkEditing(!isBulkEditing);
+            throw e; // Re-throw to be caught by the dialog
         }
     };
 
     return (
-        <div className="flex flex-col min-h-screen">
-            {/* Floating toggle for Players/Teams */}
-            <FloatingToggle
-                activeTab={activeTab}
-                setActiveTab={setActiveTab}
-            />
-
+        <div className="flex flex-col min-h-screen bg-gray-50">
             <ActionHeader
-                activeTab={activeTab}
                 groupCode={groupCode}
                 onGroupCodeChange={setGroupCode}
                 onLoadGroup={() => handleLoadGroup(groupCode)}
-                onSaveGroup={handleSaveGroup}
+                onSaveGroup={handleRenameGroup}
                 onClearGroup={handleClearGroup}
                 onDeleteGroup={handleDeleteGroup}
-                isDirty={isDirty}
+                isDirty={isGroupNameDirty}
                 isLoading={loading}
-                isBulkEditing={isBulkEditing}
-                onToggleBulkEdit={handleToggleBulkEdit}
-                onAddPlayer={() => setAddPlayerOpen(true)}
-                onUploadCsv={() => setUploadCsvOpen(true)}
-                playerCount={0} // Will be handled in EventsView
-                totalPlayerCount={players.length}
             />
 
-            <main className="flex-1 bg-gradient-to-br from-blue-50/30 to-indigo-50/30 relative overflow-hidden">
+            <main className="flex-1">
                 <div className="max-w-7xl mx-auto px-8 py-8">
                     {error && <ErrorAlert message={error} onDismiss={() => setError(null)} />}
 
-                    <div className="relative">
-                        {activeTab === 'players' ? (
-                            <div key="players" className="animate-slide-in-left">
+                    {!loadedGroupCode ? (
+                         <WelcomeScreen onCreateGroup={() => setCreateGroupOpen(true)} />
+                    ) : (
+                        <Tabs defaultValue="roster" className="w-full">
+                            <TabsList className="grid w-full grid-cols-2">
+                                <TabsTrigger value="roster">Roster</TabsTrigger>
+                                <TabsTrigger value="events">Events</TabsTrigger>
+                            </TabsList>
+                            <TabsContent value="roster" className="mt-4 animate-fade-in">
+                                <div className="bg-white/40 backdrop-blur-md border border-white/30 rounded-lg p-4 mb-4 flex items-center justify-between animate-slide-in-from-left">
+                                    <h2 className="text-lg font-semibold text-gray-800">
+                                        Roster Management
+                                    </h2>
+                                    <div className="flex items-center gap-2">
+                                        <Button variant="outline" onClick={() => setAddPlayerOpen(true)}>
+                                            <Plus className="mr-2 h-4 w-4" /> Add Player
+                                        </Button>
+                                        <Button variant="outline" onClick={() => setUploadCsvOpen(true)}>
+                                            <Upload className="mr-2 h-4 w-4" /> Upload CSV
+                                        </Button>
+                                    </div>
+                                </div>
                                 <PlayersView
                                     players={players}
                                     setPlayers={setPlayers}
                                     loading={loading}
                                     isBulkEditing={isBulkEditing}
-                                    onCreateGroup={() => setCreateGroupOpen(true)}
-                                    groupCode={loadedGroupCode}
-                                    onAddPlayer={() => setAddPlayerOpen(true)}
-                                    onUploadCsv={() => setUploadCsvOpen(true)}
-                                    onToggleBulkEdit={handleToggleBulkEdit}
+                                    onToggleBulkEdit={async () => {
+                                        await handleToggleBulkEdit(isBulkEditing, isDirty);
+                                        setIsBulkEditing(!isBulkEditing);
+                                    }}
                                     isDirty={isDirty}
                                 />
-                            </div>
-                        ) : (
-                            <div key="events" className="animate-slide-in-right">
-                                <EventsView
+                            </TabsContent>
+                            <TabsContent value="events" className="mt-4 animate-fade-in">
+                                 <EventsView
                                     events={events}
                                     selectedEvent={selectedEvent}
                                     attendanceData={attendanceData}
@@ -226,9 +214,9 @@ export default function Home() {
                                     eventsLoading={eventsLoading}
                                     attendanceLoading={attendanceLoading}
                                 />
-                            </div>
-                        )}
-                    </div>
+                            </TabsContent>
+                        </Tabs>
+                    )}
                 </div>
             </main>
             
