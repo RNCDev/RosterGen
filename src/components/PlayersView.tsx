@@ -336,6 +336,7 @@ export default function PlayersView({
             <div className="flex justify-between items-center mb-4">
                 <div className="flex items-center gap-2">
                     <select 
+                        data-testid="position-filter"
                         value={positionFilter} 
                         onChange={(e) => setPositionFilter(e.target.value)}
                         className="text-sm border-gray-300 rounded-md"

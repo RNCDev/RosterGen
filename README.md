@@ -2,8 +2,6 @@
 
 This is a Next.js application designed to help organize hockey games and manage rosters. It allows users to create groups of players, schedule events, track attendance, and automatically generate balanced teams. The application is built with a focus on a reactive and efficient user experience.
 
-![Hockey Roster Manager Screenshot](https://i.imgur.com/xVd2OOf.png)
-
 ## Core Features
 
 -   **Group Management**: Organize players into distinct groups using a unique group code. Load, create, and manage your group's roster.
@@ -27,37 +25,48 @@ This is a Next.js application designed to help organize hockey games and manage 
 
 ## Project Structure
 
+A brief overview of the key directories and files in RosterGen.
+
 ```
-src/
-├── app/
-│   ├── api/
-│   │   ├── attendance/
-│   │   ├── events/
-│   │   ├── groups/
-│   │   ├── players/
-│   │   └── teams/
-│   ├── layout.tsx
-│   └── page.tsx
+/
+├── public/                  # Static assets (images, fonts, etc.)
+├── src/
+│   ├── app/                 # Next.js App Router directory
+│   │   ├── api/             # API routes for backend functionality
+│   │   │   ├── attendance/  # API for managing player attendance
+│   │   │   ├── events/      # API for event creation and management
+│   │   │   ├── groups/      # API for group and roster management
+│   │   │   ├── players/     # API for player CRUD operations
+│   │   │   ├── stats/       # API for generating player/team stats
+│   │   │   └── teams/       # API for team generation
+│   │   ├── globals.css    # Global stylesheets
+│   │   ├── layout.tsx     # Root layout component for the application
+│   │   └── page.tsx       # Main landing page component
+│   │
+│   ├── components/          # Reusable React components
+│   │   ├── dialogs/         # Dialog/modal components for user interactions
+│   │   ├── ui/              # Core UI components from shadcn/ui (Button, Dialog, etc.)
+│   │   ├── ActionHeader.tsx # Header component with primary action buttons
+│   │   ├── EventsView.tsx   # Component to display and manage events
+│   │   ├── PlayersView.tsx  # Component to display and manage the player roster
+│   │   └── TeamsView.tsx    # Component to display generated teams
+│   │
+│   ├── hooks/               # Custom React hooks for shared logic
+│   │   └── useGroupManager.ts # Hook for managing active group state
+│   │
+│   ├── lib/                 # Utility functions and core logic
+│   │   ├── db.ts            # Database connection and query functions
+│   │   ├── teamGenerator.ts # Core logic for balancing and generating teams
+│   │   └── utils.ts         # General utility functions
+│   │
+│   └── types/               # TypeScript type definitions
+│       ├── declarations.d.ts # Ambient module declarations
+│       └── PlayerTypes.ts    # Core types for Players, Events, etc.
 │
-├── components/
-│   ├── ui/
-│   ├── dialogs/
-│   ├── ActionHeader.tsx
-│   ├── AppHeader.tsx
-│   ├── EventsView.tsx
-│   ├── PlayersView.tsx
-│   └── TeamsView.tsx
-│
-├── hooks/
-│   └── useGroupManager.ts
-│
-├── lib/
-│   ├── db.ts
-│   ├── teamGenerator.ts
-│   └── utils.ts
-│
-└── types/
-    └── PlayerTypes.ts
+├── next.config.js           # Next.js configuration file
+├── tailwind.config.js       # Tailwind CSS configuration file
+└── tsconfig.json            # TypeScript configuration file
+
 ```
 
 ## Getting Started
@@ -100,58 +109,6 @@ This project uses Vercel Postgres. You will need to create a Postgres database o
     ```bash
     vercel env pull .env.development.local
     ```
-
-6.  **Database Schema**:
-    You will need to create the `groups`, `players`, `events`, and `attendance` tables in your database. You can use the following SQL commands:
-
-    ```sql
-    -- Stores group information
-    CREATE TABLE groups (
-        id SERIAL PRIMARY KEY,
-        code VARCHAR(255) UNIQUE NOT NULL,
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-    );
-
-    -- Stores all player information and their default settings
-    CREATE TABLE players (
-        id SERIAL PRIMARY KEY,
-        first_name VARCHAR(255) NOT NULL,
-        last_name VARCHAR(255) NOT NULL,
-        skill INTEGER NOT NULL,
-        is_defense BOOLEAN NOT NULL,
-        is_attending BOOLEAN NOT NULL DEFAULT true, -- Default status, not event-specific
-        group_id INTEGER NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
-        is_active BOOLEAN NOT NULL DEFAULT true,
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-    );
-
-    -- Stores event-specific information
-    CREATE TABLE events (
-        id SERIAL PRIMARY KEY,
-        name VARCHAR(255) NOT NULL,
-        description TEXT,
-        event_date DATE NOT NULL,
-        event_time TIME,
-        location VARCHAR(255),
-        group_id INTEGER NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
-        is_active BOOLEAN NOT NULL DEFAULT true,
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-    );
-
-    -- Junction table to track player attendance for each event
-    CREATE TABLE attendance (
-        id SERIAL PRIMARY KEY,
-        player_id INTEGER NOT NULL REFERENCES players(id) ON DELETE CASCADE,
-        event_id INTEGER NOT NULL REFERENCES events(id) ON DELETE CASCADE,
-        is_attending BOOLEAN NOT NULL,
-        response_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-        notes TEXT,
-        UNIQUE(player_id, event_id) -- Ensures one attendance record per player per event
-    );
-    ```
-
 ### Installation
 
 1.  **Clone the repository**:
@@ -174,4 +131,18 @@ This project uses Vercel Postgres. You will need to create a Postgres database o
 
 2.  Open your browser and navigate to [http://localhost:3000](http://localhost:3000).
 
-The application should now be running locally and connected to your Vercel Postgres database. 
+The application should now be running locally and connected to your Vercel Postgres database.
+
+## Testing
+
+This project uses [Jest](https://jestjs.io/) and [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/) for unit and component testing.
+
+Test files are located within a `__tests__` directory inside the component's folder (e.g., `src/components/__tests__/ActionHeader.test.tsx`).
+
+To run the test suite, use the following command:
+
+```bash
+npm test
+```
+
+This will run all test files and provide a summary of the results. 
