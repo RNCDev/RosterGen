@@ -27,7 +27,6 @@ interface ActionHeaderProps {
     onAddPlayer?: () => void;
     onUploadCsv?: () => void;
     // Both views
-    onGenerateTeams: () => void;
     playerCount: number;
     totalPlayerCount: number;
 }

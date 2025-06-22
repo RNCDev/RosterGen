@@ -188,7 +188,6 @@ export default function Home() {
                 onToggleBulkEdit={handleToggleBulkEdit}
                 onAddPlayer={() => setAddPlayerOpen(true)}
                 onUploadCsv={() => setUploadCsvOpen(true)}
-                onGenerateTeams={() => {}} // No longer needed
                 playerCount={0} // Will be handled in EventsView
                 totalPlayerCount={players.length}
             />
@@ -210,7 +209,6 @@ export default function Home() {
                                     onAddPlayer={() => setAddPlayerOpen(true)}
                                     onUploadCsv={() => setUploadCsvOpen(true)}
                                     onToggleBulkEdit={handleToggleBulkEdit}
-                                    onGenerateTeams={() => {}} // No longer needed
                                     isDirty={isDirty}
                                     isGenerating={false}
                                 />
