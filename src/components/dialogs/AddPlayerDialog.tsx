@@ -28,6 +28,7 @@ export default function AddPlayerDialog({ isOpen, onClose, onAddPlayer }: AddPla
         skill: 5,
         is_defense: false,
         is_attending: true,
+        is_active: true,
     });
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -55,6 +56,7 @@ export default function AddPlayerDialog({ isOpen, onClose, onAddPlayer }: AddPla
             skill: 5,
             is_defense: false,
             is_attending: true,
+            is_active: true,
         });
         onClose();
     };
@@ -67,6 +69,7 @@ export default function AddPlayerDialog({ isOpen, onClose, onAddPlayer }: AddPla
             skill: 5,
             is_defense: false,
             is_attending: true,
+            is_active: true,
         });
         onClose();
     };
