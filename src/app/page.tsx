@@ -210,7 +210,6 @@ export default function Home() {
                                     onUploadCsv={() => setUploadCsvOpen(true)}
                                     onToggleBulkEdit={handleToggleBulkEdit}
                                     isDirty={isDirty}
-                                    isGenerating={false}
                                 />
                             </div>
                         ) : (
