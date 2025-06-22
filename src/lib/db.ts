@@ -186,9 +186,38 @@ export async function deleteEvent(eventId: number): Promise<boolean> {
 }
 
 async function createAttendanceRecordsForEvent(eventId: number, groupCode: string): Promise<void> {
+    // Try to get the most recent event's attendance as defaults
+    const { rows: lastEventAttendance } = await sql`
+        WITH last_event AS (
+            SELECT id 
+            FROM events 
+            WHERE group_code = ${groupCode} 
+            AND is_active = true 
+            AND id != ${eventId}
+            ORDER BY event_date DESC, event_time DESC, created_at DESC
+            LIMIT 1
+        )
+        SELECT a.player_id, a.is_attending
+        FROM attendance a
+        INNER JOIN last_event le ON a.event_id = le.id
+        WHERE a.player_id IN (
+            SELECT id FROM players 
+            WHERE group_code = ${groupCode} AND is_active = true
+        )
+    `;
+
+    // Create a map of player_id -> previous attendance status
+    const previousAttendance = new Map(
+        lastEventAttendance.map((row: { player_id: number; is_attending: boolean }) => [row.player_id, row.is_attending])
+    );
+
+    // Insert attendance records, using previous event's attendance as default, or false if no previous data
     await sql`
         INSERT INTO attendance (player_id, event_id, is_attending)
-        SELECT p.id, ${eventId}, false
+        SELECT 
+            p.id, 
+            ${eventId}, 
+            COALESCE(${JSON.stringify(Object.fromEntries(previousAttendance))}::jsonb->(p.id::text), 'false')::boolean
         FROM players p
         WHERE p.group_code = ${groupCode} AND p.is_active = true
     `;
