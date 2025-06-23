@@ -27,7 +27,6 @@ export async function createPlayer(player: PlayerInput): Promise<PlayerDB> {
             last_name, 
             skill, 
             is_defense, 
-            is_attending, 
             group_id
         )
         VALUES (
@@ -35,7 +34,6 @@ export async function createPlayer(player: PlayerInput): Promise<PlayerDB> {
             ${player.last_name}, 
             ${player.skill}, 
             ${player.is_defense}, 
-            ${player.is_attending}, 
             ${player.group_id}
         )
         RETURNING *;
@@ -51,7 +49,6 @@ export async function updatePlayer(player: PlayerDB): Promise<PlayerDB> {
             last_name = ${player.last_name}, 
             skill = ${player.skill}, 
             is_defense = ${player.is_defense},
-            is_attending = ${player.is_attending},
             updated_at = CURRENT_TIMESTAMP
         WHERE id = ${player.id}
         RETURNING *;
@@ -85,9 +82,9 @@ export async function bulkUpdatePlayers(
         if (playersToUpdate.length > 0) {
             for (const player of playersToUpdate) {
                 await client.query(
-                    `UPDATE players SET first_name = $1, last_name = $2, skill = $3, is_defense = $4, is_attending = $5, updated_at = CURRENT_TIMESTAMP
-                     WHERE id = $6 AND group_id = $7`,
-                    [player.first_name, player.last_name, player.skill, player.is_defense, player.is_attending, player.id, groupId]
+                    `UPDATE players SET first_name = $1, last_name = $2, skill = $3, is_defense = $4, updated_at = CURRENT_TIMESTAMP
+                     WHERE id = $5 AND group_id = $6`,
+                    [player.first_name, player.last_name, player.skill, player.is_defense, player.id, groupId]
                 );
             }
         }
@@ -95,9 +92,9 @@ export async function bulkUpdatePlayers(
         if (playersToCreate.length > 0) {
             for (const player of playersToCreate) {
                 await client.query(
-                    `INSERT INTO players (first_name, last_name, skill, is_defense, is_attending, group_id)
-                     VALUES ($1, $2, $3, $4, $5, $6)`,
-                    [player.first_name, player.last_name, player.skill, player.is_defense, player.is_attending, groupId]
+                    `INSERT INTO players (first_name, last_name, skill, is_defense, group_id)
+                     VALUES ($1, $2, $3, $4, $5)`,
+                    [player.first_name, player.last_name, player.skill, player.is_defense, groupId]
                 );
             }
         }
@@ -124,7 +121,6 @@ export async function bulkInsertPlayers(groupId: number, players: PlayerInput[])
                     last_name, 
                     skill, 
                     is_defense, 
-                    is_attending, 
                     group_id
                 )
                 VALUES (
@@ -132,7 +128,6 @@ export async function bulkInsertPlayers(groupId: number, players: PlayerInput[])
                     ${player.last_name}, 
                     ${player.skill}, 
                     ${player.is_defense},
-                    ${player.is_attending},
                     ${groupId}
                 )
                 RETURNING *;

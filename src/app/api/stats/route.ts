@@ -5,16 +5,17 @@ export async function GET() {
     try {
         // Get count of unique groups
         const groupsResult = await sql`
-            SELECT COUNT(DISTINCT group_code) as unique_groups 
-            FROM players 
-            WHERE group_code != 'default'
+            SELECT COUNT(*) as unique_groups 
+            FROM groups 
+            WHERE code != 'default'
         `;
 
         // Get total player count
         const playersResult = await sql`
-            SELECT COUNT(*) as total_players 
-            FROM players 
-            WHERE group_code != 'default'
+            SELECT COUNT(players.id) as total_players 
+            FROM players
+            JOIN groups ON players.group_id = groups.id
+            WHERE groups.code != 'default'
         `;
 
         return NextResponse.json({

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { type Player } from '@/types/PlayerTypes';
+import { type Player, type PlayerInput } from '@/types/PlayerTypes';
 import ActionHeader from '@/components/ActionHeader';
 import PlayersView from '@/components/PlayersView';
 import EventsView from '@/components/EventsView';
@@ -76,18 +76,19 @@ export default function Home() {
     const [isUploadCsvOpen, setUploadCsvOpen] = useState(false);
     const [isCreateGroupOpen, setCreateGroupOpen] = useState(false);
 
-    const onAddPlayer = async (playerData: Omit<Player, 'id' | 'group_id' | 'created_at' | 'updated_at'>) => {
+    const onAddPlayer = async (playerData: Omit<PlayerInput, 'group_id'>) => {
         try {
-            await handleAddPlayer(playerData);
+            await handleAddPlayer({ ...playerData, is_active: true });
             setAddPlayerOpen(false);
         } catch (e: any) {
             setError(e.message);
         }
     };
     
-    const onCsvUpload = async (csvPlayers: Omit<Player, 'id' | 'group_id' | 'created_at' | 'updated_at'>[]) => {
+    const onCsvUpload = async (csvPlayers: Omit<PlayerInput, 'group_id'>[]) => {
         try {
-            await handleCsvUpload(csvPlayers);
+            const playersWithActive = csvPlayers.map(p => ({ ...p, is_active: true }));
+            await handleCsvUpload(playersWithActive);
             setUploadCsvOpen(false);
         } catch (e: any) {
             setError(e.message);
