@@ -16,15 +16,21 @@ import { Plus, Upload, Users } from 'lucide-react';
 
 // A simple welcome screen component to guide new users.
 const WelcomeScreen = ({ onCreateGroup }: { onCreateGroup: () => void }) => (
-    <div className="text-center">
-        <Users size={48} className="mx-auto text-gray-400" />
-        <h2 className="mt-4 text-2xl font-semibold text-gray-800">Welcome to RosterGen</h2>
-        <p className="mt-2 text-gray-500">
-            To get started, load an existing group using the code above, or create a new one.
-        </p>
-        <Button onClick={onCreateGroup} className="mt-6">
-            Create New Group
-        </Button>
+    <div className="flex items-center justify-center h-[calc(100vh-200px)] animate-fade-in">
+        <div className="text-center p-16 bg-white/60 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/40">
+            <h2 className="text-6xl font-extrabold leading-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 mb-6">
+                Hockey Roster Manager
+            </h2>
+            <p className="text-xl text-gray-700 max-w-lg mx-auto">
+                To get started, load an existing group using the code above, or create a new one.
+            </p>
+            <Button
+                onClick={onCreateGroup}
+                className="mt-10 px-10 py-7 text-xl font-bold rounded-full shadow-xl transform hover:scale-110 transition-transform duration-300 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white"
+            >
+                Create New Group
+            </Button>
+        </div>
     </div>
 );
 
@@ -99,7 +105,7 @@ export default function Home() {
     };
 
     return (
-        <div className="flex flex-col min-h-screen bg-gray-50">
+        <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-50 via-slate-50 to-stone-100">
             <ActionHeader
                 groupCode={groupCodeInput}
                 onGroupCodeChange={setGroupCodeInput}
