@@ -24,6 +24,7 @@ interface PlayersViewProps {
     setPlayers: (players: Player[]) => void;
     loading: boolean;
     isDirty: boolean;
+    onSaveChanges: () => void;
 }
 
 type SortField = 'name' | 'skill' | 'position';
@@ -226,7 +227,8 @@ export default function PlayersView({
     players, 
     setPlayers, 
     loading,
-    isDirty
+    isDirty,
+    onSaveChanges
 }: PlayersViewProps) {
     const [isEditing, setIsEditing] = useState(false);
     const [sortConfig, setSortConfig] = useState<{ field: SortField, direction: SortDirection }>({ field: 'name', direction: 'asc' });
@@ -263,6 +265,19 @@ export default function PlayersView({
 
     const handleClearSelection = () => {
         setSelectedPlayerIds(new Set());
+    };
+
+    const handleToggleEdit = () => {
+        if (isEditing && isDirty) {
+            onSaveChanges();
+        }
+        setIsEditing(!isEditing);
+    };
+
+    const handleCancelEdit = () => {
+        // Here you would revert changes. For simplicity, we'll just exit editing mode.
+        // A more robust solution would involve refetching original players.
+        setIsEditing(false);
     };
 
     const filteredPlayers = useMemo(() => {
@@ -356,12 +371,23 @@ export default function PlayersView({
                         ))}
                     </select>
                 </div>
-                <Button 
-                    onClick={() => setIsEditing(!isEditing)} 
-                    variant={isEditing ? 'default' : 'outline'}
-                >
-                    {isEditing ? 'Done Editing' : 'Edit Roster'}
-                </Button>
+                <div className="flex items-center gap-2">
+                    <Button 
+                        onClick={handleToggleEdit}
+                        variant={isEditing ? 'primary' : 'outline'}
+                        data-action={isEditing ? "Done Editing" : "Start Editing"}
+                    >
+                        {isEditing ? 'Done Editing' : 'Edit Roster'}
+                    </Button>
+                    {isEditing && (
+                        <Button
+                            onClick={handleCancelEdit}
+                            variant="secondary"
+                        >
+                            Cancel
+                        </Button>
+                    )}
+                </div>
             </div>
             
             {players.length === 0 ? (

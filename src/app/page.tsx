@@ -69,7 +69,8 @@ export default function Home() {
         createEvent,
         updateAttendance,
         deleteEvent,
-        selectEvent
+        selectEvent,
+        handleSaveChanges
     } = useGroupManager();
     
     const [isAddPlayerOpen, setAddPlayerOpen] = useState(false);
@@ -153,6 +154,7 @@ export default function Home() {
                                     setPlayers={setPlayers}
                                     loading={loading}
                                     isDirty={isDirty}
+                                    onSaveChanges={handleSaveChanges}
                                 />
                             </TabsContent>
                             <TabsContent value="events" className="mt-4 animate-fade-in">

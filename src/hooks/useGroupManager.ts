@@ -218,6 +218,46 @@ export function useGroupManager() {
         await handleLoadGroup(activeGroup.code); // Reload all data
     };
 
+    const handleSaveChanges = async () => {
+        if (!activeGroup || !isDirty) return;
+
+        const playersToCreate = players
+            .filter(p => typeof p.id === 'string' || p.id < 0)
+            .map(({ id, ...rest }) => rest);
+        
+        const playersToUpdate = players.filter(p => {
+            const original = originalPlayers.find(op => op.id === p.id);
+            return original && !_.isEqual(p, original);
+        });
+
+        const originalPlayerIds = new Set(originalPlayers.map(p => p.id));
+        const currentPlayerIds = new Set(players.map(p => p.id));
+        const playersToDelete = [...originalPlayerIds].filter(id => !currentPlayerIds.has(id));
+
+        try {
+            const response = await fetch(`/api/players/bulk`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    groupId: activeGroup.id,
+                    playersToCreate,
+                    playersToUpdate,
+                    playersToDelete
+                })
+            });
+
+            if (!response.ok) {
+                const { error } = await response.json();
+                throw new Error(error || 'Failed to save changes');
+            }
+
+            await handleLoadGroup(activeGroup.code);
+
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Unknown error saving changes');
+        }
+    };
+
     const createEvent = useCallback(async (eventData: Omit<EventInput, 'group_id'>) => {
         if (!activeGroup) throw new Error('No active group selected');
         const response = await fetch('/api/events', {
@@ -292,6 +332,7 @@ export function useGroupManager() {
         createEvent,
         updateAttendance,
         deleteEvent,
-        selectEvent
+        selectEvent,
+        handleSaveChanges
     };
 }

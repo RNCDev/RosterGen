@@ -109,36 +109,47 @@ export async function bulkUpdatePlayers(
     }
 }
 
-export async function bulkInsertPlayers(groupId: number, players: PlayerInput[]): Promise<PlayerDB[]> {
-    const createdPlayers: PlayerDB[] = [];
-    
-    await sql`BEGIN`;
+export async function bulkSavePlayers(
+    groupId: number, 
+    playersToCreate: PlayerInput[], 
+    playersToUpdate: PlayerDB[],
+    playersToDelete: number[]
+) {
+    const client = await sql.connect();
     try {
-        for (const player of players) {
-            const { rows } = await sql<PlayerDB>`
-                INSERT INTO players (
-                    first_name, 
-                    last_name, 
-                    skill, 
-                    is_defense, 
-                    group_id
-                )
-                VALUES (
-                    ${player.first_name}, 
-                    ${player.last_name}, 
-                    ${player.skill}, 
-                    ${player.is_defense},
-                    ${groupId}
-                )
-                RETURNING *;
-            `;
-            createdPlayers.push(rows[0]);
+        await client.query('BEGIN');
+
+        if (playersToDelete.length > 0) {
+            await client.query('DELETE FROM players WHERE id = ANY($1::int[]) AND group_id = $2', [playersToDelete, groupId]);
         }
-        await sql`COMMIT`;
-        return createdPlayers;
+
+        if (playersToUpdate.length > 0) {
+            for (const player of playersToUpdate) {
+                await client.query(
+                    `UPDATE players SET first_name = $1, last_name = $2, skill = $3, is_defense = $4, updated_at = CURRENT_TIMESTAMP
+                     WHERE id = $5 AND group_id = $6`,
+                    [player.first_name, player.last_name, player.skill, player.is_defense, player.id, groupId]
+                );
+            }
+        }
+
+        if (playersToCreate.length > 0) {
+            for (const player of playersToCreate) {
+                await client.query(
+                    `INSERT INTO players (first_name, last_name, skill, is_defense, group_id)
+                     VALUES ($1, $2, $3, $4, $5)`,
+                    [player.first_name, player.last_name, player.skill, player.is_defense, groupId]
+                );
+            }
+        }
+
+        await client.query('COMMIT');
     } catch (error) {
-        await sql`ROLLBACK`;
+        await client.query('ROLLBACK');
+        console.error('Error in bulk player save transaction:', error);
         throw error;
+    } finally {
+        client.release();
     }
 }
 

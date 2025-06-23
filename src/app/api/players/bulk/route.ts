@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { z } from 'zod';
-import { bulkInsertPlayers } from '@/lib/db';
+import { bulkSavePlayers } from '../../../../../lib/db';
 import { sql } from '@vercel/postgres';
+import { PlayerInput } from '@/types/PlayerTypes';
 
 const playerSchema = z.object({
     first_name: z.string().trim().min(1),
@@ -21,42 +22,38 @@ const bulkPlayersSchema = z.object({
  * Creates multiple players in a group, typically from a CSV upload.
  * This will first delete all existing players in the group.
  */
-export async function POST(request: NextRequest) {
+export async function POST(request: Request) {
     try {
-        const body = await request.json();
-        const validation = bulkPlayersSchema.safeParse(body);
+        const { groupId, players } = await request.json();
 
-        if (!validation.success) {
-            return NextResponse.json({ error: 'Invalid data for bulk player creation', details: validation.error.flatten() }, { status: 400 });
+        if (!groupId || !Array.isArray(players)) {
+            return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
-        const { groupId, players } = validation.data;
+        await bulkSavePlayers(groupId, players, [], []);
 
-        // Use a transaction to ensure atomicity
-        const client = await sql.connect();
-        try {
-            await client.query('BEGIN');
-            // First, delete all existing players for the group
-            await client.query('DELETE FROM players WHERE group_id = $1', [groupId]);
-            
-            // Then, bulk insert the new players
-            const newPlayers = await bulkInsertPlayers(groupId, players);
-            
-            await client.query('COMMIT');
-            
-            return NextResponse.json(newPlayers, { status: 201 });
-        } catch (error) {
-            await client.query('ROLLBACK');
-            throw error; // Let the outer catch handle the response
-        } finally {
-            client.release();
-        }
+        return NextResponse.json({ message: 'Players created successfully' }, { status: 201 });
 
     } catch (error) {
-        console.error('Failed to bulk create players:', error);
-        return NextResponse.json({ 
-            error: 'Internal Server Error', 
-            message: error instanceof Error ? error.message : 'Unknown error' 
-        }, { status: 500 });
+        console.error('Error in bulk insert:', error);
+        return NextResponse.json({ error: 'Failed to create players' }, { status: 500 });
+    }
+}
+
+export async function PUT(request: Request) {
+    try {
+        const { groupId, playersToCreate, playersToUpdate, playersToDelete } = await request.json();
+
+        if (!groupId) {
+            return NextResponse.json({ error: 'Missing groupId' }, { status: 400 });
+        }
+
+        await bulkSavePlayers(groupId, playersToCreate, playersToUpdate, playersToDelete);
+
+        return NextResponse.json({ message: 'Roster updated successfully' }, { status: 200 });
+
+    } catch (error) {
+        console.error('Error in bulk update:', error);
+        return NextResponse.json({ error: 'Failed to update roster' }, { status: 500 });
     }
 } 
