@@ -7,13 +7,14 @@ import {
     type EventWithStats,
     type AttendanceDB,
     type AttendanceInput,
-    type PlayerWithAttendance
+    type PlayerWithAttendance,
+    type Group
 } from '@/types/PlayerTypes';
 
-export async function getPlayers(groupCode: string): Promise<PlayerDB[]> {
+export async function getPlayers(groupId: number): Promise<PlayerDB[]> {
     const { rows } = await sql<PlayerDB>`
         SELECT * FROM players 
-        WHERE group_code = ${groupCode} AND is_active = true
+        WHERE group_id = ${groupId} AND is_active = true
         ORDER BY first_name, last_name
     `;
     return rows;
@@ -27,7 +28,7 @@ export async function createPlayer(player: PlayerInput): Promise<PlayerDB> {
             skill, 
             is_defense, 
             is_attending, 
-            group_code
+            group_id
         )
         VALUES (
             ${player.first_name}, 
@@ -35,7 +36,7 @@ export async function createPlayer(player: PlayerInput): Promise<PlayerDB> {
             ${player.skill}, 
             ${player.is_defense}, 
             ${player.is_attending}, 
-            ${player.group_code}
+            ${player.group_id}
         )
         RETURNING *;
     `;
@@ -58,17 +59,17 @@ export async function updatePlayer(player: PlayerDB): Promise<PlayerDB> {
     return rows[0];
 }
 
-export async function deletePlayer(id: number, groupCode: string): Promise<boolean> {
+export async function deletePlayer(id: number, groupId: number): Promise<boolean> {
     const { rowCount } = await sql`
         UPDATE players 
         SET is_active = false, updated_at = CURRENT_TIMESTAMP
-        WHERE id = ${id} AND group_code = ${groupCode};
+        WHERE id = ${id} AND group_id = ${groupId};
     `;
     return rowCount > 0;
 }
 
 export async function bulkUpdatePlayers(
-    groupCode: string,
+    groupId: number,
     playersToCreate: Omit<PlayerDB, 'id' | 'created_at' | 'updated_at' | 'is_active'>[],
     playersToUpdate: PlayerDB[],
     playersToDelete: number[]
@@ -78,15 +79,15 @@ export async function bulkUpdatePlayers(
         await client.query('BEGIN');
 
         if (playersToDelete.length > 0) {
-            await client.query('DELETE FROM players WHERE id = ANY($1::int[]) AND group_code = $2', [playersToDelete, groupCode]);
+            await client.query('DELETE FROM players WHERE id = ANY($1::int[]) AND group_id = $2', [playersToDelete, groupId]);
         }
 
         if (playersToUpdate.length > 0) {
             for (const player of playersToUpdate) {
                 await client.query(
                     `UPDATE players SET first_name = $1, last_name = $2, skill = $3, is_defense = $4, is_attending = $5, updated_at = CURRENT_TIMESTAMP
-                     WHERE id = $6 AND group_code = $7`,
-                    [player.first_name, player.last_name, player.skill, player.is_defense, player.is_attending, player.id, groupCode]
+                     WHERE id = $6 AND group_id = $7`,
+                    [player.first_name, player.last_name, player.skill, player.is_defense, player.is_attending, player.id, groupId]
                 );
             }
         }
@@ -94,9 +95,9 @@ export async function bulkUpdatePlayers(
         if (playersToCreate.length > 0) {
             for (const player of playersToCreate) {
                 await client.query(
-                    `INSERT INTO players (first_name, last_name, skill, is_defense, is_attending, group_code)
+                    `INSERT INTO players (first_name, last_name, skill, is_defense, is_attending, group_id)
                      VALUES ($1, $2, $3, $4, $5, $6)`,
-                    [player.first_name, player.last_name, player.skill, player.is_defense, player.is_attending, groupCode]
+                    [player.first_name, player.last_name, player.skill, player.is_defense, player.is_attending, groupId]
                 );
             }
         }
@@ -111,7 +112,7 @@ export async function bulkUpdatePlayers(
     }
 }
 
-export async function bulkInsertPlayers(groupCode: string, players: PlayerInput[]): Promise<PlayerDB[]> {
+export async function bulkInsertPlayers(groupId: number, players: PlayerInput[]): Promise<PlayerDB[]> {
     const createdPlayers: PlayerDB[] = [];
     
     await sql`BEGIN`;
@@ -124,7 +125,7 @@ export async function bulkInsertPlayers(groupCode: string, players: PlayerInput[
                     skill, 
                     is_defense, 
                     is_attending, 
-                    group_code
+                    group_id
                 )
                 VALUES (
                     ${player.first_name}, 
@@ -132,7 +133,7 @@ export async function bulkInsertPlayers(groupCode: string, players: PlayerInput[
                     ${player.skill}, 
                     ${player.is_defense},
                     ${player.is_attending},
-                    ${groupCode}
+                    ${groupId}
                 )
                 RETURNING *;
             `;
@@ -146,46 +147,20 @@ export async function bulkInsertPlayers(groupCode: string, players: PlayerInput[
     }
 }
 
-export async function deleteGroup(groupCode: string): Promise<void> {
-    const client = await sql.connect();
-    try {
-        await client.query('BEGIN');
-        // Note: The 'attendance' table has 'ON DELETE CASCADE' for player_id and event_id.
-        // Deleting players and events will automatically cascade to delete attendance records.
-        await client.query('DELETE FROM events WHERE group_code = $1', [groupCode]);
-        await client.query('DELETE FROM players WHERE group_code = $1', [groupCode]);
-        await client.query('COMMIT');
-    } catch (error) {
-        await client.query('ROLLBACK');
-        console.error('Error in deleteGroup transaction:', error);
-        throw error;
-    } finally {
-        client.release();
-    }
+export async function deleteGroup(groupId: number): Promise<boolean> {
+    const { rowCount } = await sql`
+        DELETE FROM groups WHERE id = ${groupId}
+    `;
+    return rowCount > 0;
 }
 
-export async function renameGroup(oldGroupCode: string, newGroupCode: string): Promise<void> {
-    const client = await sql.connect();
-    try {
-        await client.query('BEGIN');
-
-        // Check if the new group code already exists to prevent conflicts
-        const { rows } = await client.query('SELECT 1 FROM players WHERE group_code = $1 LIMIT 1', [newGroupCode]);
-        if (rows.length > 0) {
-            throw new Error(`Group code "${newGroupCode}" is already in use.`);
-        }
-
-        await client.query('UPDATE players SET group_code = $1 WHERE group_code = $2', [newGroupCode, oldGroupCode]);
-        await client.query('UPDATE events SET group_code = $1 WHERE group_code = $2', [newGroupCode, oldGroupCode]);
-        
-        await client.query('COMMIT');
-    } catch (error) {
-        await client.query('ROLLBACK');
-        console.error('Error in renameGroup transaction:', error);
-        throw error;
-    } finally {
-        client.release();
-    }
+export async function renameGroup(groupId: number, newCode: string): Promise<Group> {
+    const { rows } = await sql<Group>`
+        UPDATE groups SET code = ${newCode}, updated_at = CURRENT_TIMESTAMP
+        WHERE id = ${groupId}
+        RETURNING *;
+    `;
+    return rows[0];
 }
 
 // EVENT-RELATED FUNCTIONS
@@ -195,14 +170,14 @@ export async function renameGroup(oldGroupCode: string, newGroupCode: string): P
  */
 export async function createEvent(event: EventInput): Promise<EventDB> {
     const { rows } = await sql<EventDB>`
-        INSERT INTO events (name, description, event_date, event_time, location, group_code, is_active)
-        VALUES (${event.name}, ${event.description}, ${event.event_date}, ${event.event_time}, ${event.location}, ${event.group_code}, ${event.is_active || true})
+        INSERT INTO events (name, description, event_date, event_time, location, group_id, is_active)
+        VALUES (${event.name}, ${event.description}, ${event.event_date}, ${event.event_time}, ${event.location}, ${event.group_id}, ${event.is_active || true})
         RETURNING *;
     `;
     const newEvent = rows[0];
     
     // Create attendance records for all active players in the group
-    await createAttendanceRecordsForEvent(newEvent.id, newEvent.group_code);
+    await createAttendanceRecordsForEvent(newEvent.id, newEvent.group_id);
     
     return newEvent;
 }
@@ -210,7 +185,7 @@ export async function createEvent(event: EventInput): Promise<EventDB> {
 /**
  * Retrieves all events for a group.
  */
-export async function getEventsByGroup(groupCode: string): Promise<EventWithStats[]> {
+export async function getEventsByGroup(groupId: number): Promise<EventWithStats[]> {
     const { rows } = await sql<EventWithStats>`
         SELECT 
             e.*,
@@ -220,9 +195,9 @@ export async function getEventsByGroup(groupCode: string): Promise<EventWithStat
             COUNT(CASE WHEN p.is_defense = false AND a.is_attending = true THEN 1 END) as forwards_count,
             COUNT(CASE WHEN p.is_defense = true AND a.is_attending = true THEN 1 END) as defensemen_count
         FROM events e
-        LEFT JOIN players p ON e.group_code = p.group_code AND p.is_active = true
+        LEFT JOIN players p ON e.group_id = p.group_id AND p.is_active = true
         LEFT JOIN attendance a ON e.id = a.event_id AND p.id = a.player_id
-        WHERE e.group_code = ${groupCode} AND e.is_active = true
+        WHERE e.group_id = ${groupId} AND e.is_active = true
         GROUP BY e.id
         ORDER BY e.event_date DESC, e.event_time DESC;
     `;
@@ -248,75 +223,62 @@ export async function updateEvent(eventId: number, event: Partial<EventInput>): 
     const fields = Object.keys(event) as (keyof typeof event)[];
     const values = Object.values(event);
     
-    const setClause = fields
-        .map((field, i) => `${field} = $${i + 2}`)
-        .join(', ');
+    const setClause = fields.map((field, i) => `"${field}" = $${i + 1}`).join(', ');
 
     const { rows } = await sql<EventDB>`
-        UPDATE events 
-        SET ${sql.raw(setClause)}, updated_at = CURRENT_TIMESTAMP
-        WHERE id = $1 AND is_active = true
+        UPDATE events
+        SET ${setClause}, updated_at = CURRENT_TIMESTAMP
+        WHERE id = $${fields.length + 1}
         RETURNING *;
-    `.execute([eventId, ...values]);
+    `;
+    // Pass eventId as the last parameter
+    const queryParams = [...values, eventId];
+    const { rows: updatedRows } = await sql.query(
+        `UPDATE events SET ${setClause}, updated_at = CURRENT_TIMESTAMP WHERE id = $${fields.length + 1} RETURNING *;`,
+        queryParams
+    );
 
-    return rows[0];
+    return updatedRows[0];
 }
 
 /**
- * Deletes an event.
+ * Deletes an event and its attendance records.
  */
 export async function deleteEvent(eventId: number): Promise<boolean> {
+    // ON DELETE CASCADE on attendance table will handle child records
     const { rowCount } = await sql`
-        UPDATE events 
-        SET is_active = false, updated_at = CURRENT_TIMESTAMP
-        WHERE id = ${eventId};
+        DELETE FROM events WHERE id = ${eventId};
     `;
     return rowCount > 0;
 }
 
-async function createAttendanceRecordsForEvent(eventId: number, groupCode: string): Promise<void> {
-    // Try to get the most recent event's attendance as defaults
-    const { rows: lastEventAttendance } = await sql`
-        WITH last_event AS (
-            SELECT id 
-            FROM events
-            WHERE group_code = ${groupCode}
-              AND id != ${eventId}
-              AND event_date < (SELECT event_date FROM events WHERE id = ${eventId})
-            ORDER BY event_date DESC, event_time DESC
-            LIMIT 1
-        )
-        SELECT player_id, is_attending 
-        FROM attendance
-        WHERE event_id = (SELECT id FROM last_event);
+async function createAttendanceRecordsForEvent(eventId: number, groupId: number): Promise<void> {
+    const { rows: players } = await sql<PlayerDB>`
+        SELECT id FROM players WHERE group_id = ${groupId} AND is_active = true
     `;
 
-    const attendanceMap = new Map(lastEventAttendance.map((a: { player_id: number, is_attending: boolean }) => [a.player_id, a.is_attending]));
+    if (players.length === 0) {
+        return;
+    }
 
-    // Insert attendance records, using previous event's attendance as default, or false if no previous data
-    await sql`
-        INSERT INTO attendance (player_id, event_id, is_attending)
-        SELECT 
-            p.id,
-            ${eventId},
-            COALESCE(la.is_attending, false)
-        FROM players p
-        LEFT JOIN (
-             SELECT player_id, is_attending
-             FROM attendance
-             WHERE event_id = (
-                 SELECT id 
-                 FROM events
-                 WHERE group_code = ${groupCode}
-                   AND id != ${eventId}
-                   AND event_date < (SELECT event_date FROM events WHERE id = ${eventId})
-                 ORDER BY event_date DESC, event_time DESC
-                 LIMIT 1
-             )
-        ) la ON p.id = la.player_id
-        WHERE p.group_code = ${groupCode} AND p.is_active = true
-        ON CONFLICT (player_id, event_id) DO NOTHING;
-    `;
+    const client = await sql.connect();
+    try {
+        await client.query('BEGIN');
+
+        for (const player of players) {
+            await client.query(
+                `INSERT INTO attendance (player_id, event_id, is_attending) VALUES ($1, $2, $3)`,
+                [player.id, eventId, false] // Default to not attending
+            );
+        }
+        await client.query('COMMIT');
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error(`Failed to create attendance records for event ${eventId}:`, error);
+        throw error;
+    } finally {
+        client.release();
+    }
 }
 
 export async function getAttendanceForEvent(eventId: number): Promise<PlayerWithAttendance[]> {
@@ -326,8 +288,8 @@ export async function getAttendanceForEvent(eventId: number): Promise<PlayerWith
             a.is_attending AS is_attending_event,
             a.notes
         FROM players p
-        LEFT JOIN attendance a ON p.id = a.player_id
-        WHERE a.event_id = ${eventId}
+        LEFT JOIN attendance a ON p.id = a.player_id AND a.event_id = ${eventId}
+        WHERE p.group_id = (SELECT group_id FROM events WHERE id = ${eventId})
           AND p.is_active = true
         ORDER BY p.first_name, p.last_name;
     `;
@@ -335,33 +297,40 @@ export async function getAttendanceForEvent(eventId: number): Promise<PlayerWith
 }
 
 export async function updateAttendance(attendanceData: AttendanceInput[]): Promise<void> {
-    // Use transaction for bulk updates
-    await sql`BEGIN`;
+    const client = await sql.connect();
     try {
-        for (const attendance of attendanceData) {
-            await sql`
-                INSERT INTO attendance (player_id, event_id, is_attending, notes)
-                VALUES (${attendance.player_id}, ${attendance.event_id}, ${attendance.is_attending}, ${attendance.notes})
-                ON CONFLICT (player_id, event_id) 
-                DO UPDATE SET 
-                    is_attending = EXCLUDED.is_attending, 
+        await client.query('BEGIN');
+        for (const record of attendanceData) {
+            await client.query(
+                `INSERT INTO attendance (player_id, event_id, is_attending, notes, response_date)
+                 VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
+                 ON CONFLICT (player_id, event_id) 
+                 DO UPDATE SET 
+                    is_attending = EXCLUDED.is_attending,
                     notes = EXCLUDED.notes,
-                    response_date = CURRENT_TIMESTAMP
-            `;
+                    response_date = CURRENT_TIMESTAMP;`,
+                [record.player_id, record.event_id, record.is_attending, record.notes]
+            );
         }
-        await sql`COMMIT`;
+        await client.query('COMMIT');
     } catch (error) {
-        await sql`ROLLBACK`;
+        await client.query('ROLLBACK');
+        console.error('Error in bulk attendance update:', error);
         throw error;
+    } finally {
+        client.release();
     }
 }
 
 export async function updateSingleAttendance(playerId: number, eventId: number, isAttending: boolean, notes?: string): Promise<AttendanceDB> {
     const { rows } = await sql<AttendanceDB>`
-        INSERT INTO attendance (player_id, event_id, is_attending, notes)
-        VALUES (${playerId}, ${eventId}, ${isAttending}, ${notes})
+        INSERT INTO attendance (player_id, event_id, is_attending, notes, response_date)
+        VALUES (${playerId}, ${eventId}, ${isAttending}, ${notes}, CURRENT_TIMESTAMP)
         ON CONFLICT (player_id, event_id)
-        DO UPDATE SET is_attending = ${isAttending}, notes = ${notes}, response_date = CURRENT_TIMESTAMP
+        DO UPDATE SET
+            is_attending = EXCLUDED.is_attending,
+            notes = EXCLUDED.notes,
+            response_date = CURRENT_TIMESTAMP
         RETURNING *;
     `;
     return rows[0];
@@ -372,8 +341,22 @@ export async function getAttendingPlayersForEvent(eventId: number): Promise<Play
         SELECT p.*
         FROM players p
         JOIN attendance a ON p.id = a.player_id
-        WHERE a.event_id = ${eventId} AND a.is_attending = true AND p.is_active = true
-        ORDER BY p.is_defense, p.skill DESC;
+        WHERE a.event_id = ${eventId} AND a.is_attending = true AND p.is_active = true;
     `;
     return rows;
+}
+
+// GROUP-RELATED FUNCTIONS
+export async function getGroupByCode(code: string): Promise<Group | null> {
+    const { rows } = await sql<Group>`
+        SELECT * FROM groups WHERE code = ${code}
+    `;
+    return rows[0] || null;
+}
+
+export async function createGroup(code: string): Promise<Group> {
+    const { rows } = await sql<Group>`
+        INSERT INTO groups (code) VALUES (${code}) RETURNING *
+    `;
+    return rows[0];
 } 

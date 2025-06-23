@@ -23,6 +23,75 @@ This is a Next.js application designed to help organize hockey games and manage 
 -   **Database**: [Vercel Postgres](https://vercel.com/storage/postgres)
 -   **Deployment**: [Vercel](https://vercel.com/)
 
+## Database Schema
+
+The database is designed around five core tables to manage groups, players, events, and attendance.
+
+### `groups` Table
+Stores the top-level grouping for rosters. Each group has a unique, user-defined code.
+
+| Column | Type | Constraints | Description |
+|---|---|---|---|
+| `id` | integer | Primary Key | Unique identifier for the group. |
+| `code` | character varying(255) | Not Null, Unique | The user-facing unique code for the group. |
+| `created_at` | timestamp with time zone | Default: `CURRENT_TIMESTAMP` | Timestamp of when the group was created. |
+
+### `players` Table
+Contains the roster of players for each group.
+
+| Column | Type | Constraints | Description |
+|---|---|---|---|
+| `id` | integer | Primary Key | Unique identifier for the player. |
+| `first_name` | character varying(255) | Not Null | Player's first name. |
+| `last_name` | character varying(255) | Not Null | Player's last name. |
+| `skill` | integer | | Skill level from 1-10. |
+| `is_defense` | boolean | Default: `false` | Preferred position (true for defense, false for forward). |
+| `is_attending` | boolean | Default: `true` | Legacy field, attendance is now tracked per event. |
+| `is_active` | boolean | Default: `true` | Soft delete flag. |
+| `group_id` | integer | Foreign Key (`groups.id`) | Links the player to a group. |
+| `created_at` | timestamp with time zone | Default: `CURRENT_TIMESTAMP` | Timestamp of when the player was added. |
+| `updated_at` | timestamp with time zone | Default: `CURRENT_TIMESTAMP` | Timestamp of the last update. |
+
+### `events` Table
+Stores information about scheduled games or practices.
+
+| Column | Type | Constraints | Description |
+|---|---|---|---|
+| `id` | integer | Primary Key | Unique identifier for the event. |
+| `name` | character varying(255) | Not Null | Name of the event (e.g., "Friday Skate"). |
+| `description`| text | | Optional details about the event. |
+| `event_date`| date | Not Null | The date of the event. |
+| `event_time`| time without time zone | | The start time of the event. |
+| `location` | character varying(255) | | The location of the event. |
+| `is_active` | boolean | Default: `true` | Soft delete flag. |
+| `group_id` | integer | Foreign Key (`groups.id`) | Links the event to a group. |
+| `created_at`| timestamp with time zone | Default: `CURRENT_TIMESTAMP` | Timestamp of when the event was created. |
+| `updated_at`| timestamp with time zone | Default: `CURRENT_TIMESTAMP` | Timestamp of the last update. |
+
+### `attendance` Table
+Tracks player attendance for each event. A record is created for each player when a new event is made.
+
+| Column | Type | Constraints | Description |
+|---|---|---|---|
+| `id` | integer | Primary Key | Unique identifier for the attendance record. |
+| `player_id` | integer | Not Null, Foreign Key (`players.id`) | Links to the player. |
+| `event_id` | integer | Not Null, Foreign Key (`events.id`) | Links to the event. |
+| `is_attending`| boolean | Not Null, Default: `false` | Whether the player is attending the event. |
+| `response_date`| timestamp with time zone | Default: `CURRENT_TIMESTAMP` | When the attendance was last updated. |
+| `notes` | text | | Optional notes from the player about their status.|
+
+### `player_team_assignments` Table
+This table stores historical team generation results.
+
+| Column | Type | Constraints | Description |
+|---|---|---|---|
+| `id` | integer | Primary Key | Unique identifier for the assignment. |
+| `player_id` | integer | Not Null, Foreign Key (`players.id`) | Links to the player. |
+| `team_color` | character varying(10) | Not Null | The team the player was assigned to (e.g., "red").|
+| `is_defense` | boolean | Not Null | The position the player was assigned to for this session.|
+| `session_date`| date | Not Null | The date of the session for which teams were generated.|
+| `created_at` | timestamp with time zone | Default: `CURRENT_TIMESTAMP` | Timestamp of when the assignment was made. |
+
 ## Project Structure
 
 A brief overview of the key directories and files in RosterGen.
