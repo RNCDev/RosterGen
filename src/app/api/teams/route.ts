@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import type { PlayerDB, Team, Teams } from '@/types/PlayerTypes';
 import { generateTeams } from '@/lib/teamGenerator';
-import { getAttendingPlayersForEvent, getPlayers } from '@/lib/db';
+import { getAttendingPlayersForEvent, getGroupByCode } from '@/lib/db';
 
 interface TeamData {
     forwards: PlayerDB[];
@@ -29,26 +29,18 @@ export async function POST(
         const action = searchParams.get('action');
 
         if (action === 'generate') {
-            // Generate teams based on event attendance or group attendance
+            // Generate teams based on event attendance
             const { event_id, group_code }: TeamGenerationRequest = await request.json();
 
-            if (!group_code) {
+            if (!group_code || !event_id) {
                 return NextResponse.json(
-                    { error: 'group_code is required' },
+                    { error: 'group_code and event_id are required' },
                     { status: 400 }
                 );
             }
 
-            let attendingPlayers: PlayerDB[];
-
-            if (event_id) {
-                // Get players attending a specific event
-                attendingPlayers = await getAttendingPlayersForEvent(event_id);
-            } else {
-                // Get all players with legacy is_attending = true
-                const allPlayers = await getPlayers(group_code);
-                attendingPlayers = allPlayers.filter(player => player.is_attending);
-            }
+            // Get players attending the specified event
+            const attendingPlayers = await getAttendingPlayersForEvent(event_id);
 
             if (attendingPlayers.length < 2) {
                 return NextResponse.json(
@@ -57,7 +49,7 @@ export async function POST(
                 );
             }
 
-            const teams = generateTeams(attendingPlayers, group_code, !!event_id);
+            const teams = generateTeams(attendingPlayers, group_code);
             
             // Add event metadata if provided
             const teamsWithMetadata: Teams = {
@@ -85,7 +77,15 @@ export async function POST(
                 ...data.whiteTeam.defensemen
             ];
 
-            const invalidGroupPlayers = allPlayers.filter(player => player.group_code !== data.groupCode);
+            const group = await getGroupByCode(data.groupCode);
+            if (!group) {
+                return NextResponse.json(
+                    { error: 'Group not found' },
+                    { status: 404 }
+                );
+            }
+
+            const invalidGroupPlayers = allPlayers.filter(player => player.group_id !== group.id);
             if (invalidGroupPlayers.length > 0) {
                 return NextResponse.json(
                     { error: 'Some players do not belong to the specified group' },

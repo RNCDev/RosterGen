@@ -9,7 +9,6 @@ const playerSchema = z.object({
     last_name: z.string().trim().min(1),
     skill: z.number().int().min(1).max(10),
     is_defense: z.boolean(),
-    is_attending: z.boolean(),
 });
 
 const bulkPlayersSchema = z.object({

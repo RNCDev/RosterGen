@@ -62,13 +62,12 @@ export async function getPlayersByGroup(groupId: number): Promise<PlayerDB[]> {
 
 export async function createPlayer(player: PlayerInput): Promise<PlayerDB> {
     const { rows } = await sql<PlayerDB>`
-        INSERT INTO players (first_name, last_name, skill, is_defense, is_attending, group_id)
+        INSERT INTO players (first_name, last_name, skill, is_defense, group_id)
         VALUES (
             ${player.first_name}, 
             ${player.last_name}, 
             ${player.skill}, 
             ${player.is_defense}, 
-            ${player.is_attending}, 
             ${player.group_id}
         )
         RETURNING *;
@@ -84,7 +83,6 @@ export async function updatePlayer(player: PlayerDB): Promise<PlayerDB> {
             last_name = ${player.last_name}, 
             skill = ${player.skill}, 
             is_defense = ${player.is_defense},
-            is_attending = ${player.is_attending},
             updated_at = CURRENT_TIMESTAMP
         WHERE id = ${player.id}
         RETURNING *;
@@ -108,10 +106,10 @@ export async function bulkInsertPlayers(groupId: number, players: Omit<PlayerInp
         const insertedPlayers: PlayerDB[] = [];
         for (const player of players) {
             const { rows } = await client.query(
-                `INSERT INTO players (first_name, last_name, skill, is_defense, is_attending, group_id)
-                 VALUES ($1, $2, $3, $4, $5, $6)
+                `INSERT INTO players (first_name, last_name, skill, is_defense, group_id)
+                 VALUES ($1, $2, $3, $4, $5)
                  RETURNING *`,
-                [player.first_name, player.last_name, player.skill, player.is_defense, player.is_attending, groupId]
+                [player.first_name, player.last_name, player.skill, player.is_defense, groupId]
             );
             insertedPlayers.push(rows[0]);
         }

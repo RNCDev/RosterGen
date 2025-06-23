@@ -1,15 +1,10 @@
 import { type Player, type Teams } from '@/types/PlayerTypes';
 import _ from 'lodash';
 
-export function generateTeams(players: Player[], groupCode: string, eventBased: boolean = false): Teams {
-    // For event-based generation, players are already filtered by attendance
-    // For legacy generation, filter by is_attending flag
-    const attendingPlayers = eventBased 
-        ? players.filter(p => p.group_code === groupCode)
-        : players.filter(p => p.is_attending && p.group_code === groupCode);
-
+export function generateTeams(players: Player[], groupCode: string): Teams {
+    // Players are now pre-filtered by attendance before calling this function.
     // Shuffle players to ensure randomness for tie-breaking, then sort by skill
-    const sortedPlayers = _.orderBy(_.shuffle(attendingPlayers), 'skill', 'desc');
+    const sortedPlayers = _.orderBy(_.shuffle(players), 'skill', 'desc');
 
     // Initialize teams
     const teams: Teams = {
@@ -61,27 +56,4 @@ export function generateTeams(players: Player[], groupCode: string, eventBased: 
     });
 
     return teams;
-}
-
-function balancePositions(teams: Teams) {
-    // Simple swap: if one team has >1 more F/D than the other, swap one F for one D
-    const forwardDiff = teams.red.forwards.length - teams.white.forwards.length;
-    
-    if (Math.abs(forwardDiff) > 1) {
-        const teamToGiveF = forwardDiff < 0 ? teams.red : teams.white;
-        const teamToGiveD = forwardDiff < 0 ? teams.white : teams.red;
-
-        // Find a forward to swap from the team that has too many
-        const forwardToSwap = _.sample(teamToGiveD.forwards); 
-        // Find a defenseman to swap from the team that needs a forward
-        const defenseToSwap = _.sample(teamToGiveF.defensemen);
-
-        if (forwardToSwap && defenseToSwap) {
-             // Perform the swap
-            _.pull(teamToGiveD.forwards, forwardToSwap);
-            _.pull(teamToGiveF.defensemen, defenseToSwap);
-            teamToGiveF.forwards.push(forwardToSwap);
-            teamToGiveD.defensemen.push(defenseToSwap);
-        }
-    }
 } 

@@ -46,7 +46,6 @@ Contains the roster of players for each group.
 | `last_name` | character varying(255) | Not Null | Player's last name. |
 | `skill` | integer | | Skill level from 1-10. |
 | `is_defense` | boolean | Default: `false` | Preferred position (true for defense, false for forward). |
-| `is_attending` | boolean | Default: `true` | Legacy field, attendance is now tracked per event. |
 | `is_active` | boolean | Default: `true` | Soft delete flag. |
 | `group_id` | integer | Foreign Key (`groups.id`) | Links the player to a group. |
 | `created_at` | timestamp with time zone | Default: `CURRENT_TIMESTAMP` | Timestamp of when the player was added. |

@@ -6,7 +6,6 @@ export interface PlayerDB {
     last_name: string;
     skill: number;
     is_defense: boolean;
-    is_attending: boolean;
     group_id: number;
     is_active: boolean;
     created_at?: Date;
@@ -18,7 +17,6 @@ export interface PlayerInput {
     last_name: string;
     skill: number;
     is_defense: boolean;
-    is_attending: boolean;
     group_id: number;
 }
 
@@ -27,7 +25,6 @@ export interface FormPlayer {
     lastName: string;
     skill: number;
     defense: boolean;
-    attending: boolean;
     groupId: number;
 }
 
@@ -131,7 +128,6 @@ export const toDatabase = (formData: FormPlayer): PlayerInput => ({
     last_name: formData.lastName,
     skill: formData.skill,
     is_defense: formData.defense,
-    is_attending: formData.attending,
     group_id: formData.groupId
 });
 
@@ -140,7 +136,6 @@ export const fromDatabase = (player: PlayerDB): FormPlayer => ({
     lastName: player.last_name,
     skill: player.skill,
     defense: player.is_defense,
-    attending: player.is_attending,
     groupId: player.group_id
 });
 

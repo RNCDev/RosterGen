@@ -121,7 +121,7 @@ export default function EventsView({
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
                     event_id: selectedEvent.id, 
-                    group_id: group.id 
+                    group_code: group.code 
                 }),
             });
 

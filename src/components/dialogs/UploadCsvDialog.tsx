@@ -11,9 +11,9 @@ import {
     DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/Button';
-import { type Player } from '@/types/PlayerTypes';
+import { type PlayerInput } from '@/types/PlayerTypes';
 
-type CsvPlayer = Omit<Player, 'id' | 'group_code' | 'created_at' | 'updated_at'>;
+type CsvPlayer = Omit<PlayerInput, 'group_id'>;
 
 interface UploadCsvDialogProps {
     isOpen: boolean;
@@ -51,8 +51,6 @@ export default function UploadCsvDialog({ isOpen, onClose, onUpload }: UploadCsv
                         last_name: String(row.last_name || ''),
                         skill: parseInt(row.skill || '5', 10),
                         is_defense: ['true', '1'].includes(String(row.is_defense).toLowerCase()),
-                        is_attending: true, // Default to true for all uploaded players
-                        is_active: true, // Default to true for all uploaded players
                     }));
                     setPlayers(parsedPlayers);
                 },
@@ -78,7 +76,7 @@ export default function UploadCsvDialog({ isOpen, onClose, onUpload }: UploadCsv
                 <DialogHeader>
                     <DialogTitle>Upload CSV</DialogTitle>
                     <DialogDescription>
-                        Upload a CSV file with player data. The file must include columns: first_name, last_name, skill, is_defense. All players will be marked as attending and active by default.
+                        Upload a CSV file with player data. The file must include columns: first_name, last_name, skill, is_defense.
                     </DialogDescription>
                 </DialogHeader>
 

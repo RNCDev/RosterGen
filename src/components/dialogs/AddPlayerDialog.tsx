@@ -11,9 +11,9 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/Button';
 import { UserPlus, User, Shield, Star } from 'lucide-react';
-import { Player } from '@/types/PlayerTypes';
+import { PlayerInput } from '@/types/PlayerTypes';
 
-type NewPlayerData = Omit<Player, 'id' | 'group_code' | 'created_at' | 'updated_at'>;
+type NewPlayerData = Omit<PlayerInput, 'group_id'>;
 
 interface AddPlayerDialogProps {
     isOpen: boolean;
@@ -27,8 +27,6 @@ export default function AddPlayerDialog({ isOpen, onClose, onAddPlayer }: AddPla
         last_name: '',
         skill: 5,
         is_defense: false,
-        is_attending: true,
-        is_active: true,
     });
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -39,7 +37,7 @@ export default function AddPlayerDialog({ isOpen, onClose, onAddPlayer }: AddPla
             processedValue = (e.target as HTMLInputElement).checked;
         } else if (name === 'skill') {
             processedValue = parseInt(value, 10);
-        } else if (name === 'is_defense' || name === 'is_attending') {
+        } else if (name === 'is_defense') {
             processedValue = value === 'true';
         }
 
@@ -55,8 +53,6 @@ export default function AddPlayerDialog({ isOpen, onClose, onAddPlayer }: AddPla
             last_name: '',
             skill: 5,
             is_defense: false,
-            is_attending: true,
-            is_active: true,
         });
         onClose();
     };
@@ -68,8 +64,6 @@ export default function AddPlayerDialog({ isOpen, onClose, onAddPlayer }: AddPla
             last_name: '',
             skill: 5,
             is_defense: false,
-            is_attending: true,
-            is_active: true,
         });
         onClose();
     };
@@ -206,8 +200,6 @@ export default function AddPlayerDialog({ isOpen, onClose, onAddPlayer }: AddPla
                             </label>
                         </div>
                     </div>
-
-
 
                     <DialogFooter className="pt-6">
                         <div className="flex items-center gap-3 w-full">
