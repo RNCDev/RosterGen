@@ -577,33 +577,54 @@ The event code approach is better if you need to:
 
 Both approaches solve your core problem: **one email composition, sent to everyone, with automatic attendance tracking**.
 
-# Email Service Integration Analysis
+# Automated Email Service Integration with Resend
 
 ## Email Service Costs for 3000 Emails/Month
 
-| Service | Free Tier | Paid Tier | Monthly Cost |
-|---------|-----------|-----------|--------------|
-| **SendGrid** | 100 emails/day (~3000/month) | Essentials: 50k emails | **FREE** or $14.95 |
-| **Resend** | 3000 emails/month | Pro: 50k emails | **FREE** or $20 |
-| **Mailgun** | 5000 emails/month | Pay-as-go: $0.80/1k | **FREE** or $2.40 |
-| **AWS SES** | 200/day if on EC2 | $0.10 per 1000 | **FREE** or $3 |
-| **Postmark** | 100 emails/month | $1.25 per 1000 | $37.50 |
-| **Brevo (Sendinblue)** | 300 emails/day | Starter: $25/month | **FREE** or $25 |
+| Service | Free Tier | Paid Tier | Monthly Cost | Vercel Integration |
+|---------|-----------|-----------|--------------|-------------------|
+| **Resend** ⭐ | 3000 emails/month | Pro: 50k emails | **FREE** or $20 | **⭐⭐⭐⭐⭐ Native** |
+| **SendGrid** | 100 emails/day (~3000/month) | Essentials: 50k emails | **FREE** or $14.95 | ⭐⭐⭐ Standard API |
+| **Mailgun** | 5000 emails/month | Pay-as-go: $0.80/1k | **FREE** or $2.40 | ⭐⭐⭐ Standard API |
+| **AWS SES** | 200/day if on EC2 | $0.10 per 1000 | **FREE** or $3 | ⭐⭐ Manual setup |
 
-## **Winner for Your Use Case: SendGrid or Resend (FREE)**
+## **Winner: Resend (Perfect for Vercel + Next.js)**
 
-For 3000 emails/month, you can use SendGrid's free tier which allows 100 emails/day = ~3000/month.
+**Resend is specifically built for modern web apps** and has the best Vercel integration.
 
-## Implementation Complexity
+## Resend Implementation
 
-### **Backend Changes Required**
+### **1. Setup (5 minutes)**
 
-#### 1. Email Service Integration
+#### Install Resend
+```bash
+npm install resend
+```
+
+#### Environment Variables
+```env
+# .env.local
+RESEND_API_KEY=re_your_api_key_here
+NEXT_PUBLIC_BASE_URL=https://yourdomain.com
+```
+
+#### Verify Domain (Optional but Recommended)
 ```typescript
-// src/lib/emailService.ts
-import sgMail from '@sendgrid/mail';
+// Can send from your own domain
+FROM_EMAIL=attendance@yourdomain.com
+// Or use default
+FROM_EMAIL=onboarding@resend.dev
+```
 
-sgMail.setApiKey(process.env.SENDGRID_API_KEY!);
+### **2. Email Service Implementation**
+
+#### Create Email Service
+```typescript
+// src/lib/resend.ts
+import { Resend } from 'resend';
+import { type EventDB } from '@/types/PlayerTypes';
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function sendAttendanceEmail(
     playerEmail: string,
@@ -611,212 +632,372 @@ export async function sendAttendanceEmail(
     event: EventDB,
     rsvpUrl: string
 ) {
-    const msg = {
-        to: playerEmail,
-        from: process.env.FROM_EMAIL!, // verified sender
-        subject: `Attendance Confirmation - ${event.name}`,
-        html: generateEmailTemplate(playerName, event, rsvpUrl),
-    };
-
     try {
-        await sgMail.send(msg);
-        return { success: true };
+        const { data, error } = await resend.emails.send({
+            from: 'RosterGen <noreply@yourdomain.com>',
+            to: [playerEmail],
+            subject: `Attendance Confirmation - ${event.name}`,
+            html: generateEmailTemplate(playerName, event, rsvpUrl),
+        });
+
+        if (error) {
+            console.error('Resend error:', error);
+            return { success: false, error: error.message };
+        }
+
+        return { success: true, messageId: data?.id };
     } catch (error) {
         console.error('Email send failed:', error);
-        return { success: false, error };
+        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
     }
+}
+
+function formatDate(date: Date): string {
+    return new Intl.DateTimeFormat('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    }).format(new Date(date));
 }
 
 function generateEmailTemplate(playerName: string, event: EventDB, rsvpUrl: string): string {
     return `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2>Hi ${playerName}!</h2>
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Attendance Confirmation</title>
+        </head>
+        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
             
-            <p>Please confirm your attendance for <strong>${event.name}</strong></p>
-            
-            <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                <p><strong>📅 Date:</strong> ${formatDate(event.event_date)}</p>
-                ${event.event_time ? `<p><strong>🕐 Time:</strong> ${event.event_time}</p>` : ''}
-                ${event.location ? `<p><strong>📍 Location:</strong> ${event.location}</p>` : ''}
+            <div style="text-align: center; margin-bottom: 30px;">
+                <h1 style="color: #2563eb; margin: 0;">🏒 RosterGen</h1>
             </div>
             
-            <div style="text-align: center; margin: 30px 0;">
+            <div style="background: #f8fafc; border-radius: 12px; padding: 30px; margin-bottom: 30px;">
+                <h2 style="margin: 0 0 15px 0; color: #1e293b;">Hi ${playerName}!</h2>
+                <p style="margin: 0; font-size: 16px;">Please confirm your attendance for <strong>${event.name}</strong></p>
+            </div>
+            
+            <div style="background: #ffffff; border: 2px solid #e2e8f0; border-radius: 12px; padding: 25px; margin-bottom: 30px;">
+                <h3 style="margin: 0 0 20px 0; color: #374151; font-size: 18px;">Event Details</h3>
+                
+                <div style="margin-bottom: 15px;">
+                    <span style="display: inline-block; width: 20px;">📅</span>
+                    <strong>Date:</strong> ${formatDate(event.event_date)}
+                </div>
+                
+                ${event.event_time ? `
+                <div style="margin-bottom: 15px;">
+                    <span style="display: inline-block; width: 20px;">🕐</span>
+                    <strong>Time:</strong> ${event.event_time}
+                </div>
+                ` : ''}
+                
+                ${event.location ? `
+                <div style="margin-bottom: 15px;">
+                    <span style="display: inline-block; width: 20px;">📍</span>
+                    <strong>Location:</strong> ${event.location}
+                </div>
+                ` : ''}
+                
+                ${event.description ? `
+                <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+                    <p style="margin: 0; font-style: italic; color: #6b7280;">${event.description}</p>
+                </div>
+                ` : ''}
+            </div>
+            
+            <div style="text-align: center; margin: 40px 0;">
                 <a href="${rsvpUrl}" 
-                   style="background: #4CAF50; color: white; padding: 15px 30px; 
-                          text-decoration: none; border-radius: 5px; font-size: 16px;">
-                    Click Here to Confirm Attendance
+                   style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 16px 32px; text-decoration: none; border-radius: 8px; font-size: 16px; font-weight: 600; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); transition: transform 0.2s;">
+                    ✅ Confirm Your Attendance
                 </a>
             </div>
             
-            <p style="color: #666; font-size: 14px;">
-                You'll be able to select your name and confirm yes/no on the next page.
-            </p>
-        </div>
+            <div style="background: #f1f5f9; border-radius: 8px; padding: 20px; margin-bottom: 30px;">
+                <p style="margin: 0; font-size: 14px; color: #64748b; text-align: center;">
+                    💡 <strong>How it works:</strong> Click the button above to go to a quick form where you can select your name and confirm if you'll be attending.
+                </p>
+            </div>
+            
+            <div style="text-align: center; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+                <p style="margin: 0; font-size: 12px; color: #94a3b8;">
+                    This link will expire in 30 days. Having trouble? Contact your team admin.
+                </p>
+            </div>
+            
+        </body>
+        </html>
     `;
 }
+
+export { resend };
 ```
 
-#### 2. Bulk Email API Endpoint
+### **3. Bulk Email API Endpoint**
+
 ```typescript
 // src/app/api/events/[eventId]/send-invites/route.ts
-import { sendAttendanceEmail } from '@/lib/emailService';
+import { NextRequest, NextResponse } from 'next/server';
+import { sendAttendanceEmail } from '@/lib/resend';
+import { getEventById, getPlayersByGroup } from '@/lib/db';
+import { sql } from '@vercel/postgres';
+import crypto from 'crypto';
 
-export async function POST(request: NextRequest) {
-    const { eventId } = context.params;
-    
-    // Get event details
-    const event = await getEventById(parseInt(eventId));
-    if (!event) {
-        return NextResponse.json({ error: 'Event not found' }, { status: 404 });
-    }
-    
-    // Generate RSVP token
-    const token = crypto.randomUUID();
-    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-    
-    await sql`
-        INSERT INTO event_rsvp_tokens (event_id, token, expires_at)
-        VALUES (${eventId}, ${token}, ${expiresAt})
-        ON CONFLICT (event_id) DO UPDATE SET 
-            token = ${token}, 
-            expires_at = ${expiresAt}
-    `;
-    
-    const rsvpUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/rsvp/${token}`;
-    
-    // Get players with email addresses
-    const players = await getPlayersByGroup(event.group_id);
-    const playersWithEmail = players.filter(p => p.email);
-    
-    // Send emails in batches to avoid rate limits
-    const results = [];
-    for (const player of playersWithEmail) {
-        const result = await sendAttendanceEmail(
-            player.email!,
-            `${player.first_name} ${player.last_name}`,
-            event,
-            rsvpUrl
-        );
-        results.push({ playerId: player.id, ...result });
+export async function POST(request: NextRequest, context: { params: { eventId: string } }) {
+    try {
+        const { eventId } = context.params;
         
-        // Rate limiting: wait 100ms between emails
-        await new Promise(resolve => setTimeout(resolve, 100));
+        // Get event details
+        const event = await getEventById(parseInt(eventId));
+        if (!event) {
+            return NextResponse.json({ error: 'Event not found' }, { status: 404 });
+        }
+        
+        // Generate or reuse RSVP token
+        const token = crypto.randomUUID();
+        const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
+        
+        await sql`
+            INSERT INTO event_rsvp_tokens (event_id, token, expires_at)
+            VALUES (${eventId}, ${token}, ${expiresAt})
+            ON CONFLICT (event_id) DO UPDATE SET 
+                token = ${token}, 
+                expires_at = ${expiresAt}
+        `;
+        
+        const rsvpUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/rsvp/${token}`;
+        
+        // Get players with email addresses
+        const allPlayers = await getPlayersByGroup(event.group_id);
+        const playersWithEmail = allPlayers.filter(p => p.email && p.email.trim() !== '');
+        
+        console.log(`Sending emails to ${playersWithEmail.length} players out of ${allPlayers.length} total players`);
+        
+        // Send emails with rate limiting
+        const results = [];
+        for (const player of playersWithEmail) {
+            try {
+                const result = await sendAttendanceEmail(
+                    player.email!,
+                    `${player.first_name} ${player.last_name}`,
+                    event,
+                    rsvpUrl
+                );
+                
+                results.push({ 
+                    playerId: player.id, 
+                    playerName: `${player.first_name} ${player.last_name}`,
+                    email: player.email,
+                    ...result 
+                });
+                
+                // Rate limiting: wait 100ms between emails to avoid overwhelming Resend
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
+            } catch (error) {
+                console.error(`Failed to send email to ${player.email}:`, error);
+                results.push({ 
+                    playerId: player.id, 
+                    playerName: `${player.first_name} ${player.last_name}`,
+                    email: player.email,
+                    success: false, 
+                    error: error instanceof Error ? error.message : 'Unknown error' 
+                });
+            }
+        }
+        
+        const summary = {
+            totalPlayers: allPlayers.length,
+            emailsSent: results.filter(r => r.success).length,
+            emailsFailed: results.filter(r => !r.success).length,
+            playersWithoutEmail: allPlayers.length - playersWithEmail.length,
+            rsvpUrl,
+            results
+        };
+        
+        console.log('Email sending summary:', summary);
+        
+        return NextResponse.json(summary);
+        
+    } catch (error) {
+        console.error('Error in send-invites API:', error);
+        return NextResponse.json(
+            { error: 'Failed to send email invites' },
+            { status: 500 }
+        );
     }
-    
-    return NextResponse.json({
-        totalPlayers: players.length,
-        emailsSent: results.filter(r => r.success).length,
-        emailsFailed: results.filter(r => !r.success).length,
-        playersWithoutEmail: players.length - playersWithEmail.length,
-        results
-    });
 }
 ```
 
-#### 3. Frontend Integration
+### **4. Frontend Integration**
+
 ```typescript
-// In EventsView.tsx - Add to the admin controls
+// In EventsView.tsx - Add to the existing admin controls
+const [isSendingEmails, setIsSendingEmails] = useState(false);
+
 const handleSendEmailInvites = async () => {
     if (!selectedEvent) return;
+    
+    const confirmed = window.confirm(
+        `Send email invites for "${selectedEvent.name}" to all players with email addresses?`
+    );
+    
+    if (!confirmed) return;
     
     setIsSendingEmails(true);
     try {
         const response = await fetch(`/api/events/${selectedEvent.id}/send-invites`, {
-            method: 'POST'
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
         });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+        }
         
         const results = await response.json();
         
-        alert(`
-            Email invites sent!
-            ✅ Successfully sent: ${results.emailsSent}
-            ❌ Failed: ${results.emailsFailed}
-            ⚠️ Players without email: ${results.playersWithoutEmail}
-        `);
+        // Show detailed results
+        const message = `
+📧 Email Invites Sent!
+
+✅ Successfully sent: ${results.emailsSent}
+❌ Failed to send: ${results.emailsFailed}
+⚠️ Players without email: ${results.playersWithoutEmail}
+📋 Total players: ${results.totalPlayers}
+
+${results.emailsFailed > 0 ? '\nCheck console for failed email details.' : ''}
+        `.trim();
+        
+        alert(message);
+        
+        // Log failed emails for debugging
+        if (results.emailsFailed > 0) {
+            console.log('Failed emails:', results.results.filter(r => !r.success));
+        }
         
     } catch (error) {
-        alert('Failed to send email invites');
+        console.error('Failed to send email invites:', error);
+        alert(`Failed to send email invites: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
         setIsSendingEmails(false);
     }
 };
 
-// Add button to admin controls
-<Button 
-    onClick={handleSendEmailInvites}
-    disabled={isSendingEmails}
-    className="btn-primary"
->
-    {isSendingEmails ? 'Sending...' : '📧 Send Email Invites'}
-</Button>
+// Add to the admin controls section where the "Generate Teams" button is
+<div className="flex items-center gap-2">
+    <Button variant="outline" onClick={handleEnterBulkEditMode}>
+        Bulk Edit
+    </Button>
+    <Button 
+        onClick={handleSendEmailInvites}
+        disabled={isSendingEmails || !selectedEvent}
+        className="btn-primary"
+    >
+        {isSendingEmails ? (
+            <>
+                <span className="animate-spin mr-2">⏳</span>
+                Sending...
+            </>
+        ) : (
+            <>
+                📧 Send Email Invites
+            </>
+        )}
+    </Button>
+    <Button
+        onClick={handleGenerateTeams}
+        disabled={isGeneratingTeams}
+        className="btn-primary"
+    >
+        <ArrowRightLeft className={`w-4 h-4 mr-2 ${isGeneratingTeams ? 'animate-spin' : ''}`} />
+        {isGeneratingTeams ? 'Generating...' : 'Generate Teams'}
+    </Button>
+</div>
 ```
 
-## **Cost-Benefit Analysis**
+### **5. Environment Variables Setup**
 
-### **Manual Approach (Current)**
-- **Cost**: $0
-- **Admin Time**: ~5-10 minutes per event
-  - Write email template
-  - Copy emails list
-  - Send in email client
-- **Response Rate**: ~30-50% (typical email response)
+```env
+# .env.local (for development)
+RESEND_API_KEY=re_your_api_key_here
+NEXT_PUBLIC_BASE_URL=http://localhost:3000
 
-### **Automated Approach (SendGrid)**
-- **Cost**: $0/month (free tier covers you)
-- **Admin Time**: ~30 seconds per event (just click button)
-- **Response Rate**: ~50-70% (better templates, easier process)
-- **Additional Benefits**:
-  - Professional HTML emails
-  - Delivery tracking
-  - Bounce/spam monitoring
-  - Automatic retry for failures
+# .env.production (or set in Vercel dashboard)
+RESEND_API_KEY=re_your_production_api_key
+NEXT_PUBLIC_BASE_URL=https://yourdomain.com
+```
 
-## **Implementation Time**
+### **6. Resend Dashboard Setup**
 
-| Task | Estimated Time |
-|------|----------------|
-| **SendGrid setup** | 1 hour |
-| **Email service integration** | 2 hours |
-| **Bulk email API** | 2 hours |
-| **Frontend button** | 1 hour |
-| **Email template design** | 1 hour |
-| **Testing & debugging** | 2 hours |
-| **Total** | **~9 hours** |
+1. **Sign up at resend.com**
+2. **Get your API key** from the dashboard
+3. **Optional: Add your domain** for branded emails (attendance@yourdomain.com)
+4. **Add API key to Vercel** environment variables
 
-## **ROI Calculation**
+## **Implementation Timeline**
 
-**Time Savings per Event:**
-- Manual: 8 minutes
-- Automated: 0.5 minutes
-- **Savings: 7.5 minutes per event**
+| Task | Time | Notes |
+|------|------|-------|
+| **Resend setup** | 30 min | Create account, get API key |
+| **Email service code** | 1.5 hours | Write sendAttendanceEmail function |
+| **Bulk email API** | 2 hours | Create send-invites endpoint |
+| **Frontend integration** | 1 hour | Add button to EventsView |
+| **Testing** | 1 hour | Test with real emails |
+| **Email template polish** | 1 hour | Make it look professional |
+| **Total** | **~7 hours** |
 
-**Monthly Savings:**
-- 10 events/month × 7.5 minutes = 75 minutes saved
-- **1.25 hours saved per month**
+## **Cost Analysis**
 
-**Annual Value:**
-- 15 hours saved per year
-- At $50/hour value of admin time = **$750/year saved**
-- Implementation cost: ~$450 (9 hours × $50)
-- **ROI: 67% in first year, then pure savings**
+**Resend Free Tier:**
+- ✅ **3,000 emails/month** (perfect for your 3000 emails)
+- ✅ **Professional templates**
+- ✅ **Delivery analytics**
+- ✅ **Perfect Vercel integration**
 
-## **Recommendation**
+**Your Usage:**
+- 10 events/month × 200 players = 2,000 emails
+- **$0/month cost** (well within free tier)
 
-**Definitely implement the automated approach** because:
+## **Benefits of Automated Approach**
 
-1. **Zero ongoing cost** (free tier covers your volume)
-2. **Massive time savings** (7.5 minutes per event)
-3. **Better user experience** (professional emails, easier RSVP)
-4. **Higher response rates** (cleaner process)
-5. **Implementation pays for itself** in 7 months
+### **Time Savings**
+- **Manual**: 8-10 minutes per event (write email, copy addresses, send)
+- **Automated**: 30 seconds per event (just click button)
+- **Savings**: 7.5 minutes × 10 events = 75 minutes/month
 
-## **Alternative: Hybrid Approach**
+### **Better User Experience**
+- ✅ Professional HTML emails
+- ✅ Beautiful, responsive design
+- ✅ Consistent branding
+- ✅ Clear call-to-action buttons
 
-If you want to start simple:
+### **Admin Benefits**
+- ✅ One-click sending
+- ✅ Delivery tracking
+- ✅ Error reporting
+- ✅ No copy/paste errors
+- ✅ Automatic RSVP link generation
 
-1. **Phase 1**: Keep manual email sending, but implement the RSVP link system
-2. **Phase 2**: Add automated sending later when you have time
+### **Player Benefits**
+- ✅ Beautiful, easy-to-read emails
+- ✅ Mobile-friendly design
+- ✅ One-click RSVP process
+- ✅ Clear event information
 
-This way you get the RSVP benefits immediately without the email automation complexity.
+## **Final Recommendation**
 
-**Bottom Line: For $0/month and 9 hours of implementation, you save 15+ hours per year and provide a much better experience for your players.**
+**Definitely implement the automated Resend approach** because:
+
+1. **Perfect Vercel integration** (5-minute setup)
+2. **Zero ongoing cost** (free tier covers your needs)
+3. **Massive time savings** (7.5 minutes per event)
+4. **Professional appearance** (better than manual emails)
+5. **Higher response rates** (easier RSVP process)
+6. **Implementation pays for itself** in 2 months of time savings
+
+**ROI**: 7 hours implementation saves 15+ hours per year = **115% ROI in first year!**
