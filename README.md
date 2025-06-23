@@ -50,6 +50,7 @@ Contains the roster of players for each group.
 | `group_id` | integer | Foreign Key (`groups.id`) | Links the player to a group. |
 | `created_at` | timestamp with time zone | Default: `CURRENT_TIMESTAMP` | Timestamp of when the player was added. |
 | `updated_at` | timestamp with time zone | Default: `CURRENT_TIMESTAMP` | Timestamp of the last update. |
+| `email` | character varying(255) | Player's email. |
 
 ### `events` Table
 Stores information about scheduled games or practices.
@@ -78,18 +79,6 @@ Tracks player attendance for each event. A record is created for each player whe
 | `is_attending`| boolean | Not Null, Default: `false` | Whether the player is attending the event. |
 | `response_date`| timestamp with time zone | Default: `CURRENT_TIMESTAMP` | When the attendance was last updated. |
 | `notes` | text | | Optional notes from the player about their status.|
-
-### `player_team_assignments` Table
-This table stores historical team generation results.
-
-| Column | Type | Constraints | Description |
-|---|---|---|---|
-| `id` | integer | Primary Key | Unique identifier for the assignment. |
-| `player_id` | integer | Not Null, Foreign Key (`players.id`) | Links to the player. |
-| `team_color` | character varying(10) | Not Null | The team the player was assigned to (e.g., "red").|
-| `is_defense` | boolean | Not Null | The position the player was assigned to for this session.|
-| `session_date`| date | Not Null | The date of the session for which teams were generated.|
-| `created_at` | timestamp with time zone | Default: `CURRENT_TIMESTAMP` | Timestamp of when the assignment was made. |
 
 ## Project Structure
 
