@@ -27,14 +27,18 @@ export async function createPlayer(player: PlayerInput): Promise<PlayerDB> {
             last_name, 
             skill, 
             is_defense, 
-            group_id
+            group_id,
+            email,
+            phone
         )
         VALUES (
             ${player.first_name}, 
             ${player.last_name}, 
             ${player.skill}, 
             ${player.is_defense}, 
-            ${player.group_id}
+            ${player.group_id},
+            ${player.email || null},
+            ${player.phone || null}
         )
         RETURNING *;
     `;
@@ -49,6 +53,8 @@ export async function updatePlayer(player: PlayerDB): Promise<PlayerDB> {
             last_name = ${player.last_name}, 
             skill = ${player.skill}, 
             is_defense = ${player.is_defense},
+            email = ${player.email || null},
+            phone = ${player.phone || null},
             updated_at = CURRENT_TIMESTAMP
         WHERE id = ${player.id}
         RETURNING *;
@@ -67,7 +73,7 @@ export async function deletePlayer(id: number, groupId: number): Promise<boolean
 
 export async function bulkUpdatePlayers(
     groupId: number,
-    playersToCreate: Omit<PlayerDB, 'id' | 'created_at' | 'updated_at' | 'is_active'>[],
+    playersToCreate: Omit<PlayerInput, 'group_id'>[],
     playersToUpdate: PlayerDB[],
     playersToDelete: number[]
 ) {
@@ -82,9 +88,9 @@ export async function bulkUpdatePlayers(
         if (playersToUpdate.length > 0) {
             for (const player of playersToUpdate) {
                 await client.query(
-                    `UPDATE players SET first_name = $1, last_name = $2, skill = $3, is_defense = $4, updated_at = CURRENT_TIMESTAMP
-                     WHERE id = $5 AND group_id = $6`,
-                    [player.first_name, player.last_name, player.skill, player.is_defense, player.id, groupId]
+                    `UPDATE players SET first_name = $1, last_name = $2, skill = $3, is_defense = $4, email = $5, phone = $6, updated_at = CURRENT_TIMESTAMP
+                     WHERE id = $7 AND group_id = $8`,
+                    [player.first_name, player.last_name, player.skill, player.is_defense, player.email || null, player.phone || null, player.id, groupId]
                 );
             }
         }
@@ -92,9 +98,9 @@ export async function bulkUpdatePlayers(
         if (playersToCreate.length > 0) {
             for (const player of playersToCreate) {
                 await client.query(
-                    `INSERT INTO players (first_name, last_name, skill, is_defense, group_id)
-                     VALUES ($1, $2, $3, $4, $5)`,
-                    [player.first_name, player.last_name, player.skill, player.is_defense, groupId]
+                    `INSERT INTO players (first_name, last_name, skill, is_defense, group_id, email, phone)
+                     VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+                    [player.first_name, player.last_name, player.skill, player.is_defense, groupId, player.email || null, player.phone || null]
                 );
             }
         }
@@ -111,7 +117,7 @@ export async function bulkUpdatePlayers(
 
 export async function bulkSavePlayers(
     groupId: number, 
-    playersToCreate: PlayerInput[], 
+    playersToCreate: Omit<PlayerInput, 'group_id'>[], 
     playersToUpdate: PlayerDB[],
     playersToDelete: number[]
 ) {
@@ -126,9 +132,9 @@ export async function bulkSavePlayers(
         if (playersToUpdate.length > 0) {
             for (const player of playersToUpdate) {
                 await client.query(
-                    `UPDATE players SET first_name = $1, last_name = $2, skill = $3, is_defense = $4, updated_at = CURRENT_TIMESTAMP
-                     WHERE id = $5 AND group_id = $6`,
-                    [player.first_name, player.last_name, player.skill, player.is_defense, player.id, groupId]
+                    `UPDATE players SET first_name = $1, last_name = $2, skill = $3, is_defense = $4, email = $5, phone = $6, updated_at = CURRENT_TIMESTAMP
+                     WHERE id = $7 AND group_id = $8`,
+                    [player.first_name, player.last_name, player.skill, player.is_defense, player.email || null, player.phone || null, player.id, groupId]
                 );
             }
         }
@@ -136,9 +142,9 @@ export async function bulkSavePlayers(
         if (playersToCreate.length > 0) {
             for (const player of playersToCreate) {
                 await client.query(
-                    `INSERT INTO players (first_name, last_name, skill, is_defense, group_id)
-                     VALUES ($1, $2, $3, $4, $5)`,
-                    [player.first_name, player.last_name, player.skill, player.is_defense, groupId]
+                    `INSERT INTO players (first_name, last_name, skill, is_defense, group_id, email, phone)
+                     VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+                    [player.first_name, player.last_name, player.skill, player.is_defense, groupId, player.email || null, player.phone || null]
                 );
             }
         }

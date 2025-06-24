@@ -10,6 +10,8 @@ const playerSchema = z.object({
     last_name: z.string().trim().min(1),
     skill: z.number().int().min(1).max(10),
     is_defense: z.boolean(),
+    email: z.string().email().or(z.literal('')).nullable().optional(),
+    phone: z.string().max(20).nullable().optional(),
 });
 
 const bulkPlayersSchema = z.object({
@@ -24,11 +26,14 @@ const bulkPlayersSchema = z.object({
  */
 export async function POST(request: Request) {
     try {
-        const { groupId, players } = await request.json();
+        const body = await request.json();
+        const validation = bulkPlayersSchema.safeParse(body);
 
-        if (!groupId || !Array.isArray(players)) {
-            return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+        if (!validation.success) {
+            return NextResponse.json({ error: 'Invalid data provided', issues: validation.error.issues }, { status: 400 });
         }
+
+        const { groupId, players } = validation.data;
 
         await bulkSavePlayers(groupId, players, [], []);
 
@@ -40,13 +45,27 @@ export async function POST(request: Request) {
     }
 }
 
+const playerWithIdSchema = playerSchema.extend({
+    id: z.number().int().positive(),
+});
+
+const bulkUpdateSchema = z.object({
+    groupId: z.number().int().positive(),
+    playersToCreate: z.array(playerSchema).optional(),
+    playersToUpdate: z.array(playerWithIdSchema).optional(),
+    playersToDelete: z.array(z.number().int().positive()).optional(),
+});
+
 export async function PUT(request: Request) {
     try {
-        const { groupId, playersToCreate, playersToUpdate, playersToDelete } = await request.json();
+        const body = await request.json();
+        const validation = bulkUpdateSchema.safeParse(body);
 
-        if (!groupId) {
-            return NextResponse.json({ error: 'Missing groupId' }, { status: 400 });
+        if (!validation.success) {
+            return NextResponse.json({ error: 'Invalid data provided', issues: validation.error.issues }, { status: 400 });
         }
+
+        const { groupId, playersToCreate = [], playersToUpdate = [], playersToDelete = [] } = validation.data;
 
         await bulkSavePlayers(groupId, playersToCreate, playersToUpdate, playersToDelete);
 

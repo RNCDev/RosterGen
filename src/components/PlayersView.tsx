@@ -238,7 +238,7 @@ export default function PlayersView({
     
     // Pagination state
     const [currentPage, setCurrentPage] = useState(1);
-    const [rowsPerPage, setRowsPerPage] = useState(25);
+    const [rowsPerPage, setRowsPerPage] = useState(20);
 
     const handlePlayerUpdate = (updatedPlayer: Player) => {
         setPlayers(players.map(p => (p.id === updatedPlayer.id ? updatedPlayer : p)));

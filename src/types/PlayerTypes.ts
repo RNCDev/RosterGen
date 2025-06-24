@@ -8,7 +8,8 @@ export interface PlayerDB {
     is_defense: boolean;
     group_id: number;
     is_active: boolean;
-    email?: string; // Player's email address
+    email?: string | null; // Player's email address
+    phone?: string | null; // Player's phone number
     created_at?: Date;
     updated_at?: Date;
 }
@@ -19,7 +20,8 @@ export interface PlayerInput {
     skill: number;
     is_defense: boolean;
     group_id: number;
-    email?: string;
+    email?: string | null;
+    phone?: string | null;
 }
 
 export interface FormPlayer {
