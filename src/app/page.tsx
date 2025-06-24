@@ -9,6 +9,7 @@ import ErrorAlert from '@/components/ErrorAlert';
 import AddPlayerDialog from '@/components/dialogs/AddPlayerDialog';
 import UploadCsvDialog from '@/components/dialogs/UploadCsvDialog';
 import CreateGroupDialog from '@/components/dialogs/CreateGroupDialog';
+import packageJson from '../../package.json';
 import { useGroupManager } from '@/hooks/useGroupManager';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/Button';
@@ -16,17 +17,18 @@ import { Plus, Upload, Users } from 'lucide-react';
 
 // A simple welcome screen component to guide new users.
 const WelcomeScreen = ({ onCreateGroup }: { onCreateGroup: () => void }) => (
-    <div className="flex items-center justify-center h-[calc(100vh-200px)] animate-fade-in">
-        <div className="text-center p-16 bg-white/60 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/40">
-            <h2 className="text-6xl font-extrabold leading-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 mb-6">
+    <div className="flex items-center justify-center min-h-[60vh] sm:h-[calc(100vh-200px)] animate-fade-in px-4">
+        <div className="text-center p-6 sm:p-12 lg:p-16 bg-white/60 backdrop-blur-xl rounded-2xl sm:rounded-3xl shadow-2xl border border-white/40 w-full max-w-2xl">
+            <h2 className="text-3xl sm:text-4xl lg:text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r bg-gradient-to-r from-neutral-300 to-stone-400 mb-4 sm:mb-6 pb-8">
                 Hockey Roster Manager
             </h2>
-            <p className="text-xl text-gray-700 max-w-lg mx-auto">
+            <p className="text-base sm:text-lg lg:text-xl text-gray-700 max-w-lg mx-auto mb-6 sm:mb-8">
                 To get started, load an existing group using the code above, or create a new one.
+                <span className="text-xsm text-gray-300 opacity-60 sm:mb-0">  v{packageJson.version}</span>
             </p>
             <Button
                 onClick={onCreateGroup}
-                className="mt-10 px-10 py-7 text-xl font-bold rounded-full shadow-xl transform hover:scale-110 transition-transform duration-300 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white"
+                className="mt-4 sm:mt-6 lg:mt-10 px-6 sm:px-8 lg:px-10 py-3 sm:py-4 lg:py-7 text-base sm:text-lg lg:text-xl font-bold rounded-full shadow-xl transform hover:scale-110 transition-transform duration-300 bg-gradient-to-r from-neutral-300 to-stone-400 text-white w-full sm:w-auto"
             >
                 Create New Group
             </Button>
@@ -122,7 +124,7 @@ export default function Home() {
             />
 
             <main className="flex-1">
-                <div className="max-w-7xl mx-auto px-8 py-8">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
                     {error && <ErrorAlert message={error} onDismiss={() => setError(null)} />}
 
                     {loading ? (
@@ -131,20 +133,20 @@ export default function Home() {
                          <WelcomeScreen onCreateGroup={() => setCreateGroupOpen(true)} />
                     ) : (
                         <Tabs defaultValue="roster" className="w-full">
-                            <TabsList className="grid w-full grid-cols-2">
-                                <TabsTrigger value="roster">Roster</TabsTrigger>
-                                <TabsTrigger value="events">Events</TabsTrigger>
+                            <TabsList className="grid w-full grid-cols-2 h-auto">
+                                <TabsTrigger value="roster" className="text-sm sm:text-base py-2 sm:py-3">Roster</TabsTrigger>
+                                <TabsTrigger value="events" className="text-sm sm:text-base py-2 sm:py-3">Events</TabsTrigger>
                             </TabsList>
                             <TabsContent value="roster" className="mt-4 animate-fade-in">
-                                <div className="bg-white/40 backdrop-blur-md border border-white/30 rounded-lg p-4 mb-4 flex items-center justify-between animate-slide-in-from-left">
-                                    <h2 className="text-lg font-semibold text-gray-800">
+                                <div className="bg-white/40 backdrop-blur-md border border-white/30 rounded-lg p-3 sm:p-4 mb-4 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-0 sm:justify-between animate-slide-in-from-left">
+                                    <h2 className="text-base sm:text-lg font-semibold text-gray-800">
                                         Roster Management {activeGroup ? `- ${activeGroup.code}` : ''}
                                     </h2>
-                                    <div className="flex items-center gap-2">
-                                        <Button variant="outline" onClick={() => setAddPlayerOpen(true)}>
+                                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+                                        <Button variant="outline" onClick={() => setAddPlayerOpen(true)} className="text-sm sm:text-base">
                                             <Plus className="mr-2 h-4 w-4" /> Add Player
                                         </Button>
-                                        <Button variant="outline" onClick={() => setUploadCsvOpen(true)}>
+                                        <Button variant="outline" onClick={() => setUploadCsvOpen(true)} className="text-sm sm:text-base">
                                             <Upload className="mr-2 h-4 w-4" /> Upload CSV
                                         </Button>
                                     </div>
