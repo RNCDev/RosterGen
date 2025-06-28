@@ -141,7 +141,7 @@ export default function Home() {
                             <TabsContent value="roster" className="mt-4 animate-fade-in">
                                 <div className="bg-white/40 backdrop-blur-md border border-white/30 rounded-lg p-3 sm:p-4 mb-4 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-0 sm:justify-between animate-slide-in-from-left">
                                     <h2 className="text-base sm:text-lg font-semibold text-gray-800">
-                                        Roster Management {activeGroup ? `- ${activeGroup.code}` : ''}
+                                        Roster Management
                                     </h2>
                                     <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
                                         <Button variant="outline" onClick={() => setAddPlayerOpen(true)} className="text-sm sm:text-base">
