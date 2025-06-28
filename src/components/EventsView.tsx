@@ -10,7 +10,8 @@ import {
     ChevronsLeft,
     ChevronLeft,
     ChevronRight,
-    ChevronsRight
+    ChevronsRight,
+    Copy
 } from 'lucide-react';
 import { 
     type EventWithStats, 
@@ -22,6 +23,7 @@ import {
     type EventInput
 } from '@/types/PlayerTypes';
 import CreateEventDialog from './dialogs/CreateEventDialog';
+import DuplicateEventDialog from './dialogs/DuplicateEventDialog';
 import TeamsView from './TeamsView';
 import { Button } from './ui/Button';
 
@@ -33,6 +35,7 @@ interface EventsViewProps {
     onCreateEvent: (eventData: Omit<EventInput, 'group_id'>) => Promise<void>;
     onDeleteEvent: (eventId: number) => Promise<void>;
     onUpdateAttendance: (eventId: number, updates: AttendanceInput[]) => Promise<void>;
+    onDuplicateEvent: (eventId: number, newName: string, newDate: string, newTime?: string, newLocation?: string) => Promise<void>;
     group: Group | null;
     eventsLoading: boolean;
     attendanceLoading: boolean;
@@ -46,12 +49,15 @@ export default function EventsView({
     onCreateEvent,
     onDeleteEvent,
     onUpdateAttendance,
+    onDuplicateEvent,
     group,
     eventsLoading,
     attendanceLoading
 }: EventsViewProps) {
     const [localAttendance, setLocalAttendance] = useState<PlayerWithAttendance[]>(attendanceData);
     const [isCreateEventOpen, setCreateEventOpen] = useState(false);
+    const [isDuplicateEventOpen, setDuplicateEventOpen] = useState(false);
+    const [eventToDuplicate, setEventToDuplicate] = useState<EventWithStats | null>(null);
     const [showTeams, setShowTeams] = useState(false);
     const [teams, setTeams] = useState<Teams>({
         red: { forwards: [], defensemen: [] },
@@ -193,6 +199,17 @@ export default function EventsView({
             setCurrentPage(page);
         }
     };
+
+    const handleDuplicateEvent = (event: EventWithStats) => {
+        setEventToDuplicate(event);
+        setDuplicateEventOpen(true);
+    };
+
+    const handleDuplicateSubmit = async (eventId: number, newName: string, newDate: string, newTime?: string, newLocation?: string) => {
+        await onDuplicateEvent(eventId, newName, newDate, newTime, newLocation);
+        setDuplicateEventOpen(false);
+        setEventToDuplicate(null);
+    };
     
     if (!group) {
         return (
@@ -230,13 +247,14 @@ export default function EventsView({
                             <p className="text-xs text-gray-500">Click 'Create Event' to start</p>
                         </div>
                     ) : (
-                        events.map(event => (
+                        events.map((event) => (
                             <EventCard
                                 key={event.id}
                                 event={event}
                                 isSelected={selectedEvent?.id === event.id}
                                 onClick={() => onEventSelect(event)}
                                 onDelete={() => onDeleteEvent(event.id)}
+                                onDuplicate={() => handleDuplicateEvent(event)}
                             />
                         ))
                     )}
@@ -348,17 +366,29 @@ export default function EventsView({
                 onCreateEvent={onCreateEvent}
                 group={group}
             />
+
+            <DuplicateEventDialog
+                isOpen={isDuplicateEventOpen}
+                onClose={() => setDuplicateEventOpen(false)}
+                onDuplicate={handleDuplicateSubmit}
+                event={eventToDuplicate}
+            />
         </div>
     );
 }
 
 // Compact Event Card
-function EventCard({ event, isSelected, onClick, onDelete }: { event: EventWithStats; isSelected: boolean; onClick: () => void; onDelete: () => void; }) {
+function EventCard({ event, isSelected, onClick, onDelete, onDuplicate }: { event: EventWithStats; isSelected: boolean; onClick: () => void; onDelete: () => void; onDuplicate: () => void; }) {
     const handleDelete = (e: React.MouseEvent) => {
         e.stopPropagation(); // Prevent card from being selected
         if (window.confirm(`Are you sure you want to delete the event "${event.name}"?`)) {
             onDelete();
         }
+    };
+
+    const handleDuplicate = (e: React.MouseEvent) => {
+        e.stopPropagation(); // Prevent card from being selected
+        onDuplicate();
     };
 
     const cardBaseClasses = "w-full rounded-lg border p-3 cursor-pointer transition-all duration-200 ease-in-out transform";
@@ -375,13 +405,22 @@ function EventCard({ event, isSelected, onClick, onDelete }: { event: EventWithS
                         {new Date(event.event_date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' })}
                     </p>
                 </div>
-                <button
-                    onClick={handleDelete}
-                    className={`p-1.5 rounded-full transition-colors ${isSelected ? 'text-blue-300 hover:bg-blue-800/50' : 'text-gray-400 hover:bg-gray-200/80'}`}
-                    title="Delete Event"
-                >
-                    <Trash2 size={16} />
-                </button>
+                <div className="flex items-center gap-1">
+                    <button
+                        onClick={handleDuplicate}
+                        className={`p-1.5 rounded-full transition-colors ${isSelected ? 'text-blue-300 hover:bg-blue-800/50' : 'text-gray-400 hover:bg-gray-200/80'}`}
+                        title="Duplicate Event"
+                    >
+                        <Copy size={16} />
+                    </button>
+                    <button
+                        onClick={handleDelete}
+                        className={`p-1.5 rounded-full transition-colors ${isSelected ? 'text-blue-300 hover:bg-blue-800/50' : 'text-gray-400 hover:bg-gray-200/80'}`}
+                        title="Delete Event"
+                    >
+                        <Trash2 size={16} />
+                    </button>
+                </div>
             </div>
             <div className={`my-3 h-px ${isSelected ? 'bg-blue-700/50' : 'bg-gray-200/80'}`}></div>
             <div className="flex justify-between items-center text-sm">

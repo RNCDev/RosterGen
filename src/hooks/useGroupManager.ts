@@ -297,6 +297,20 @@ export function useGroupManager() {
         }
     }, [activeGroup, loadEvents]);
 
+    const duplicateEvent = useCallback(async (eventId: number, newName: string, newDate: string, newTime?: string, newLocation?: string) => {
+        if (!activeGroup) throw new Error('No active group selected');
+        const response = await fetch('/api/events', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ eventId, newName, newDate, newTime, newLocation })
+        });
+        if (!response.ok) {
+            const { error } = await response.json();
+            throw new Error(error || 'Failed to duplicate event');
+        }
+        await loadEvents(activeGroup.id);
+    }, [activeGroup, loadEvents]);
+
     const isDirty = !_.isEqual(players, originalPlayers);
     const isGroupNameDirty = activeGroup ? activeGroup.code !== groupCodeInput : false;
 
@@ -333,6 +347,7 @@ export function useGroupManager() {
         updateAttendance,
         deleteEvent,
         selectEvent,
-        handleSaveChanges
+        handleSaveChanges,
+        duplicateEvent
     };
 }

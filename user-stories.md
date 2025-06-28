@@ -31,6 +31,8 @@ This document outlines the user stories for the RosterGen application, covering 
 -   [x] **EV07: Save Bulk Attendance:** As a user in "Bulk Edit" mode, I want to click "Save Changes" to commit all my updates in a single action.
 -   [x] **EV08: Cancel Bulk Attendance:** As a user in "Bulk Edit" mode, I want a "Cancel" button to discard all my attendance changes and exit the mode.
 -   [x] **EV09: Smart Attendance Defaults:** As a user creating a new event, I want the system to automatically default each player's attendance to their attendance status from the most recent previous event, so I don't have to manually set attendance for regular attendees every time.
+-   [x] **EV10: Duplicate Event:** As a user, I want to click a duplicate icon on an event card to quickly create a copy of that event with a new name and date, so I can easily schedule recurring events.
+-   [x] **EV11: New Player Future Attendance:** As a user, when I add a new player to the roster, I want that player to automatically be added to the attendance records for all future events in the group, so I don't have to manually add them to each upcoming event.
 
 ## Feedback & State Management
 

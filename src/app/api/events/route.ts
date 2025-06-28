@@ -4,9 +4,11 @@ import {
     getEventsByGroup, 
     getEventById, 
     updateEvent, 
-    deleteEvent 
+    deleteEvent,
+    duplicateEvent
 } from '@/lib/db';
 import { type EventInput } from '@/types/PlayerTypes';
+import { z } from 'zod';
 
 export async function GET(request: NextRequest) {
     try {
@@ -138,5 +140,50 @@ export async function DELETE(request: NextRequest) {
             { error: 'Failed to delete event' },
             { status: 500 }
         );
+    }
+}
+
+/**
+ * PATCH /api/events
+ * Duplicates an existing event with new name and date.
+ */
+export async function PATCH(request: NextRequest) {
+    try {
+        const body = await request.json();
+        const validation = z.object({
+            eventId: z.number().int().positive(),
+            newName: z.string().trim().min(1),
+            newDate: z.string().min(1), // ISO date string
+            newTime: z.string().optional(), // Optional time
+            newLocation: z.string().optional(), // Optional location
+        }).safeParse(body);
+
+        if (!validation.success) {
+            return NextResponse.json({ error: 'Invalid data', details: validation.error.flatten() }, { status: 400 });
+        }
+
+        const { eventId, newName, newDate, newTime, newLocation } = validation.data;
+        
+        // Get the original event to copy its details
+        const originalEvent = await getEventById(eventId);
+        if (!originalEvent) {
+            return NextResponse.json({ error: 'Event not found' }, { status: 404 });
+        }
+
+        // Create the duplicated event
+        const duplicatedEvent = await duplicateEvent(eventId, {
+            name: newName,
+            event_date: newDate,
+            event_time: newTime || originalEvent.event_time,
+            location: newLocation || originalEvent.location,
+            description: originalEvent.description,
+            group_id: originalEvent.group_id
+        });
+
+        return NextResponse.json(duplicatedEvent, { status: 201 });
+
+    } catch (error) {
+        console.error('Error in PATCH /api/events:', error);
+        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 } 

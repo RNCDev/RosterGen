@@ -72,7 +72,8 @@ export default function Home() {
         updateAttendance,
         deleteEvent,
         selectEvent,
-        handleSaveChanges
+        handleSaveChanges,
+        duplicateEvent
     } = useGroupManager();
     
     const [isAddPlayerOpen, setAddPlayerOpen] = useState(false);
@@ -168,6 +169,7 @@ export default function Home() {
                                     onCreateEvent={createEvent}
                                     onDeleteEvent={deleteEvent}
                                     onUpdateAttendance={updateAttendance}
+                                    onDuplicateEvent={duplicateEvent}
                                     group={activeGroup}
                                     eventsLoading={eventsLoading}
                                     attendanceLoading={attendanceLoading}

@@ -61,18 +61,49 @@ export async function getPlayersByGroup(groupId: number): Promise<PlayerDB[]> {
 }
 
 export async function createPlayer(player: PlayerInput): Promise<PlayerDB> {
-    const { rows } = await sql<PlayerDB>`
-        INSERT INTO players (first_name, last_name, skill, is_defense, group_id)
-        VALUES (
-            ${player.first_name}, 
-            ${player.last_name}, 
-            ${player.skill}, 
-            ${player.is_defense}, 
-            ${player.group_id}
-        )
-        RETURNING *;
-    `;
-    return rows[0];
+    const client = await sql.connect();
+    try {
+        await client.query('BEGIN');
+        
+        // Create the player
+        const { rows: playerRows } = await client.query(
+            `INSERT INTO players (first_name, last_name, skill, is_defense, group_id)
+             VALUES ($1, $2, $3, $4, $5)
+             RETURNING *`,
+            [player.first_name, player.last_name, player.skill, player.is_defense, player.group_id]
+        );
+        
+        const newPlayer = playerRows[0];
+        
+        // Get all future events for this group (events with date >= today)
+        const { rows: futureEvents } = await client.query(
+            `SELECT id FROM events 
+             WHERE group_id = $1 
+             AND is_active = true 
+             AND event_date >= CURRENT_DATE
+             ORDER BY event_date ASC`,
+            [player.group_id]
+        );
+        
+        // Create attendance records for all future events
+        for (const event of futureEvents) {
+            await client.query(
+                `INSERT INTO attendance (player_id, event_id, is_attending)
+                 VALUES ($1, $2, $3)
+                 ON CONFLICT (player_id, event_id) DO NOTHING`,
+                [newPlayer.id, event.id, false] // Default to not attending
+            );
+        }
+        
+        await client.query('COMMIT');
+        return newPlayer;
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Error creating player with attendance records:', error);
+        throw error;
+    } finally {
+        client.release();
+    }
 }
 
 export async function updatePlayer(player: PlayerDB): Promise<PlayerDB> {
@@ -103,6 +134,17 @@ export async function bulkInsertPlayers(groupId: number, players: Omit<PlayerInp
     const client = await sql.connect();
     try {
         await client.query('BEGIN');
+        
+        // Get all future events for this group first
+        const { rows: futureEvents } = await client.query(
+            `SELECT id FROM events 
+             WHERE group_id = $1 
+             AND is_active = true 
+             AND event_date >= CURRENT_DATE
+             ORDER BY event_date ASC`,
+            [groupId]
+        );
+        
         const insertedPlayers: PlayerDB[] = [];
         for (const player of players) {
             const { rows } = await client.query(
@@ -111,8 +153,20 @@ export async function bulkInsertPlayers(groupId: number, players: Omit<PlayerInp
                  RETURNING *`,
                 [player.first_name, player.last_name, player.skill, player.is_defense, groupId]
             );
-            insertedPlayers.push(rows[0]);
+            const newPlayer = rows[0];
+            insertedPlayers.push(newPlayer);
+            
+            // Create attendance records for all future events for this player
+            for (const event of futureEvents) {
+                await client.query(
+                    `INSERT INTO attendance (player_id, event_id, is_attending)
+                     VALUES ($1, $2, $3)
+                     ON CONFLICT (player_id, event_id) DO NOTHING`,
+                    [newPlayer.id, event.id, false] // Default to not attending
+                );
+            }
         }
+        
         await client.query('COMMIT');
         return insertedPlayers;
     } catch (error) {
@@ -309,4 +363,56 @@ export async function getAttendingPlayersForEvent(eventId: number): Promise<Play
         WHERE a.event_id = ${eventId} AND a.is_attending = true AND p.is_active = true;
     `;
     return rows;
+}
+
+export async function duplicateEvent(eventId: number, newEventData: EventInput): Promise<EventDB> {
+    const client = await sql.connect();
+    try {
+        await client.query('BEGIN');
+        
+        // Create the new event
+        const { rows: eventRows } = await client.query(
+            `INSERT INTO events (name, description, event_date, event_time, location, group_id, is_active)
+             VALUES ($1, $2, $3, $4, $5, $6, $7)
+             RETURNING *`,
+            [
+                newEventData.name,
+                newEventData.description,
+                newEventData.event_date,
+                newEventData.event_time,
+                newEventData.location,
+                newEventData.group_id,
+                true
+            ]
+        );
+        
+        const newEvent = eventRows[0];
+        
+        // Get attendance patterns from the original event
+        const { rows: originalAttendance } = await client.query(
+            `SELECT player_id, is_attending 
+             FROM attendance 
+             WHERE event_id = $1`,
+            [eventId]
+        );
+        
+        // Create attendance records for the new event using the original patterns
+        for (const attendance of originalAttendance) {
+            await client.query(
+                `INSERT INTO attendance (player_id, event_id, is_attending)
+                 VALUES ($1, $2, $3)
+                 ON CONFLICT (player_id, event_id) DO NOTHING`,
+                [attendance.player_id, newEvent.id, attendance.is_attending]
+            );
+        }
+        
+        await client.query('COMMIT');
+        return newEvent;
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Error duplicating event:', error);
+        throw error;
+    } finally {
+        client.release();
+    }
 }

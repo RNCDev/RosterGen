@@ -13,7 +13,11 @@ This is a Next.js application designed to help organize hockey games and manage 
     -   Toggle individual player attendance with an instant UI update (no page reloads!).
     -   **New! Bulk Edit Mode**: Efficiently update attendance for multiple players at once using a simple checkbox interface.
     -   **Smart Attendance Defaults**: When creating a new event, player attendance automatically defaults to their attendance status from the most recent previous event, saving time for groups with consistent attendance patterns.
+    -   **New! Automatic Future Attendance**: When adding a new player to the roster, they are automatically added to all future events in the group with a default "not attending" status.
 -   **Automatic Team Generation**: Generate balanced teams for an event based on the skill level and position of attending players.
+-   **Event Management**:
+    -   Create and manage events with specific dates, times, and locations.
+    -   **New! Duplicate Events**: Quickly duplicate existing events with a new name and date using the copy icon on event cards, perfect for recurring events.
 
 ## Tech Stack
 
@@ -102,6 +106,11 @@ A brief overview of the key directories and files in RosterGen.
 │   │
 │   ├── components/          # Reusable React components
 │   │   ├── dialogs/         # Dialog/modal components for user interactions
+│   │   │   ├── AddPlayerDialog.tsx
+│   │   │   ├── CreateEventDialog.tsx
+│   │   │   ├── CreateGroupDialog.tsx
+│   │   │   ├── DuplicateEventDialog.tsx
+│   │   │   └── UploadCsvDialog.tsx
 │   │   ├── ui/              # Core UI components from shadcn/ui (Button, Dialog, etc.)
 │   │   ├── ActionHeader.tsx # Header component with primary action buttons
 │   │   ├── EventsView.tsx   # Component to display and manage events
