@@ -47,6 +47,8 @@ export async function POST(request: Request) {
 
 const playerWithIdSchema = playerSchema.extend({
     id: z.number().int().positive(),
+    group_id: z.number().int().positive(),
+    is_active: z.boolean(),
 });
 
 const bulkUpdateSchema = z.object({
