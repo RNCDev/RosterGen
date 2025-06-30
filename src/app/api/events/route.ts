@@ -173,7 +173,7 @@ export async function PATCH(request: NextRequest) {
         // Create the duplicated event
         const duplicatedEvent = await duplicateEvent(eventId, {
             name: newName,
-            event_date: newDate,
+            event_date: new Date(newDate),
             event_time: newTime || originalEvent.event_time,
             location: newLocation || originalEvent.location,
             description: originalEvent.description,
