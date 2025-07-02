@@ -15,6 +15,14 @@ This is a Next.js application designed to help organize hockey games and manage 
     -   **Smart Attendance Defaults**: When creating a new event, player attendance automatically defaults to their attendance status from the most recent previous event, saving time for groups with consistent attendance patterns.
     -   **New! Automatic Future Attendance**: When adding a new player to the roster, they are automatically added to all future events in the group with a default "not attending" status.
 -   **Automatic Team Generation**: Generate balanced teams for an event based on the skill level and position of attending players.
+-   **Player Rank Tournament**: Interactive tournament system to refine player skill ratings through head-to-head comparisons:
+    -   **Smart Matchup Generation**: Creates approximately 1.5x the number of players in strategic pairings
+    -   **Head-to-Head Comparisons**: Simple click-based interface to choose the better player in each matchup
+    -   **Elo-Based Ranking System**: Uses tournament-grade rating algorithms for accurate skill assessment
+    -   **Whole Number Rankings**: Produces clean 1-10 skill levels that can be applied directly to the roster
+    -   **Progress Tracking**: Real-time progress bar and completion counter during tournament play
+    -   **Paginated Results**: Easy-to-read results table with pagination for large rosters
+    -   **Direct Integration**: Apply tournament results directly to player skill levels with one click
 -   **Event Management**:
     -   Create and manage events with specific dates, times, and locations.
     -   **New! Duplicate Events**: Quickly duplicate existing events with a new name and date using the copy icon on event cards, perfect for recurring events.
@@ -110,6 +118,7 @@ A brief overview of the key directories and files in RosterGen.
 │   │   │   ├── CreateEventDialog.tsx
 │   │   │   ├── CreateGroupDialog.tsx
 │   │   │   ├── DuplicateEventDialog.tsx
+│   │   │   ├── PlayerRankTourneyDialog.tsx
 │   │   │   └── UploadCsvDialog.tsx
 │   │   ├── ui/              # Core UI components from shadcn/ui (Button, Dialog, etc.)
 │   │   ├── ActionHeader.tsx # Header component with primary action buttons

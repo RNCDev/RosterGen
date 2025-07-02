@@ -15,9 +15,11 @@ import {
     ChevronLeft,
     ChevronRight,
     ChevronsRight,
-    Plus
+    Plus,
+    Trophy
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import PlayerRankTourneyDialog from '@/components/dialogs/PlayerRankTourneyDialog';
 
 interface PlayersViewProps {
     players: Player[];
@@ -235,6 +237,7 @@ export default function PlayersView({
     const [positionFilter, setPositionFilter] = useState('all');
     const [skillFilter, setSkillFilter] = useState('all');
     const [selectedPlayerIds, setSelectedPlayerIds] = useState<Set<number>>(new Set());
+    const [isTourneyOpen, setIsTourneyOpen] = useState(false);
     
     // Pagination state
     const [currentPage, setCurrentPage] = useState(1);
@@ -373,6 +376,16 @@ export default function PlayersView({
                 </div>
                 <div className="flex items-center gap-2">
                     <Button 
+                        onClick={() => setIsTourneyOpen(true)}
+                        variant="outline"
+                        className="text-sm hidden"
+                        disabled={players.length < 2}
+                        title={players.length < 2 ? "Need at least 2 players" : "Start Player Rank Tournament"}
+                    >
+                        <Trophy className="w-4 h-4 mr-2" />
+                        Rank Tourney
+                    </Button>
+                    <Button 
                         onClick={handleToggleEdit}
                         variant={isEditing ? 'primary' : 'outline'}
                         data-action={isEditing ? "Done Editing" : "Start Editing"}
@@ -450,6 +463,13 @@ export default function PlayersView({
                     </div>
                 </div>
             )}
+            
+            <PlayerRankTourneyDialog
+                isOpen={isTourneyOpen}
+                onClose={() => setIsTourneyOpen(false)}
+                players={players}
+                onApplyRankings={setPlayers}
+            />
         </div>
     );
 } 
