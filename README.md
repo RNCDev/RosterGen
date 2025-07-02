@@ -14,7 +14,12 @@ This is a Next.js application designed to help organize hockey games and manage 
     -   **New! Bulk Edit Mode**: Efficiently update attendance for multiple players at once using a simple checkbox interface.
     -   **Smart Attendance Defaults**: When creating a new event, player attendance automatically defaults to their attendance status from the most recent previous event, saving time for groups with consistent attendance patterns.
     -   **New! Automatic Future Attendance**: When adding a new player to the roster, they are automatically added to all future events in the group with a default "not attending" status.
--   **Automatic Team Generation**: Generate balanced teams for an event based on the skill level and position of attending players.
+-   **Advanced Team Generation & Management**:
+    -   **Automatic Team Generation**: Generate balanced teams for an event based on the skill level and position of attending players.
+    -   **Custom Team Names**: Define custom team names (instead of "Red" and "White") that persist across all events in a group, with real-time UI feedback when updating.
+    -   **Save Teams to Events**: Preserve generated team rosters by saving them directly to specific events for future reference.
+    -   **Load Saved Teams**: Quickly restore previously saved team compositions with a single click, perfect for recurring lineups or preferred team arrangements.
+    -   **Dynamic Team Display**: Teams automatically use custom names throughout the interface, from generation to display and copying.
 -   **Player Rank Tournament**: Interactive tournament system to refine player skill ratings through head-to-head comparisons:
     -   **Smart Matchup Generation**: Creates approximately 1.5x the number of players in strategic pairings
     -   **Head-to-Head Comparisons**: Simple click-based interface to choose the better player in each matchup
@@ -81,6 +86,7 @@ Stores information about scheduled games or practices.
 | `group_id` | integer | Foreign Key (`groups.id`) | Links the event to a group. |
 | `created_at`| timestamp with time zone | Default: `CURRENT_TIMESTAMP` | Timestamp of when the event was created. |
 | `updated_at`| timestamp with time zone | Default: `CURRENT_TIMESTAMP` | Timestamp of the last update. |
+| `saved_teams_data`| text | | JSON string of saved team rosters for the event. |
 
 ### `attendance` Table
 Tracks player attendance for each event. A record is created for each player when a new event is made.
@@ -106,7 +112,9 @@ A brief overview of the key directories and files in RosterGen.
 │   │   ├── api/             # API routes for backend functionality
 │   │   │   ├── attendance/  # API for managing player attendance
 │   │   │   ├── events/      # API for event creation and management
+│   │   │   │   └── teams/   # API for saving/loading teams to/from events
 │   │   │   ├── groups/      # API for group and roster management
+│   │   │   │   └── aliases/ # API for updating team alias names
 │   │   │   ├── players/     # API for player CRUD operations
 │   │   │   ├── stats/       # API for generating player/team stats
 │   │   │   └── teams/       # API for team generation

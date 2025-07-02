@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useRef } from 'react';
-import { type Teams, type Player, type Team } from '@/types/PlayerTypes';
-import { Clipboard, Users, BarChart2, Hash, Trophy, Zap, Shield, Target, RefreshCw } from 'lucide-react';
+import React, { useRef, useState } from 'react';
+import { type Teams, type Player, type Team, type EventWithStats } from '@/types/PlayerTypes';
+import { Clipboard, Users, BarChart2, Hash, Trophy, Zap, Shield, Target, RefreshCw, Save, CheckCircle } from 'lucide-react';
 import _ from 'lodash';
 import { Button } from '@/components/ui/Button';
 import { toBlob } from 'html-to-image';
@@ -16,6 +16,8 @@ interface TeamsViewProps {
     isGenerating: boolean;
     onBack: () => void;
     onSaveTeamNames: (alias1: string, alias2: string) => Promise<void>;
+    selectedEvent: EventWithStats | null;
+    onSaveTeamsForEvent: (eventId: number, teams: Teams) => Promise<void>;
 }
 
 // Helper to calculate team stats
@@ -154,8 +156,10 @@ const TeamCard = ({
     );
 };
 
-export default function TeamsView({ teams, teamNames, setTeamNames, onGenerateTeams, attendingPlayerCount, isGenerating, onBack, onSaveTeamNames }: TeamsViewProps) {
+export default function TeamsView({ teams, teamNames, setTeamNames, onGenerateTeams, attendingPlayerCount, isGenerating, onBack, onSaveTeamNames, selectedEvent, onSaveTeamsForEvent }: TeamsViewProps) {
     const teamsContainerRef = useRef<HTMLDivElement>(null);
+    const [isSavingTeams, setIsSavingTeams] = useState(false);
+    const [showSaveSuccess, setShowSaveSuccess] = useState(false);
 
     const handleCopyToClipboard = () => {
         if (teamsContainerRef.current === null) {
@@ -179,6 +183,22 @@ export default function TeamsView({ teams, teamNames, setTeamNames, onGenerateTe
                 console.error('Failed to convert HTML to image: ', err);
                 alert('Failed to create image of teams.');
             });
+    };
+
+    const handleSaveToEvent = async () => {
+        if (!selectedEvent) return;
+        
+        setIsSavingTeams(true);
+        try {
+            await onSaveTeamsForEvent(selectedEvent.id, teams);
+            setShowSaveSuccess(true);
+            setTimeout(() => setShowSaveSuccess(false), 3000); // Hide after 3 seconds
+        } catch (error) {
+            console.error('Failed to save teams to event:', error);
+            // Could add error state here if needed
+        } finally {
+            setIsSavingTeams(false);
+        }
     };
     
     // Access teams using dynamic keys from teamNames
@@ -231,6 +251,30 @@ export default function TeamsView({ teams, teamNames, setTeamNames, onGenerateTe
                     <RefreshCw className={`w-4 h-4 mr-2 ${isGenerating ? 'animate-spin' : ''}`} />
                     {isGenerating ? 'Generating...' : 'Regenerate Teams'}
                 </Button>
+                {selectedEvent && (
+                    <Button 
+                        onClick={handleSaveToEvent}
+                        disabled={isSavingTeams || totalPlayers === 0}
+                        variant="outline"
+                    >
+                        {isSavingTeams ? (
+                            <>
+                                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                                Saving...
+                            </>
+                        ) : showSaveSuccess ? (
+                            <>
+                                <CheckCircle className="w-4 h-4 mr-2 text-green-500" />
+                                Saved!
+                            </>
+                        ) : (
+                            <>
+                                <Save className="w-4 h-4 mr-2" />
+                                Save to Event
+                            </>
+                        )}
+                    </Button>
+                )}
                 <Button variant="outline" onClick={handleCopyToClipboard}>
                     <Clipboard className="w-4 h-4 mr-2" />
                     Copy to Clipboard

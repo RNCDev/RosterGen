@@ -254,10 +254,23 @@ export async function updateEvent(eventId: number, event: Partial<EventInput>): 
 
 export async function deleteEvent(eventId: number): Promise<boolean> {
     const { rowCount } = await sql`
-        DELETE FROM events 
-        WHERE id = ${eventId};
+        UPDATE events 
+        SET is_active = false, updated_at = CURRENT_TIMESTAMP
+        WHERE id = ${eventId}
     `;
     return rowCount > 0;
+}
+
+export async function updateEventSavedTeams(eventId: number, teamsData: string): Promise<EventDB> {
+    const { rows } = await sql<EventDB>`
+        UPDATE events 
+        SET 
+            saved_teams_data = ${teamsData},
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = ${eventId}
+        RETURNING *
+    `;
+    return rows[0];
 }
 
 async function createAttendanceRecordsForEvent(eventId: number, groupId: number): Promise<void> {

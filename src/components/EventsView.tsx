@@ -44,6 +44,8 @@ interface EventsViewProps {
     teamAlias2: string;
     setTeamAlias2: React.Dispatch<React.SetStateAction<string>>;
     onUpdateTeamAliases: (alias1: string, alias2: string) => Promise<void>;
+    onSaveTeamsForEvent: (eventId: number, teams: Teams) => Promise<void>;
+    onLoadTeamsForEvent: (eventId: number) => Promise<Teams>;
 }
 
 export default function EventsView({
@@ -62,7 +64,9 @@ export default function EventsView({
     setTeamAlias1,
     teamAlias2,
     setTeamAlias2,
-    onUpdateTeamAliases
+    onUpdateTeamAliases,
+    onSaveTeamsForEvent,
+    onLoadTeamsForEvent
 }: EventsViewProps) {
     const [localAttendance, setLocalAttendance] = useState<PlayerWithAttendance[]>(attendanceData);
     const [isCreateEventOpen, setCreateEventOpen] = useState(false);
@@ -147,6 +151,18 @@ export default function EventsView({
         } catch (error) {
             console.error('Failed to generate teams:', error);
             setIsGeneratingTeams(false);
+        }
+    };
+
+    const handleLoadSavedTeams = async () => {
+        if (!selectedEvent) return;
+        try {
+            const savedTeams = await onLoadTeamsForEvent(selectedEvent.id);
+            setTeams(savedTeams);
+            setShowTeams(true);
+        } catch (error) {
+            console.error('Failed to load saved teams:', error);
+            // You could show a user-friendly error message here
         }
     };
 
@@ -297,6 +313,16 @@ export default function EventsView({
                                             <Button variant="outline" onClick={handleEnterBulkEditMode}>
                                                 Bulk Edit
                                             </Button>
+                                            {selectedEvent?.saved_teams_data && (
+                                                <Button
+                                                    variant="outline"
+                                                    onClick={handleLoadSavedTeams}
+                                                    className="btn-secondary"
+                                                >
+                                                    <Users className="w-4 h-4 mr-2" />
+                                                    Load Saved Teams
+                                                </Button>
+                                            )}
                                             <Button
                                                 onClick={handleGenerateTeams}
                                                 disabled={isGeneratingTeams}
@@ -355,6 +381,8 @@ export default function EventsView({
                                 isGenerating={isGeneratingTeams}
                                 onBack={() => setShowTeams(false)}
                                 onSaveTeamNames={onUpdateTeamAliases}
+                                selectedEvent={selectedEvent}
+                                onSaveTeamsForEvent={onSaveTeamsForEvent}
                             />
                         )}
                     </>

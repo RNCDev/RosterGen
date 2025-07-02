@@ -8,7 +8,8 @@ import {
     type EventWithStats, 
     type PlayerWithAttendance, 
     type AttendanceInput, 
-    type EventInput 
+    type EventInput,
+    type Teams
 } from '@/types/PlayerTypes';
 import _ from 'lodash';
 
@@ -328,22 +329,77 @@ export function useGroupManager() {
         }
     }, [activeGroup, loadEvents]);
 
-    const duplicateEvent = useCallback(async (eventId: number, newName: string, newDate: string, newTime?: string, newLocation?: string) => {
-        if (!activeGroup) throw new Error('No active group selected');
-        const response = await fetch('/api/events', {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ eventId, newName, newDate, newTime, newLocation })
-        });
-        if (!response.ok) {
-            const { error } = await response.json();
-            throw new Error(error || 'Failed to duplicate event');
-        }
-        await loadEvents(activeGroup.id);
-    }, [activeGroup, loadEvents]);
+    const duplicateEvent = async (eventId: number, newName: string, newDate: string, newTime?: string, newLocation?: string) => {
+        if (!activeGroup) return;
+        
+        try {
+            const response = await fetch('/api/events', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    eventId,
+                    newName,
+                    newDate,
+                    newTime,
+                    newLocation
+                })
+            });
 
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to duplicate event');
+            }
+
+            // Reload events to show the new duplicated event
+            await loadEvents(activeGroup.id);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to duplicate event');
+        }
+    };
+
+    const handleSaveTeamsForEvent = async (eventId: number, teams: Teams): Promise<void> => {
+        try {
+            const response = await fetch('/api/events/teams', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ eventId, teams })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to save teams');
+            }
+
+            // Optionally reload events to get the updated saved_teams_data
+            if (activeGroup) {
+                await loadEvents(activeGroup.id);
+            }
+        } catch (err) {
+            console.error('Error saving teams:', err);
+            throw err; // Re-throw so the UI can handle it
+        }
+    };
+
+    const handleLoadTeamsForEvent = async (eventId: number): Promise<Teams> => {
+        try {
+            const response = await fetch(`/api/events/teams?eventId=${eventId}`);
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to load teams');
+            }
+
+            const data = await response.json();
+            return data.teams;
+        } catch (err) {
+            console.error('Error loading teams:', err);
+            throw err; // Re-throw so the UI can handle it
+        }
+    };
+
+    // Computed values
     const isDirty = !_.isEqual(players, originalPlayers);
-    const isGroupNameDirty = activeGroup ? activeGroup.code !== groupCodeInput : false;
+    const isGroupNameDirty = activeGroup ? groupCodeInput !== activeGroup.code : false;
 
     const handleClearGroup = () => {
         setGroupCodeInput('');
@@ -365,10 +421,10 @@ export function useGroupManager() {
         handleClearGroup,
         handleCreateGroup,
         handleRenameGroup,
+        handleUpdateTeamAliases,
         handleDeleteGroup,
         handleAddPlayer,
         handleCsvUpload,
-        // Events
         events,
         selectedEvent,
         attendanceData,
@@ -384,6 +440,7 @@ export function useGroupManager() {
         setTeamAlias1,
         teamAlias2,
         setTeamAlias2,
-        handleUpdateTeamAliases
+        handleSaveTeamsForEvent,
+        handleLoadTeamsForEvent
     };
 }

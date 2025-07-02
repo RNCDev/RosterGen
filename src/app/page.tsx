@@ -78,7 +78,9 @@ export default function Home() {
         setTeamAlias1,
         teamAlias2,
         setTeamAlias2,
-        handleUpdateTeamAliases
+        handleUpdateTeamAliases,
+        handleSaveTeamsForEvent,
+        handleLoadTeamsForEvent
     } = useGroupManager();
     
     const [isAddPlayerOpen, setAddPlayerOpen] = useState(false);
@@ -188,6 +190,8 @@ export default function Home() {
                                     teamAlias2={teamAlias2}
                                     setTeamAlias2={setTeamAlias2}
                                     onUpdateTeamAliases={handleUpdateTeamAliases}
+                                    onSaveTeamsForEvent={handleSaveTeamsForEvent}
+                                    onLoadTeamsForEvent={handleLoadTeamsForEvent}
                                 />
                             </TabsContent>
                         </Tabs>

@@ -53,6 +53,7 @@ export interface EventDB {
     is_active: boolean;
     created_at: Date;
     updated_at: Date;
+    saved_teams_data?: string | null; // Stores JSON string of generated teams
 }
 
 export interface EventInput {
