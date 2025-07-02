@@ -4,6 +4,7 @@ import type { NextRequest } from 'next/server';
 import type { PlayerDB, Team, Teams } from '@/types/PlayerTypes';
 import { generateTeams } from '@/lib/teamGenerator';
 import { getAttendingPlayersForEvent, getGroupByCode } from '@/lib/db';
+import type { Group } from '@/types/PlayerTypes';
 
 interface TeamData {
     forwards: PlayerDB[];
@@ -30,9 +31,9 @@ export async function POST(
 
         if (action === 'generate') {
             // Generate teams based on event attendance
-            const { event_id, group_code }: TeamGenerationRequest = await request.json();
+            const { event_id, group }: { event_id: number; group: Group } = await request.json();
 
-            if (!group_code || !event_id) {
+            if (!group?.code || !event_id) {
                 return NextResponse.json(
                     { error: 'group_code and event_id are required' },
                     { status: 400 }
@@ -49,18 +50,14 @@ export async function POST(
                 );
             }
 
-            const teams = generateTeams(attendingPlayers, group_code);
+            const teams = generateTeams(attendingPlayers, group);
             
             // Add event metadata if provided
-            const teamsWithMetadata: Teams = {
-                ...teams,
+            // The teams object no longer directly contains event_id or generated_at
+            // These are now returned as separate properties in the API response.
+            return NextResponse.json({
+                teams: teams, 
                 event_id: event_id,
-                generated_at: new Date()
-            };
-
-            return NextResponse.json({ 
-                teams: teamsWithMetadata, 
-                event_id,
                 generated_at: new Date(),
                 player_count: attendingPlayers.length
             });

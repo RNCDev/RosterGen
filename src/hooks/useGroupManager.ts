@@ -20,6 +20,9 @@ export function useGroupManager() {
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
 
+    const [teamAlias1, setTeamAlias1] = useState<string>('Red');
+    const [teamAlias2, setTeamAlias2] = useState<string>('White');
+
     // Event-related state
     const [events, setEvents] = useState<EventWithStats[]>([]);
     const [selectedEvent, setSelectedEvent] = useState<EventWithStats | null>(null);
@@ -65,9 +68,16 @@ export function useGroupManager() {
                 throw new Error(errorData.error || 'Failed to fetch group');
             }
             const groupData: Group = await groupResponse.json();
-            setActiveGroup(groupData);
-            setGroupCodeInput(groupData.code); // Sync input field with loaded code
-            localStorage.setItem('activeGroupCode', groupData.code);
+            const sanitizedGroupData = {
+                ...groupData,
+                "team-alias-1": groupData["team-alias-1"] && groupData["team-alias-1"].trim() !== '' ? groupData["team-alias-1"] : 'Red',
+                "team-alias-2": groupData["team-alias-2"] && groupData["team-alias-2"].trim() !== '' ? groupData["team-alias-2"] : 'White',
+            };
+            setActiveGroup(sanitizedGroupData);
+            setGroupCodeInput(sanitizedGroupData.code); // Sync input field with loaded code
+            localStorage.setItem('activeGroupCode', sanitizedGroupData.code);
+            setTeamAlias1(sanitizedGroupData["team-alias-1"]);
+            setTeamAlias2(sanitizedGroupData["team-alias-2"]);
 
             // 2. Fetch players for the group
             const playersResponse = await fetch(`/api/players?groupId=${groupData.id}`);
@@ -175,6 +185,27 @@ export function useGroupManager() {
             setError(err instanceof Error ? err.message : 'Failed to rename group');
             // Revert input to the last saved code
             setGroupCodeInput(activeGroup.code);
+        }
+    }, [activeGroup]);
+
+    const handleUpdateTeamAliases = useCallback(async (alias1: string, alias2: string) => {
+        if (!activeGroup) return;
+        try {
+            const response = await fetch('/api/groups/aliases', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ groupId: activeGroup.id, teamAlias1: alias1, teamAlias2: alias2 })
+            });
+            if (!response.ok) {
+                const { error } = await response.json();
+                throw new Error(error || 'Failed to update team aliases');
+            }
+            const updatedGroup: Group = await response.json();
+            setActiveGroup(updatedGroup);
+            setTeamAlias1(updatedGroup["team-alias-1"] && updatedGroup["team-alias-1"].trim() !== '' ? updatedGroup["team-alias-1"] : 'Red');
+            setTeamAlias2(updatedGroup["team-alias-2"] && updatedGroup["team-alias-2"].trim() !== '' ? updatedGroup["team-alias-2"] : 'White');
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to update team aliases');
         }
     }, [activeGroup]);
 
@@ -348,6 +379,11 @@ export function useGroupManager() {
         deleteEvent,
         selectEvent,
         handleSaveChanges,
-        duplicateEvent
+        duplicateEvent,
+        teamAlias1,
+        setTeamAlias1,
+        teamAlias2,
+        setTeamAlias2,
+        handleUpdateTeamAliases
     };
 }

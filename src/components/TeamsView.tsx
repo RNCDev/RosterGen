@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useRef } from 'react';
-import { type Teams, type Player } from '@/types/PlayerTypes';
+import { type Teams, type Player, type Team } from '@/types/PlayerTypes';
 import { Clipboard, Users, BarChart2, Hash, Trophy, Zap, Shield, Target, RefreshCw } from 'lucide-react';
 import _ from 'lodash';
 import { Button } from '@/components/ui/Button';
@@ -15,10 +15,11 @@ interface TeamsViewProps {
     attendingPlayerCount: number;
     isGenerating: boolean;
     onBack: () => void;
+    onSaveTeamNames: (alias1: string, alias2: string) => Promise<void>;
 }
 
 // Helper to calculate team stats
-const calculateStats = (team: Teams['red']) => {
+const calculateStats = (team: Team) => {
     const allPlayers = [...team.forwards, ...team.defensemen];
     if (allPlayers.length === 0) {
         return {
@@ -84,6 +85,7 @@ const TeamCard = ({
                             type="text"
                             value={name}
                             onChange={(e) => onNameChange(e.target.value)}
+                            onBlur={() => onNameChange(name)}
                             className={`text-lg font-bold bg-transparent border-b border-transparent focus:border-gray-400 outline-none ${colors.accent}`}
                             placeholder="Team Name"
                         />
@@ -152,7 +154,7 @@ const TeamCard = ({
     );
 };
 
-export default function TeamsView({ teams, teamNames, setTeamNames, onGenerateTeams, attendingPlayerCount, isGenerating, onBack }: TeamsViewProps) {
+export default function TeamsView({ teams, teamNames, setTeamNames, onGenerateTeams, attendingPlayerCount, isGenerating, onBack, onSaveTeamNames }: TeamsViewProps) {
     const teamsContainerRef = useRef<HTMLDivElement>(null);
 
     const handleCopyToClipboard = () => {
@@ -179,30 +181,33 @@ export default function TeamsView({ teams, teamNames, setTeamNames, onGenerateTe
             });
     };
     
-    const totalPlayers = teams.red.forwards.length + teams.red.defensemen.length + teams.white.forwards.length + teams.white.defensemen.length;
-    const redStats = calculateStats(teams.red);
-    const whiteStats = calculateStats(teams.white);
-    const skillDifference = Math.abs(redStats.totalSkill - whiteStats.totalSkill);
+    // Access teams using dynamic keys from teamNames
+    const team1Data = teams[teamNames.team1.toLowerCase()];
+    const team2Data = teams[teamNames.team2.toLowerCase()];
 
-    if (totalPlayers === 0) {
+    // Ensure team data exists before calculating stats or rendering
+    if (!team1Data || !team2Data) {
+        // This case should ideally not happen if teams are always generated correctly,
+        // but provides a safe fallback for rendering or initial state.
         return (
             <div className="flex items-center justify-center min-h-[60vh] animate-fade-in">
                 <div className="text-center p-12 card-elevated max-w-lg animate-slide-up">
                     <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-6">
                         <Users className="w-10 h-10 text-blue-600" />
                     </div>
-                    <h3 className="heading-secondary mb-3">No Teams Generated</h3>
+                    <h3 className="heading-secondary mb-3">Generating Teams...</h3>
                     <p className="text-gray-500 mb-6 leading-relaxed">
-                        Go to the <span className="font-semibold text-blue-600">Players</span> tab and click 'Generate Teams' to create balanced teams.
+                        Please wait while teams are generated based on attendance.
                     </p>
-                    <div className="flex items-center justify-center gap-2 text-sm text-gray-400">
-                        <Trophy className="w-4 h-4" />
-                        <span>Teams will appear here once generated</span>
-                    </div>
                 </div>
             </div>
         );
     }
+
+    const totalPlayers = team1Data.forwards.length + team1Data.defensemen.length + team2Data.forwards.length + team2Data.defensemen.length;
+    const team1Stats = calculateStats(team1Data);
+    const team2Stats = calculateStats(team2Data);
+    const skillDifference = Math.abs(team1Stats.totalSkill - team2Stats.totalSkill);
 
     return (
         <div className="space-y-6 animate-fade-in">
@@ -236,14 +241,20 @@ export default function TeamsView({ teams, teamNames, setTeamNames, onGenerateTe
             <div ref={teamsContainerRef} className="grid md:grid-cols-2 gap-4 items-start">
                 <TeamCard
                     name={teamNames.team1}
-                    team={teams.red}
-                    onNameChange={(name) => setTeamNames({ ...teamNames, team1: name })}
+                    team={team1Data}
+                    onNameChange={(name) => {
+                        setTeamNames({ ...teamNames, team1: name });
+                        onSaveTeamNames(name, teamNames.team2);
+                    }}
                     teamColor="red"
                 />
                 <TeamCard
                     name={teamNames.team2}
-                    team={teams.white}
-                    onNameChange={(name) => setTeamNames({ ...teamNames, team2: name })}
+                    team={team2Data}
+                    onNameChange={(name) => {
+                        setTeamNames({ ...teamNames, team2: name });
+                        onSaveTeamNames(teamNames.team1, name);
+                    }}
                     teamColor="blue"
                 />
             </div>

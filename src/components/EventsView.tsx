@@ -39,6 +39,11 @@ interface EventsViewProps {
     group: Group | null;
     eventsLoading: boolean;
     attendanceLoading: boolean;
+    teamAlias1: string;
+    setTeamAlias1: React.Dispatch<React.SetStateAction<string>>;
+    teamAlias2: string;
+    setTeamAlias2: React.Dispatch<React.SetStateAction<string>>;
+    onUpdateTeamAliases: (alias1: string, alias2: string) => Promise<void>;
 }
 
 export default function EventsView({
@@ -52,18 +57,19 @@ export default function EventsView({
     onDuplicateEvent,
     group,
     eventsLoading,
-    attendanceLoading
+    attendanceLoading,
+    teamAlias1,
+    setTeamAlias1,
+    teamAlias2,
+    setTeamAlias2,
+    onUpdateTeamAliases
 }: EventsViewProps) {
     const [localAttendance, setLocalAttendance] = useState<PlayerWithAttendance[]>(attendanceData);
     const [isCreateEventOpen, setCreateEventOpen] = useState(false);
     const [isDuplicateEventOpen, setDuplicateEventOpen] = useState(false);
     const [eventToDuplicate, setEventToDuplicate] = useState<EventWithStats | null>(null);
     const [showTeams, setShowTeams] = useState(false);
-    const [teams, setTeams] = useState<Teams>({
-        red: { forwards: [], defensemen: [] },
-        white: { forwards: [], defensemen: [] },
-    });
-    const [teamNames, setTeamNames] = useState({ team1: 'Red', team2: 'White' });
+    const [teams, setTeams] = useState<Teams>({});
     const [isGeneratingTeams, setIsGeneratingTeams] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const PAGE_SIZE = 20;
@@ -77,13 +83,10 @@ export default function EventsView({
     }, [attendanceData]);
 
     useEffect(() => {
-        // When the selected event changes, hide the teams view and reset teams data
+        // When the selected event or team aliases change, hide the teams view and reset teams data
         setShowTeams(false);
-        setTeams({
-            red: { forwards: [], defensemen: [] },
-            white: { forwards: [], defensemen: [] },
-        });
-    }, [selectedEvent?.id]);
+        setTeams({}); // Reset teams to empty object
+    }, [selectedEvent?.id, teamAlias1, teamAlias2]);
 
     const handleAttendanceToggle = async (playerId: number) => {
         if (!selectedEvent) return;
@@ -127,7 +130,7 @@ export default function EventsView({
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
                     event_id: selectedEvent.id, 
-                    group_code: group.code 
+                    group: group 
                 }),
             });
 
@@ -342,12 +345,16 @@ export default function EventsView({
                         ) : (
                              <TeamsView 
                                 teams={teams}
-                                teamNames={teamNames} 
-                                setTeamNames={setTeamNames} 
+                                teamNames={{ team1: teamAlias1, team2: teamAlias2 }}
+                                setTeamNames={({ team1, team2 }) => {
+                                    setTeamAlias1(team1);
+                                    setTeamAlias2(team2);
+                                }}
                                 onGenerateTeams={handleGenerateTeams}
                                 attendingPlayerCount={localAttendance.filter(p => p.is_attending_event).length}
                                 isGenerating={isGeneratingTeams}
                                 onBack={() => setShowTeams(false)}
+                                onSaveTeamNames={onUpdateTeamAliases}
                             />
                         )}
                     </>

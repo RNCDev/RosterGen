@@ -47,6 +47,8 @@ Stores the top-level grouping for rosters. Each group has a unique, user-defined
 | `id` | integer | Primary Key | Unique identifier for the group. |
 | `code` | character varying(255) | Not Null, Unique | The user-facing unique code for the group. |
 | `created_at` | timestamp with time zone | Default: `CURRENT_TIMESTAMP` | Timestamp of when the group was created. |
+| `team_alias_1` | character varying(125) | Not Null, Default: `'Red'` | Custom name for Team 1. |
+| `team_alias_2` | character varying(125) | Not Null, Default: `'White'` | Custom name for Team 2. |
 
 ### `players` Table
 Contains the roster of players for each group.

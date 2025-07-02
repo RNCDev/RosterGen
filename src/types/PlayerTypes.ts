@@ -37,6 +37,8 @@ export interface Group {
     id: number;
     code: string;
     created_at: Date;
+    "team-alias-1": string;
+    "team-alias-2": string;
 }
 
 // Event types
@@ -112,12 +114,7 @@ export type Team = {
     group_code?: string;
 };
 
-export type Teams = {
-    red: Team;
-    white: Team;
-    event_id?: number; // New field for event-specific teams
-    generated_at?: Date; // New field
-};
+export type Teams = Record<string, Team>;
 
 // Team generation types (updated)
 export interface EventTeamGeneration {

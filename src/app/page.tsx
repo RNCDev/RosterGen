@@ -73,7 +73,12 @@ export default function Home() {
         deleteEvent,
         selectEvent,
         handleSaveChanges,
-        duplicateEvent
+        duplicateEvent,
+        teamAlias1,
+        setTeamAlias1,
+        teamAlias2,
+        setTeamAlias2,
+        handleUpdateTeamAliases
     } = useGroupManager();
     
     const [isAddPlayerOpen, setAddPlayerOpen] = useState(false);
@@ -122,6 +127,11 @@ export default function Home() {
                 isPlayerListDirty={isDirty}
                 isLoading={loading}
                 isGroupLoaded={!!activeGroup}
+                teamAlias1={teamAlias1}
+                setTeamAlias1={setTeamAlias1}
+                teamAlias2={teamAlias2}
+                setTeamAlias2={setTeamAlias2}
+                onUpdateTeamAliases={handleUpdateTeamAliases}
             />
 
             <main className="flex-1">
@@ -173,6 +183,11 @@ export default function Home() {
                                     group={activeGroup}
                                     eventsLoading={eventsLoading}
                                     attendanceLoading={attendanceLoading}
+                                    teamAlias1={teamAlias1}
+                                    setTeamAlias1={setTeamAlias1}
+                                    teamAlias2={teamAlias2}
+                                    setTeamAlias2={setTeamAlias2}
+                                    onUpdateTeamAliases={handleUpdateTeamAliases}
                                 />
                             </TabsContent>
                         </Tabs>
