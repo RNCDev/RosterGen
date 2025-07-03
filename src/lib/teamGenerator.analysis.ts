@@ -1,4 +1,4 @@
-import { type Player, type Teams } from '@/types/PlayerTypes';
+import { type Player, type Teams, type Group } from '@/types/PlayerTypes';
 import { generateTeams } from './teamGenerator';
 import _ from 'lodash';
 
@@ -57,11 +57,20 @@ export function analyzeTeams(teams: Teams) {
     return stats;
 }
 
+// Create a test group for analysis
+const testGroup: Group = {
+    id: 1,
+    code: 'test',
+    created_at: new Date(),
+    "team-alias-1": "Red",
+    "team-alias-2": "White"
+};
+
 export function runBulkAnalysis(players: Player[], iterations: number) {
     const teamCompositions = new Set<string>();
 
     for (let i = 0; i < iterations; i++) {
-        const teams = generateTeams(players, 'test');
+        const teams = generateTeams(players, testGroup);
         const stats = analyzeTeams(teams);
         
         const composition = `Red: ${stats.red.forwards}F/${stats.red.defensemen}D | White: ${stats.white.forwards}F/${stats.white.defensemen}D`;
@@ -69,7 +78,7 @@ export function runBulkAnalysis(players: Player[], iterations: number) {
     }
     
     // Perform a single run to analyze player distribution
-    const teams = generateTeams(players, 'test');
+    const teams = generateTeams(players, testGroup);
     const sortedPlayers = [...players].sort((a,b) => b.skill - a.skill);
     const top4Players = sortedPlayers.slice(0, 4).map(p => `${p.first_name} (${p.skill})`);
     
