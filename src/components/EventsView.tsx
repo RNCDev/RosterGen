@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React from 'react';
 import { Calendar } from 'lucide-react';
 import { 
     type EventWithStats, 
@@ -17,6 +17,9 @@ import EventsList from './EventsList';
 import AttendanceTable from './AttendanceTable';
 import AttendanceControls from './AttendanceControls';
 import PlayerPagination from './PlayerPagination';
+import { useEventManagement } from '@/hooks/useEventManagement';
+import { useAttendanceManagement } from '@/hooks/useAttendanceManagement';
+import { usePlayerPagination } from '@/hooks/usePlayerPagination';
 
 interface EventsViewProps {
     events: EventWithStats[];
@@ -61,24 +64,10 @@ export default function EventsView({
     onSaveTeamsForEvent,
     onLoadTeamsForEvent
 }: EventsViewProps) {
-    const [isCreateEventOpen, setCreateEventOpen] = useState(false);
-    const [isDuplicateEventOpen, setDuplicateEventOpen] = useState(false);
-    const [eventToDuplicate, setEventToDuplicate] = useState<EventWithStats | null>(null);
-    const [showTeams, setShowTeams] = useState(false);
-    const [teams, setTeams] = useState<Teams>({});
-    const [isGeneratingTeams, setIsGeneratingTeams] = useState(false);
-    const [currentPage, setCurrentPage] = useState(1);
-    const PAGE_SIZE = 20;
-
-    // State for bulk edit mode
-    const [isBulkEditMode, setIsBulkEditMode] = useState(false);
-    const [stagedChanges, setStagedChanges] = useState<Map<number, boolean>>(new Map());
-
-    useEffect(() => {
-        // When the selected event or team aliases change, hide the teams view and reset teams data
-        setShowTeams(false);
-        setTeams({}); // Reset teams to empty object
-    }, [selectedEvent?.id, teamAlias1, teamAlias2]);
+    // Extract state management to custom hooks
+    const eventManagement = useEventManagement(selectedEvent?.id, teamAlias1, teamAlias2);
+    const attendanceManagement = useAttendanceManagement();
+    const paginationState = usePlayerPagination(attendanceData, 20);
 
     const handleAttendanceToggle = async (playerId: number) => {
         if (!selectedEvent) return;
@@ -91,114 +80,22 @@ export default function EventsView({
         }
     };
 
-    const handleGenerateTeams = async () => {
-        if (!selectedEvent || !group) return;
-        setIsGeneratingTeams(true);
-        try {
-            const response = await fetch(`/api/teams?action=generate`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    event_id: selectedEvent.id, 
-                    group: group 
-                }),
-            });
-
-            if (!response.ok) throw new Error(await response.text());
-            
-            const data = await response.json();
-            setTeams(data.teams);
-            
-            setTimeout(() => {
-                setIsGeneratingTeams(false);
-                setShowTeams(true);
-            }, 800); // Small delay for animation
-
-        } catch (error) {
-            console.error('Failed to generate teams:', error);
-            setIsGeneratingTeams(false);
-        }
-    };
-
     const handleLoadSavedTeams = async () => {
         if (!selectedEvent) return;
         try {
             const savedTeams = await onLoadTeamsForEvent(selectedEvent.id);
-            setTeams(savedTeams);
-            setShowTeams(true);
+            eventManagement.setTeams(savedTeams);
+            eventManagement.setShowTeams(true);
         } catch (error) {
             console.error('Failed to load saved teams:', error);
             // You could show a user-friendly error message here
         }
     };
 
-    const handleEnterBulkEditMode = () => {
-        const initialStagedChanges = new Map<number, boolean>();
-        attendanceData.forEach(player => {
-            initialStagedChanges.set(player.id, player.is_attending_event ?? false);
-        });
-        setStagedChanges(initialStagedChanges);
-        setIsBulkEditMode(true);
-    };
-
-    const handleExitBulkEditMode = () => {
-        setIsBulkEditMode(false);
-        setStagedChanges(new Map());
-    };
-
-    const handleStagedChange = (playerId: number, isAttending: boolean) => {
-        setStagedChanges(new Map(stagedChanges.set(playerId, isAttending)));
-    };
-
-    const handleSaveChanges = async () => {
-        if (!selectedEvent) return;
-
-        const changes: AttendanceInput[] = [];
-        const originalAttendance = new Map(
-            attendanceData.map(p => [p.id, p.is_attending_event ?? false])
-        );
-
-        for (const [playerId, isAttending] of stagedChanges.entries()) {
-            if (originalAttendance.get(playerId) !== isAttending) {
-                changes.push({
-                    player_id: playerId,
-                    event_id: selectedEvent.id,
-                    is_attending: isAttending,
-                });
-            }
-        }
-
-        if (changes.length > 0) {
-            await onUpdateAttendance(selectedEvent.id, changes);
-        }
-
-        setIsBulkEditMode(false);
-        setStagedChanges(new Map());
-    };
-
-    const paginatedAttendance = useMemo(() => {
-        const start = (currentPage - 1) * PAGE_SIZE;
-        const end = start + PAGE_SIZE;
-        return attendanceData.slice(start, end);
-    }, [attendanceData, currentPage]);
-
-    const totalPages = Math.ceil(attendanceData.length / PAGE_SIZE);
-
-    const handlePageChange = (page: number) => {
-        if (page >= 1 && page <= totalPages) {
-            setCurrentPage(page);
-        }
-    };
-
-    const handleDuplicateEvent = (event: EventWithStats) => {
-        setEventToDuplicate(event);
-        setDuplicateEventOpen(true);
-    };
-
     const handleDuplicateSubmit = async (eventId: number, newName: string, newDate: string, newTime?: string, newLocation?: string) => {
         await onDuplicateEvent(eventId, newName, newDate, newTime, newLocation);
-        setDuplicateEventOpen(false);
-        setEventToDuplicate(null);
+        eventManagement.setDuplicateEventOpen(false);
+        eventManagement.setEventToDuplicate(null);
     };
     
     if (!group) {
@@ -219,57 +116,57 @@ export default function EventsView({
                 selectedEvent={selectedEvent}
                 eventsLoading={eventsLoading}
                 onEventSelect={onEventSelect}
-                onCreateEvent={() => setCreateEventOpen(true)}
+                onCreateEvent={() => eventManagement.setCreateEventOpen(true)}
                 onDeleteEvent={onDeleteEvent}
-                onDuplicateEvent={handleDuplicateEvent}
+                onDuplicateEvent={eventManagement.handleDuplicateEvent}
             />
 
             {/* Right Column: Attendance */}
             <div className="flex-1 space-y-4">
                 {selectedEvent ? (
                     <>
-                        {!showTeams ? (
+                        {!eventManagement.showTeams ? (
                             <>
                                 <AttendanceControls
                                     selectedEvent={selectedEvent}
-                                    isBulkEditMode={isBulkEditMode}
-                                    isGeneratingTeams={isGeneratingTeams}
-                                    onEnterBulkEditMode={handleEnterBulkEditMode}
-                                    onExitBulkEditMode={handleExitBulkEditMode}
-                                    onSaveChanges={handleSaveChanges}
+                                    isBulkEditMode={attendanceManagement.isBulkEditMode}
+                                    isGeneratingTeams={eventManagement.isGeneratingTeams}
+                                    onEnterBulkEditMode={() => attendanceManagement.handleEnterBulkEditMode(attendanceData)}
+                                    onExitBulkEditMode={attendanceManagement.handleExitBulkEditMode}
+                                    onSaveChanges={() => attendanceManagement.handleSaveChanges(selectedEvent.id, attendanceData, onUpdateAttendance)}
                                     onLoadSavedTeams={handleLoadSavedTeams}
-                                    onGenerateTeams={handleGenerateTeams}
+                                    onGenerateTeams={() => group && eventManagement.handleGenerateTeams(selectedEvent, group)}
                                 />
 
                                 <AttendanceTable
-                                    players={paginatedAttendance}
+                                    players={paginationState.paginatedItems}
                                     onAttendanceToggle={handleAttendanceToggle}
-                                    isBulkEditMode={isBulkEditMode}
-                                    stagedChanges={stagedChanges}
-                                    onStagedChange={handleStagedChange}
+                                    isBulkEditMode={attendanceManagement.isBulkEditMode}
+                                    stagedChanges={attendanceManagement.stagedChanges}
+                                    onStagedChange={attendanceManagement.handleStagedChange}
                                 />
 
                                 <PlayerPagination
-                                    currentPage={currentPage}
-                                    totalPages={totalPages}
+                                    currentPage={paginationState.currentPage}
+                                    totalPages={paginationState.totalPages}
                                     totalItems={attendanceData.length}
-                                    itemsPerPage={PAGE_SIZE}
-                                    onPageChange={handlePageChange}
+                                    itemsPerPage={paginationState.rowsPerPage}
+                                    onPageChange={paginationState.handlePageChange}
                                     itemName="players"
                                 />
                             </>
                         ) : (
                             <TeamsView 
-                                teams={teams}
+                                teams={eventManagement.teams}
                                 teamNames={{ team1: teamAlias1, team2: teamAlias2 }}
                                 setTeamNames={({ team1, team2 }) => {
                                     setTeamAlias1(team1);
                                     setTeamAlias2(team2);
                                 }}
-                                onGenerateTeams={handleGenerateTeams}
+                                onGenerateTeams={() => group && eventManagement.handleGenerateTeams(selectedEvent, group)}
                                 attendingPlayerCount={attendanceData.filter(p => p.is_attending_event).length}
-                                isGenerating={isGeneratingTeams}
-                                onBack={() => setShowTeams(false)}
+                                isGenerating={eventManagement.isGeneratingTeams}
+                                onBack={() => eventManagement.setShowTeams(false)}
                                 onSaveTeamNames={onUpdateTeamAliases}
                                 selectedEvent={selectedEvent}
                                 onSaveTeamsForEvent={onSaveTeamsForEvent}
@@ -286,17 +183,17 @@ export default function EventsView({
             </div>
 
             <CreateEventDialog
-                isOpen={isCreateEventOpen}
-                onClose={() => setCreateEventOpen(false)}
+                isOpen={eventManagement.isCreateEventOpen}
+                onClose={() => eventManagement.setCreateEventOpen(false)}
                 onCreateEvent={onCreateEvent}
                 group={group}
             />
 
             <DuplicateEventDialog
-                isOpen={isDuplicateEventOpen}
-                onClose={() => setDuplicateEventOpen(false)}
+                isOpen={eventManagement.isDuplicateEventOpen}
+                onClose={() => eventManagement.setDuplicateEventOpen(false)}
                 onDuplicate={handleDuplicateSubmit}
-                event={eventToDuplicate}
+                event={eventManagement.eventToDuplicate}
             />
         </div>
     );

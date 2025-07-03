@@ -31,38 +31,14 @@ Overall, RosterGen is a well-structured Next.js application with a clear separat
 
 ### 🔧 **Areas for Improvement**
 
-**State Management Issues**
-1. **Local State Complexity**: Multiple pieces of local state in components (editing modes, pagination, filters) could be simplified or extracted.
-
 **Database Concerns**
-2. **Team Alias Schema**: Using `team-alias-1` and `team-alias-2` with hyphens is inconsistent with other field naming. Should be `team_alias_1` and `team_alias_2`.
+1. **Team Alias Schema**: Using `team-alias-1` and `team-alias-2` with hyphens is inconsistent with other field naming. Should be `team_alias_1` and `team_alias_2`.
 
-3. **Missing Indexing**: Database operations could benefit from indexes on frequently queried fields like `group_id`, `event_id`, and `player_id`.
+2. **Missing Indexing**: Database operations could benefit from indexes on frequently queried fields like `group_id`, `event_id`, and `player_id`.
 
 ### 🚀 **Recommended Refactoring**
 
-1. **Component Decomposition**:
-   ```
-   PlayersView → PlayerList + PlayerFilters + PlayerTable + PlayerBulkActions
-   EventsView → EventsList + AttendanceTable + TeamGeneration
-   ```
-
-2. **Create Shared Utilities**:
-   - API response wrapper for consistent error handling
-   - Database query builder for common patterns
-   - Form validation utilities
-
-3. **Simplify Styling**:
-   - Remove unused CSS animations and complex glass effects
-   - Consolidate to essential design tokens only
-   - Use more semantic color variables
-
-4. **Add Performance Optimizations**:
-   - Implement React.memo for expensive components
-   - Add debouncing for search/filter operations
-   - Consider pagination at API level for large rosters
-
-## 2. UI/UX Improvements Analysis
+## 1. UI/UX Improvements Analysis
 
 ### 📱 **Current UI Assessment**
 
@@ -156,7 +132,7 @@ Overall, RosterGen is a well-structured Next.js application with a clear separat
 - Print-friendly team sheets
 - Export to common formats (PDF, image)
 
-## 3. Technical Debt & Future Considerations
+## 2. Technical Debt & Future Considerations
 
 ### 🚧 **Priority Technical Improvements**
 
