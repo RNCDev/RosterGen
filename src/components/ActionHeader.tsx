@@ -9,7 +9,9 @@ import {
     Trash2, 
     ShieldCheck,
     Loader2, // For spinner
-    CheckCircle // For success
+    CheckCircle, // For success
+    Clipboard,
+    Pencil
 } from 'lucide-react';
 // Import package.json to get version
 import packageJson from '../../package.json';
@@ -111,101 +113,107 @@ export default function ActionHeader({
             <div className="max-w-7xl mx-auto px-4 sm:px-8 py-3 sm:py-4">
                 {/* Main container for group code, team aliases, and action buttons */}
                 <div className="flex flex-col gap-4">
-                    {/* Group Code Input and Main Action Buttons */}
+                    {/* Group Code Input (pill style) and Main Action Buttons */}
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-start gap-3 sm:gap-4 w-full">
-                        {/* Group Code Input */}
+                        {/* Group Code Input with Label, styled as pill */}
                         <div className="flex flex-col items-start gap-2 w-full sm:w-auto">
-                            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto">
-                                <div className="card-modern flex items-center gap-2 px-3 py-2 w-full sm:w-auto">
+                            <div className="flex flex-row items-center gap-2 w-full sm:w-auto">
+                                <div className="flex items-center gap-2 px-6 py-2 rounded-full bg-blue-50 border border-blue-200 shadow-sm min-w-[140px]">
+                                    <span className="text-xs font-semibold text-gray-500 uppercase mr-2">GROUP</span>
                                     <input
                                         type="text"
                                         value={groupCode}
                                         onChange={(e) => onGroupCodeChange(e.target.value)}
                                         onKeyDown={(e) => e.key === 'Enter' && handleLoadWithPrompt()}
-                                        placeholder="Enter group code"
-                                        className="bg-transparent focus:outline-none px-2 py-1 text-sm font-medium placeholder:text-gray-400 w-full sm:w-40 min-w-0"
+                                        placeholder="Group Code"
+                                        className="bg-transparent focus:outline-none text-base font-bold text-blue-800 w-28 min-w-0 px-1"
                                         aria-label="Group Code"
                                     />
                                     <button
                                         onClick={handleLoadWithPrompt}
                                         disabled={!groupCode.trim() || isLoading}
-                                        className="p-2 hover:bg-blue-50 rounded-md transition-colors disabled:opacity-50 flex-shrink-0"
+                                        className="p-2 hover:bg-blue-100 rounded-md transition-colors disabled:opacity-50 flex-shrink-0"
                                         title="Load Group"
                                     >
-                                        <Search size={16} className="text-blue-600" />
+                                        <Search size={18} className="text-blue-600" />
                                     </button>
                                 </div>
                             </div>
                         </div>
-
-                        {/* Action Buttons (positioned after Group Code input horizontally) */}
-                        <div className="flex items-center gap-1 bg-white/60 backdrop-blur-sm rounded-lg p-1 border border-white/30 sm:ml-auto">
+                        {/* Action Buttons (more prominent) */}
+                        <div className="flex items-center gap-2 bg-white/80 backdrop-blur-sm rounded-lg p-2 border border-blue-200 shadow-md sm:ml-auto">
                             <button
                                 onClick={onSaveGroup}
                                 disabled={!isGroupNameDirty || isLoading || !isGroupLoaded}
-                                className={`p-2 rounded-md transition-all ${
+                                className={`px-3 py-2 rounded-md font-semibold transition-all shadow-sm border ${
                                     isGroupNameDirty && isGroupLoaded
-                                        ? 'bg-green-50 text-green-600 hover:bg-green-100 animate-pulse'
-                                        : 'text-gray-400'
+                                        ? 'bg-green-100 text-green-700 border-green-300 hover:bg-green-200 animate-pulse'
+                                        : 'bg-gray-100 text-gray-400 border-gray-200'
                                 }`}
                                 title={isGroupNameDirty ? "Save New Group Name" : "Group Name Saved"}
                             >
                                 {isGroupNameDirty ? (
-                                    <Save size={16} />
+                                    <Save size={18} />
                                 ) : (
-                                    <ShieldCheck size={16} />
+                                    <ShieldCheck size={18} />
                                 )}
                             </button>
                             <button
                                 onClick={handleClearWithPrompt}
-                                className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-md transition-colors"
+                                className="px-3 py-2 rounded-md font-semibold bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200 transition-colors shadow-sm"
                                 title="Clear Workspace"
                             >
-                                <X size={16} />
+                                <X size={18} />
                             </button>
                             <button
                                 onClick={handleDeleteWithPrompt}
                                 disabled={!groupCode.trim() || isLoading || !isGroupLoaded}
-                                className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors disabled:opacity-50"
+                                className="px-3 py-2 rounded-md font-semibold bg-red-100 text-red-600 border border-red-200 hover:bg-red-200 transition-colors shadow-sm disabled:opacity-50"
                                 title="Delete Group"
                             >
-                                <Trash2 size={16} />
+                                <Trash2 size={18} />
                             </button>
                         </div>
                     </div>
 
-                    {/* Team Aliases (positioned below Group Code and Action Buttons) */}
+                    {/* Team Aliases (card/chip style, match group style) */}
                     {isGroupLoaded && (
                         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full">
-                            <div className="card-modern flex items-center gap-2 px-3 py-2 w-full sm:w-auto">
-                                <label htmlFor="team1-name" className="text-sm font-medium text-gray-700">Team 1:</label>
+                            {/* Team 1 Chip */}
+                            <div className="flex items-center gap-2 px-6 py-2 rounded-full bg-blue-50 border border-blue-200 shadow-sm">
+                                <span className="text-xs font-semibold text-gray-500 uppercase mr-2">TEAM 1</span>
                                 <input
                                     id="team1-name"
                                     type="text"
                                     value={teamAlias1}
                                     onChange={(e) => setTeamAlias1(e.target.value)}
                                     onBlur={() => handleUpdateAlias1(teamAlias1)}
-                                    placeholder="Team 1 Name"
-                                    className="bg-transparent focus:outline-none px-2 py-1 text-sm font-medium placeholder:text-gray-400 w-full sm:w-40 min-w-0"
+                                    placeholder="Red"
+                                    className="bg-transparent focus:outline-none text-base font-bold text-blue-800 w-20 min-w-0 px-1"
                                     aria-label="Team 1 Name"
                                 />
-                                {isSavingAlias1 && <Loader2 size={16} className="animate-spin text-blue-500" />}
-                                {showAlias1Success && <CheckCircle size={16} className="text-green-500" />}
+                                <span className="ml-1 flex items-center">
+                                    {isSavingAlias1 ? <Loader2 size={16} className="animate-spin text-blue-500" /> : <Pencil size={16} className="text-blue-400 cursor-pointer hover:text-blue-600 transition" aria-label="Edit team name" />}
+                                    {showAlias1Success && <CheckCircle size={16} className="text-green-500 ml-1" />}
+                                </span>
                             </div>
-                            <div className="card-modern flex items-center gap-2 px-3 py-2 w-full sm:w-auto">
-                                <label htmlFor="team2-name" className="text-sm font-medium text-gray-700">Team 2:</label>
+                            {/* Team 2 Chip */}
+                            <div className="flex items-center gap-2 px-6 py-2 rounded-full bg-blue-50 border border-blue-200 shadow-sm">
+                                <span className="text-xs font-semibold text-gray-500 uppercase mr-2">TEAM 2</span>
                                 <input
                                     id="team2-name"
                                     type="text"
                                     value={teamAlias2}
                                     onChange={(e) => setTeamAlias2(e.target.value)}
                                     onBlur={() => handleUpdateAlias2(teamAlias2)}
-                                    placeholder="Team 2 Name"
-                                    className="bg-transparent focus:outline-none px-2 py-1 text-sm font-medium placeholder:text-gray-400 w-full sm:w-40 min-w-0"
+                                    placeholder="White"
+                                    className="bg-transparent focus:outline-none text-base font-bold text-blue-800 w-20 min-w-0 px-1"
                                     aria-label="Team 2 Name"
                                 />
-                                {isSavingAlias2 && <Loader2 size={16} className="animate-spin text-blue-500" />}
-                                {showAlias2Success && <CheckCircle size={16} className="text-green-500" />}
+                                <span className="ml-1 flex items-center">
+                                    {isSavingAlias2 ? <Loader2 size={16} className="animate-spin text-blue-500" /> : <Pencil size={16} className="text-blue-400 cursor-pointer hover:text-blue-600 transition" aria-label="Edit team name" />}
+                                    {showAlias2Success && <CheckCircle size={16} className="text-green-500 ml-1" />}
+                                </span>
                             </div>
                         </div>
                     )}
