@@ -1,21 +1,9 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { 
-    Calendar, 
-    Users, 
-    Plus, 
-    Trash2, 
-    ArrowRightLeft,
-    ChevronsLeft,
-    ChevronLeft,
-    ChevronRight,
-    ChevronsRight,
-    Copy
-} from 'lucide-react';
+import { Calendar } from 'lucide-react';
 import { 
     type EventWithStats, 
-    type EventDB, 
     type PlayerWithAttendance, 
     type AttendanceInput,
     type Teams,
@@ -25,7 +13,10 @@ import {
 import CreateEventDialog from './dialogs/CreateEventDialog';
 import DuplicateEventDialog from './dialogs/DuplicateEventDialog';
 import TeamsView from './TeamsView';
-import { Button } from './ui/Button';
+import EventsList from './EventsList';
+import AttendanceTable from './AttendanceTable';
+import AttendanceControls from './AttendanceControls';
+import PlayerPagination from './PlayerPagination';
 
 interface EventsViewProps {
     events: EventWithStats[];
@@ -150,6 +141,11 @@ export default function EventsView({
         setIsBulkEditMode(true);
     };
 
+    const handleExitBulkEditMode = () => {
+        setIsBulkEditMode(false);
+        setStagedChanges(new Map());
+    };
+
     const handleStagedChange = (playerId: number, isAttending: boolean) => {
         setStagedChanges(new Map(stagedChanges.set(playerId, isAttending)));
     };
@@ -218,97 +214,32 @@ export default function EventsView({
     return (
         <div className="flex flex-col md:flex-row gap-6 animate-fade-in">
             {/* Left Column: Events List & Actions */}
-            <div className="w-full md:w-72 lg:w-80 flex-shrink-0 space-y-6">
-                <div className="space-y-2">
-                     <h2 className="text-lg font-semibold text-gray-800">Events</h2>
-                     <p className="text-sm text-gray-600">Select an event to view attendance.</p>
-                </div>
+            <EventsList
+                events={events}
+                selectedEvent={selectedEvent}
+                eventsLoading={eventsLoading}
+                onEventSelect={onEventSelect}
+                onCreateEvent={() => setCreateEventOpen(true)}
+                onDeleteEvent={onDeleteEvent}
+                onDuplicateEvent={handleDuplicateEvent}
+            />
 
-                <Button onClick={() => setCreateEventOpen(true)} className="w-full justify-center btn-primary">
-                    <Plus size={16} className="mr-2"/> Create Event
-                </Button>
-                
-                <div className="space-y-3">
-                    {eventsLoading ? (
-                         <div className="text-center py-8">
-                            <div className="w-6 h-6 mx-auto mb-2 border-2 border-blue-200 border-t-blue-500 rounded-full animate-spin"></div>
-                            <p className="text-xs text-gray-500">Loading events...</p>
-                        </div>
-                    ) : events.length === 0 ? (
-                        <div className="text-center py-8 bg-gray-50 rounded-lg">
-                            <Calendar className="w-10 h-10 text-gray-400 mx-auto mb-3" />
-                            <p className="text-gray-600 mb-2 text-sm font-medium">No events found</p>
-                            <p className="text-xs text-gray-500">Click 'Create Event' to start</p>
-                        </div>
-                    ) : (
-                        events.map((event) => (
-                            <EventCard
-                                key={event.id}
-                                event={event}
-                                isSelected={selectedEvent?.id === event.id}
-                                onClick={() => onEventSelect(event)}
-                                onDelete={() => onDeleteEvent(event.id)}
-                                onDuplicate={() => handleDuplicateEvent(event)}
-                            />
-                        ))
-                    )}
-                </div>
-            </div>
-
-             {/* Right Column: Attendance */}
+            {/* Right Column: Attendance */}
             <div className="flex-1 space-y-4">
-                 {selectedEvent ? (
+                {selectedEvent ? (
                     <>
                         {!showTeams ? (
                             <>
-                                <div className="flex items-center justify-between">
-                                    <h3 className="text-lg font-semibold text-gray-900">
-                                        Event Attendance for <span className="text-blue-600">{selectedEvent.name}</span>
-                                    </h3>
-
-                                    {isBulkEditMode ? (
-                                        <div className="flex items-center gap-2">
-                                            <Button
-                                                variant="ghost"
-                                                onClick={() => {
-                                                    setIsBulkEditMode(false);
-                                                    setStagedChanges(new Map());
-                                                }}
-                                            >
-                                                Cancel
-                                            </Button>
-                                            <Button
-                                                onClick={handleSaveChanges}
-                                            >
-                                                Save Changes
-                                            </Button>
-                                        </div>
-                                    ) : (
-                                        <div className="flex items-center gap-2">
-                                            <Button variant="outline" onClick={handleEnterBulkEditMode}>
-                                                Bulk Edit
-                                            </Button>
-                                            {selectedEvent?.saved_teams_data && (
-                                                <Button
-                                                    variant="outline"
-                                                    onClick={handleLoadSavedTeams}
-                                                    className="btn-secondary"
-                                                >
-                                                    <Users className="w-4 h-4 mr-2" />
-                                                    Load Saved Teams
-                                                </Button>
-                                            )}
-                                            <Button
-                                                onClick={handleGenerateTeams}
-                                                disabled={isGeneratingTeams}
-                                                className="btn-primary"
-                                            >
-                                                <ArrowRightLeft className={`w-4 h-4 mr-2 ${isGeneratingTeams ? 'animate-spin' : ''}`} />
-                                                {isGeneratingTeams ? 'Generating...' : 'Generate Teams'}
-                                            </Button>
-                                        </div>
-                                    )}
-                                </div>
+                                <AttendanceControls
+                                    selectedEvent={selectedEvent}
+                                    isBulkEditMode={isBulkEditMode}
+                                    isGeneratingTeams={isGeneratingTeams}
+                                    onEnterBulkEditMode={handleEnterBulkEditMode}
+                                    onExitBulkEditMode={handleExitBulkEditMode}
+                                    onSaveChanges={handleSaveChanges}
+                                    onLoadSavedTeams={handleLoadSavedTeams}
+                                    onGenerateTeams={handleGenerateTeams}
+                                />
 
                                 <AttendanceTable
                                     players={paginatedAttendance}
@@ -318,33 +249,17 @@ export default function EventsView({
                                     onStagedChange={handleStagedChange}
                                 />
 
-                                {/* Pagination */}
-                                <div className="flex items-center justify-between">
-                                    <div className="text-sm text-gray-500">
-                                        Showing {Math.min(attendanceData.length > 0 ? ((currentPage - 1) * PAGE_SIZE) + 1 : 0, attendanceData.length)}
-                                        - {Math.min(currentPage * PAGE_SIZE, attendanceData.length)} of {attendanceData.length} players
-                                    </div>
-                                     {totalPages > 1 && (
-                                        <div className="flex items-center gap-1">
-                                            <Button variant="ghost" size="sm" onClick={() => handlePageChange(1)} disabled={currentPage === 1}>
-                                                <ChevronsLeft className="w-4 h-4" />
-                                            </Button>
-                                            <Button variant="ghost" size="sm" onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1}>
-                                                <ChevronLeft className="w-4 h-4" />
-                                            </Button>
-                                            <span className="text-sm px-2">Page {currentPage} of {totalPages}</span>
-                                            <Button variant="ghost" size="sm" onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages}>
-                                                <ChevronRight className="w-4 h-4" />
-                                            </Button>
-                                            <Button variant="ghost" size="sm" onClick={() => handlePageChange(totalPages)} disabled={currentPage === totalPages}>
-                                                <ChevronsRight className="w-4 h-4" />
-                                            </Button>
-                                        </div>
-                                     )}
-                                </div>
+                                <PlayerPagination
+                                    currentPage={currentPage}
+                                    totalPages={totalPages}
+                                    totalItems={attendanceData.length}
+                                    itemsPerPage={PAGE_SIZE}
+                                    onPageChange={handlePageChange}
+                                    itemName="players"
+                                />
                             </>
                         ) : (
-                             <TeamsView 
+                            <TeamsView 
                                 teams={teams}
                                 teamNames={{ team1: teamAlias1, team2: teamAlias2 }}
                                 setTeamNames={({ team1, team2 }) => {
@@ -383,135 +298,6 @@ export default function EventsView({
                 onDuplicate={handleDuplicateSubmit}
                 event={eventToDuplicate}
             />
-        </div>
-    );
-}
-
-// Compact Event Card
-function EventCard({ event, isSelected, onClick, onDelete, onDuplicate }: { event: EventWithStats; isSelected: boolean; onClick: () => void; onDelete: () => void; onDuplicate: () => void; }) {
-    const handleDelete = (e: React.MouseEvent) => {
-        e.stopPropagation(); // Prevent card from being selected
-        if (window.confirm(`Are you sure you want to delete the event "${event.name}"?`)) {
-            onDelete();
-        }
-    };
-
-    const handleDuplicate = (e: React.MouseEvent) => {
-        e.stopPropagation(); // Prevent card from being selected
-        onDuplicate();
-    };
-
-    const cardBaseClasses = "w-full rounded-lg border p-3 cursor-pointer transition-all duration-200 ease-in-out transform";
-    const cardStateClasses = isSelected
-        ? "bg-blue-900/95 border-blue-700 text-white shadow-lg -translate-y-1"
-        : "bg-white/60 border-white/40 text-gray-800 hover:border-gray-300/80 hover:-translate-y-0.5";
-
-    return (
-        <div onClick={onClick} className={`${cardBaseClasses} ${cardStateClasses}`}>
-            <div className="flex justify-between items-start">
-                <div className="flex-1">
-                    <p className={`font-bold text-lg ${isSelected ? 'text-white' : 'text-gray-900'}`}>{event.name}</p>
-                    <p className={`text-sm ${isSelected ? 'text-blue-200' : 'text-gray-600'}`}>
-                        {new Date(event.event_date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' })}
-                    </p>
-                </div>
-                <div className="flex items-center gap-1">
-                    <button
-                        onClick={handleDuplicate}
-                        className={`p-1.5 rounded-full transition-colors ${isSelected ? 'text-blue-300 hover:bg-blue-800/50' : 'text-gray-400 hover:bg-gray-200/80'}`}
-                        title="Duplicate Event"
-                    >
-                        <Copy size={16} />
-                    </button>
-                    <button
-                        onClick={handleDelete}
-                        className={`p-1.5 rounded-full transition-colors ${isSelected ? 'text-blue-300 hover:bg-blue-800/50' : 'text-gray-400 hover:bg-gray-200/80'}`}
-                        title="Delete Event"
-                    >
-                        <Trash2 size={16} />
-                    </button>
-                </div>
-            </div>
-            <div className={`my-3 h-px ${isSelected ? 'bg-blue-700/50' : 'bg-gray-200/80'}`}></div>
-            <div className="flex justify-between items-center text-sm">
-                <div className={`flex items-center gap-1.5 ${isSelected ? 'text-blue-200' : 'text-gray-600'}`}>
-                    <Users size={14} />
-                    <span>{event.attending_count || 0} Attending</span>
-                </div>
-                <div className={`flex items-center gap-1.5 ${isSelected ? 'text-blue-200' : 'text-gray-600'}`}>
-                    <span className="font-semibold text-green-400">{event.forwards_count || 0} F</span>
-                    <span className="font-semibold text-purple-400">{event.defensemen_count || 0} D</span>
-                </div>
-            </div>
-        </div>
-    );
-}
-
-function AttendanceTable({
-    players,
-    onAttendanceToggle,
-    isBulkEditMode,
-    stagedChanges,
-    onStagedChange,
-}: {
-    players: PlayerWithAttendance[];
-    onAttendanceToggle: (playerId: number) => void;
-    isBulkEditMode: boolean;
-    stagedChanges: Map<number, boolean>;
-    onStagedChange: (playerId: number, isAttending: boolean) => void;
-}) {
-    return (
-        <div className="bg-white/50 backdrop-blur-sm rounded-lg border border-white/40 overflow-hidden">
-            <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200/50">
-                    <thead className="bg-gray-50/50">
-                        <tr>
-                            <th scope="col" className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Player
-                            </th>
-                            <th scope="col" className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Position
-                            </th>
-                            <th scope="col" className="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Status
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200/50">
-                        {players.map((player) => {
-                            const isAttending = isBulkEditMode ? (stagedChanges.get(player.id) ?? false) : (player.is_attending_event ?? false);
-                            
-                            return (
-                                <tr key={player.id} className="hover:bg-gray-100/50 transition-colors">
-                                    <td className="px-4 py-1 whitespace-nowrap">
-                                        <div className="text-sm font-medium text-gray-900">{player.first_name} {player.last_name}</div>
-                                    </td>
-                                    <td className="px-4 py-1 whitespace-nowrap">
-                                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                                            player.is_defense ? 'bg-purple-100 text-purple-800' : 'bg-green-100 text-green-800'
-                                        }`}>
-                                            {player.is_defense ? 'Defense' : 'Forward'}
-                                        </span>
-                                    </td>
-                                    <td className="px-4 py-1 whitespace-nowrap text-center">
-                                        <input
-                                            type="checkbox"
-                                            checked={isAttending}
-                                            onChange={(e) => {
-                                                if (isBulkEditMode) {
-                                                    onStagedChange(player.id, e.target.checked)
-                                                }
-                                            }}
-                                            disabled={!isBulkEditMode}
-                                            className="h-5 w-5 rounded text-blue-600 focus:ring-blue-500 border-gray-300 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
-                                        />
-                                    </td>
-                                </tr>
-                            );
-                        })}
-                    </tbody>
-                </table>
-            </div>
         </div>
     );
 }

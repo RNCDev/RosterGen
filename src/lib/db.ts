@@ -190,6 +190,83 @@ export async function bulkInsertPlayers(groupId: number, players: Omit<PlayerInp
     }
 }
 
+export async function bulkUpdatePlayers(
+    groupId: number,
+    playersToCreate: Omit<PlayerInput, 'group_id'>[],
+    playersToUpdate: PlayerDB[],
+    playersToDelete: number[]
+): Promise<void> {
+    const client = await sql.connect();
+    try {
+        await client.query('BEGIN');
+
+        // Delete players
+        if (playersToDelete.length > 0) {
+            await client.query(
+                `UPDATE players SET is_active = false WHERE id = ANY($1::int[]) AND group_id = $2`,
+                [playersToDelete, groupId]
+            );
+        }
+
+        // Update players
+        if (playersToUpdate.length > 0) {
+            for (const player of playersToUpdate) {
+                await client.query(
+                    `UPDATE players SET 
+                        first_name = $1, 
+                        last_name = $2, 
+                        skill = $3, 
+                        is_defense = $4, 
+                        updated_at = CURRENT_TIMESTAMP
+                     WHERE id = $5 AND group_id = $6`,
+                    [player.first_name, player.last_name, player.skill, player.is_defense, player.id, groupId]
+                );
+            }
+        }
+
+        // Create new players
+        if (playersToCreate.length > 0) {
+            // Get all future events for this group first
+            const { rows: futureEvents } = await client.query(
+                `SELECT id FROM events 
+                 WHERE group_id = $1 
+                 AND is_active = true 
+                 AND event_date >= CURRENT_DATE
+                 ORDER BY event_date ASC`,
+                [groupId]
+            );
+
+            for (const player of playersToCreate) {
+                const { rows } = await client.query(
+                    `INSERT INTO players (first_name, last_name, skill, is_defense, group_id)
+                     VALUES ($1, $2, $3, $4, $5)
+                     RETURNING *`,
+                    [player.first_name, player.last_name, player.skill, player.is_defense, groupId]
+                );
+                const newPlayer = rows[0];
+                
+                // Create attendance records for all future events for this player
+                for (const event of futureEvents) {
+                    await client.query(
+                        `INSERT INTO attendance (player_id, event_id, is_attending)
+                         VALUES ($1, $2, $3)
+                         ON CONFLICT (player_id, event_id) DO NOTHING`,
+                        [newPlayer.id, event.id, false] // Default to not attending
+                    );
+                }
+            }
+        }
+
+        await client.query('COMMIT');
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Error in bulk player update transaction:', error);
+        throw error;
+    } finally {
+        client.release();
+    }
+}
+
 // ===== EVENT OPERATIONS =====
 
 export async function createEvent(event: EventInput): Promise<EventDB> {

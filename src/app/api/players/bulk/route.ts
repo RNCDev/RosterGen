@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
-import { bulkInsertPlayers } from '@/lib/db';
+import { bulkInsertPlayers, bulkUpdatePlayers } from '@/lib/db';
 import { type PlayerInput } from '@/types/PlayerTypes';
 import {
     ApiResponse,
@@ -57,7 +57,7 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
 
     const { groupId, players } = validation.data;
 
-    await bulkInsertPlayers(groupId, players, [], []);
+    await bulkInsertPlayers(groupId, players);
 
     return ApiResponse.created({ 
         message: 'Players created successfully',
@@ -79,7 +79,7 @@ export const PUT = withErrorHandler(async (request: NextRequest) => {
 
     const { groupId, playersToCreate, playersToUpdate, playersToDelete } = validation.data;
 
-    await bulkInsertPlayers(groupId, playersToCreate, playersToUpdate, playersToDelete);
+    await bulkUpdatePlayers(groupId, playersToCreate, playersToUpdate, playersToDelete);
 
     return ApiResponse.success({ 
         message: 'Roster updated successfully',
