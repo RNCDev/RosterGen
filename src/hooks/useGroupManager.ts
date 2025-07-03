@@ -317,17 +317,55 @@ export function useGroupManager() {
 
     const updateAttendance = useCallback(async (eventId: number, updates: AttendanceInput[]) => {
         if (!activeGroup) return;
+        
+        // Store original state for potential rollback
+        const originalAttendanceData = [...attendanceData];
+        
+        // Optimistic update: Apply changes immediately to the state
+        const optimisticUpdate = attendanceData.map(player => {
+            const update = updates.find(u => u.player_id === player.id);
+            if (update) {
+                return {
+                    ...player,
+                    is_attending_event: update.is_attending
+                };
+            }
+            return player;
+        });
+        
+        // Apply optimistic update immediately
+        setAttendanceData(optimisticUpdate);
+        
         try {
             await fetch('/api/attendance?bulk=true', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(updates)
             });
-            await loadEvents(activeGroup.id); // Refetch events for updated stats
+            
+            // Refresh events for updated stats (this will also refresh attendance data)
+            await loadEvents(activeGroup.id);
         } catch (err) {
+            // Rollback on error
+            setAttendanceData(originalAttendanceData);
             setError(err instanceof Error ? err.message : 'Failed to update attendance');
+            throw err; // Re-throw so EventsView can handle UI feedback if needed
         }
-    }, [activeGroup, loadEvents]);
+    }, [activeGroup, attendanceData, loadEvents]);
+
+    // Add a new function for single attendance toggle (commonly used)
+    const toggleAttendance = useCallback(async (playerId: number, eventId: number) => {
+        const player = attendanceData.find(p => p.id === playerId);
+        if (!player) return;
+        
+        const updates: AttendanceInput[] = [{
+            player_id: playerId,
+            event_id: eventId,
+            is_attending: !player.is_attending_event
+        }];
+        
+        await updateAttendance(eventId, updates);
+    }, [attendanceData, updateAttendance]);
 
     const duplicateEvent = async (eventId: number, newName: string, newDate: string, newTime?: string, newLocation?: string) => {
         if (!activeGroup) return;
@@ -441,6 +479,7 @@ export function useGroupManager() {
         teamAlias2,
         setTeamAlias2,
         handleSaveTeamsForEvent,
-        handleLoadTeamsForEvent
+        handleLoadTeamsForEvent,
+        toggleAttendance
     };
 }

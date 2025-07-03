@@ -80,7 +80,8 @@ export default function Home() {
         setTeamAlias2,
         handleUpdateTeamAliases,
         handleSaveTeamsForEvent,
-        handleLoadTeamsForEvent
+        handleLoadTeamsForEvent,
+        toggleAttendance
     } = useGroupManager();
     
     const [isAddPlayerOpen, setAddPlayerOpen] = useState(false);
@@ -181,6 +182,7 @@ export default function Home() {
                                     onCreateEvent={createEvent}
                                     onDeleteEvent={deleteEvent}
                                     onUpdateAttendance={updateAttendance}
+                                    onToggleAttendance={toggleAttendance}
                                     onDuplicateEvent={duplicateEvent}
                                     group={activeGroup}
                                     eventsLoading={eventsLoading}

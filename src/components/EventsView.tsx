@@ -35,6 +35,7 @@ interface EventsViewProps {
     onCreateEvent: (eventData: Omit<EventInput, 'group_id'>) => Promise<void>;
     onDeleteEvent: (eventId: number) => Promise<void>;
     onUpdateAttendance: (eventId: number, updates: AttendanceInput[]) => Promise<void>;
+    onToggleAttendance: (playerId: number, eventId: number) => Promise<void>;
     onDuplicateEvent: (eventId: number, newName: string, newDate: string, newTime?: string, newLocation?: string) => Promise<void>;
     group: Group | null;
     eventsLoading: boolean;
@@ -56,6 +57,7 @@ export default function EventsView({
     onCreateEvent,
     onDeleteEvent,
     onUpdateAttendance,
+    onToggleAttendance,
     onDuplicateEvent,
     group,
     eventsLoading,
@@ -68,7 +70,6 @@ export default function EventsView({
     onSaveTeamsForEvent,
     onLoadTeamsForEvent
 }: EventsViewProps) {
-    const [localAttendance, setLocalAttendance] = useState<PlayerWithAttendance[]>(attendanceData);
     const [isCreateEventOpen, setCreateEventOpen] = useState(false);
     const [isDuplicateEventOpen, setDuplicateEventOpen] = useState(false);
     const [eventToDuplicate, setEventToDuplicate] = useState<EventWithStats | null>(null);
@@ -83,10 +84,6 @@ export default function EventsView({
     const [stagedChanges, setStagedChanges] = useState<Map<number, boolean>>(new Map());
 
     useEffect(() => {
-        setLocalAttendance(attendanceData);
-    }, [attendanceData]);
-
-    useEffect(() => {
         // When the selected event or team aliases change, hide the teams view and reset teams data
         setShowTeams(false);
         setTeams({}); // Reset teams to empty object
@@ -95,33 +92,11 @@ export default function EventsView({
     const handleAttendanceToggle = async (playerId: number) => {
         if (!selectedEvent) return;
         
-        // Optimistic update
-        const originalState = [...localAttendance];
-        const playerIndex = originalState.findIndex(p => p.id === playerId);
-        if (playerIndex === -1) return;
-
-        const updatedPlayer = {
-            ...originalState[playerIndex],
-            is_attending_event: !originalState[playerIndex].is_attending_event
-        };
-        
-        const newState = [...originalState];
-        newState[playerIndex] = updatedPlayer;
-        setLocalAttendance(newState);
-
-        // API call
-        const updates: AttendanceInput[] = [{
-            player_id: playerId,
-            event_id: selectedEvent.id,
-            is_attending: updatedPlayer.is_attending_event
-        }];
-
         try {
-            await onUpdateAttendance(selectedEvent.id, updates);
+            await onToggleAttendance(playerId, selectedEvent.id);
         } catch (error) {
-            console.error('Failed to update attendance, reverting:', error);
-            // Revert on error
-            setLocalAttendance(originalState);
+            // Error handling is now managed in useGroupManager
+            console.error('Failed to update attendance:', error);
         }
     };
 
@@ -168,7 +143,7 @@ export default function EventsView({
 
     const handleEnterBulkEditMode = () => {
         const initialStagedChanges = new Map<number, boolean>();
-        localAttendance.forEach(player => {
+        attendanceData.forEach(player => {
             initialStagedChanges.set(player.id, player.is_attending_event ?? false);
         });
         setStagedChanges(initialStagedChanges);
@@ -184,7 +159,7 @@ export default function EventsView({
 
         const changes: AttendanceInput[] = [];
         const originalAttendance = new Map(
-            localAttendance.map(p => [p.id, p.is_attending_event ?? false])
+            attendanceData.map(p => [p.id, p.is_attending_event ?? false])
         );
 
         for (const [playerId, isAttending] of stagedChanges.entries()) {
@@ -208,10 +183,10 @@ export default function EventsView({
     const paginatedAttendance = useMemo(() => {
         const start = (currentPage - 1) * PAGE_SIZE;
         const end = start + PAGE_SIZE;
-        return localAttendance.slice(start, end);
-    }, [localAttendance, currentPage]);
+        return attendanceData.slice(start, end);
+    }, [attendanceData, currentPage]);
 
-    const totalPages = Math.ceil(localAttendance.length / PAGE_SIZE);
+    const totalPages = Math.ceil(attendanceData.length / PAGE_SIZE);
 
     const handlePageChange = (page: number) => {
         if (page >= 1 && page <= totalPages) {
@@ -346,8 +321,8 @@ export default function EventsView({
                                 {/* Pagination */}
                                 <div className="flex items-center justify-between">
                                     <div className="text-sm text-gray-500">
-                                        Showing {Math.min(localAttendance.length > 0 ? ((currentPage - 1) * PAGE_SIZE) + 1 : 0, localAttendance.length)}
-                                        - {Math.min(currentPage * PAGE_SIZE, localAttendance.length)} of {localAttendance.length} players
+                                        Showing {Math.min(attendanceData.length > 0 ? ((currentPage - 1) * PAGE_SIZE) + 1 : 0, attendanceData.length)}
+                                        - {Math.min(currentPage * PAGE_SIZE, attendanceData.length)} of {attendanceData.length} players
                                     </div>
                                      {totalPages > 1 && (
                                         <div className="flex items-center gap-1">
@@ -377,7 +352,7 @@ export default function EventsView({
                                     setTeamAlias2(team2);
                                 }}
                                 onGenerateTeams={handleGenerateTeams}
-                                attendingPlayerCount={localAttendance.filter(p => p.is_attending_event).length}
+                                attendingPlayerCount={attendanceData.filter(p => p.is_attending_event).length}
                                 isGenerating={isGeneratingTeams}
                                 onBack={() => setShowTeams(false)}
                                 onSaveTeamNames={onUpdateTeamAliases}
