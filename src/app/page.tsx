@@ -13,7 +13,7 @@ import packageJson from '../../package.json';
 import { useGroupManager } from '@/hooks/useGroupManager';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/Button';
-import { Plus, Upload, Users } from 'lucide-react';
+import { Plus, Upload, Users, Loader2, CheckCircle } from 'lucide-react';
 
 // A simple welcome screen component to guide new users.
 const WelcomeScreen = ({ onCreateGroup }: { onCreateGroup: () => void }) => (
@@ -87,6 +87,10 @@ export default function Home() {
     const [isAddPlayerOpen, setAddPlayerOpen] = useState(false);
     const [isUploadCsvOpen, setUploadCsvOpen] = useState(false);
     const [isCreateGroupOpen, setCreateGroupOpen] = useState(false);
+    const [isSavingAlias1, setIsSavingAlias1] = useState(false);
+    const [isSavingAlias2, setIsSavingAlias2] = useState(false);
+    const [showAlias1Success, setShowAlias1Success] = useState(false);
+    const [showAlias2Success, setShowAlias2Success] = useState(false);
 
     const onAddPlayer = async (playerData: Omit<PlayerInput, 'group_id'>) => {
         try {
@@ -117,6 +121,36 @@ export default function Home() {
         }
     };
 
+    const handleUpdateTeamName = async (team: 'team1' | 'team2') => {
+        const alias1 = team === 'team1' ? teamAlias1 : teamAlias1;
+        const alias2 = team === 'team2' ? teamAlias2 : teamAlias2;
+
+        if (team === 'team1') {
+            setIsSavingAlias1(true);
+        } else {
+            setIsSavingAlias2(true);
+        }
+
+        try {
+            await handleUpdateTeamAliases(alias1, alias2);
+            if (team === 'team1') {
+                setShowAlias1Success(true);
+                setTimeout(() => setShowAlias1Success(false), 2000);
+            } else {
+                setShowAlias2Success(true);
+                setTimeout(() => setShowAlias2Success(false), 2000);
+            }
+        } catch (error) {
+            console.error(`Failed to update Team ${team === 'team1' ? 1 : 2} alias:`, error);
+        } finally {
+            if (team === 'team1') {
+                setIsSavingAlias1(false);
+            } else {
+                setIsSavingAlias2(false);
+            }
+        }
+    };
+
     return (
         <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-50 via-slate-50 to-stone-100">
             <ActionHeader
@@ -138,7 +172,7 @@ export default function Home() {
             />
 
             <main className="flex-1">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 sm:py-3 lg:py-4">
                     {error && <ErrorAlert message={error} onDismiss={() => setError(null)} />}
 
                     {loading ? (
@@ -147,20 +181,62 @@ export default function Home() {
                          <WelcomeScreen onCreateGroup={() => setCreateGroupOpen(true)} />
                     ) : (
                         <Tabs defaultValue="roster" className="w-full">
-                            <TabsList className="grid w-full grid-cols-2 h-auto">
-                                <TabsTrigger value="roster" className="text-sm sm:text-base py-2 sm:py-3">Roster</TabsTrigger>
-                                <TabsTrigger value="events" className="text-sm sm:text-base py-2 sm:py-3">Events</TabsTrigger>
+                            <TabsList className="grid w-full grid-cols-2 h-auto border-b-2 border-gray-200 mt-2 mb-2">
+                                <TabsTrigger value="roster" className="text-sm sm:text-base py-2 sm:py-3 data-[state=active]:border-b-4 data-[state=active]:border-blue-600 data-[state=active]:text-blue-700">
+                                    Roster
+                                </TabsTrigger>
+                                <TabsTrigger value="events" className="text-sm sm:text-base py-2 sm:py-3 data-[state=active]:border-b-4 data-[state=active]:border-blue-600 data-[state=active]:text-blue-700">
+                                    Events
+                                </TabsTrigger>
                             </TabsList>
-                            <TabsContent value="roster" className="mt-4 animate-fade-in">
-                                <div className="bg-white/40 backdrop-blur-md border border-white/30 rounded-lg p-3 sm:p-4 mb-4 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-0 sm:justify-between animate-slide-in-from-left">
-                                    <h2 className="text-base sm:text-lg font-semibold text-gray-800">
+                            <TabsContent value="roster" className="mt-2 animate-fade-in">
+                                <div className="w-full flex flex-row items-center gap-4 mt-2 mb-4">
+                                    <div className="flex items-center gap-2 px-6 py-2 min-w-[200px] rounded-full bg-blue-50 border border-blue-200 shadow-sm">
+                                        <span className="text-xs font-semibold text-gray-500 uppercase mr-2">TEAM 1</span>
+                                        <input
+                                            id="team1-name"
+                                            type="text"
+                                            value={teamAlias1}
+                                            onChange={e => setTeamAlias1(e.target.value)}
+                                            onBlur={() => handleUpdateTeamName('team1')}
+                                            onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
+                                            placeholder="Red"
+                                            className="bg-transparent focus:outline-none text-base font-bold text-blue-800 w-32 min-w-0 px-1"
+                                            aria-label="Team 1 Name"
+                                        />
+                                        <span className="ml-1 flex items-center">
+                                            {isSavingAlias1 ? <Loader2 size={16} className="animate-spin text-blue-500" /> : null}
+                                            {showAlias1Success && <CheckCircle size={16} className="text-green-500 ml-1" />}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center gap-2 px-6 py-2 min-w-[200px] rounded-full bg-blue-50 border border-blue-200 shadow-sm">
+                                        <span className="text-xs font-semibold text-gray-500 uppercase mr-2">TEAM 2</span>
+                                        <input
+                                            id="team2-name"
+                                            type="text"
+                                            value={teamAlias2}
+                                            onChange={e => setTeamAlias2(e.target.value)}
+                                            onBlur={() => handleUpdateTeamName('team2')}
+                                            onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
+                                            placeholder="White"
+                                            className="bg-transparent focus:outline-none text-base font-bold text-blue-800 w-32 min-w-0 px-1"
+                                            aria-label="Team 2 Name"
+                                        />
+                                        <span className="ml-1 flex items-center">
+                                            {isSavingAlias2 ? <Loader2 size={16} className="animate-spin text-blue-500" /> : null}
+                                            {showAlias2Success && <CheckCircle size={16} className="text-green-500 ml-1" />}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div className="bg-white/40 backdrop-blur-md border border-white/30 rounded-lg p-3 sm:p-4 mb-4 flex flex-row items-center gap-4 animate-slide-in-from-left">
+                                    <h2 className="text-base sm:text-lg font-semibold text-gray-800 mr-4">
                                         Roster Management
                                     </h2>
-                                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
-                                        <Button variant="outline" onClick={() => setAddPlayerOpen(true)} className="text-sm sm:text-base">
+                                    <div className="flex flex-row items-center gap-2">
+                                        <Button variant="outline" onClick={() => setAddPlayerOpen(true)} className="text-sm sm:text-base h-10">
                                             <Plus className="mr-2 h-4 w-4" /> Add Player
                                         </Button>
-                                        <Button variant="outline" onClick={() => setUploadCsvOpen(true)} className="text-sm sm:text-base">
+                                        <Button variant="outline" onClick={() => setUploadCsvOpen(true)} className="text-sm sm:text-base h-10">
                                             <Upload className="mr-2 h-4 w-4" /> Upload CSV
                                         </Button>
                                     </div>
@@ -173,7 +249,7 @@ export default function Home() {
                                     onSaveChanges={handleSaveChanges}
                                 />
                             </TabsContent>
-                            <TabsContent value="events" className="mt-4 animate-fade-in">
+                            <TabsContent value="events" className="mt-2 animate-fade-in">
                                  <EventsView
                                     events={events}
                                     selectedEvent={selectedEvent}

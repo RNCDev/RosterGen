@@ -26,45 +26,45 @@ export default function PlayerPagination({
 
     return (
         <div className="mt-4 flex items-center justify-between">
-            <div className="text-sm text-gray-500">
+            <div className="text-base text-gray-500">
                 Showing {startItem} - {endItem} of {totalItems} {itemName}
             </div>
             {totalPages > 1 && (
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-3">
                     <Button 
-                        size="sm" 
+                        size="lg" 
                         variant="outline" 
                         onClick={() => onPageChange(1)} 
                         disabled={currentPage === 1}
                     >
-                        <ChevronsLeft className="w-4 h-4" />
+                        <ChevronsLeft className="w-5 h-5" />
                     </Button>
                     <Button 
-                        size="sm" 
+                        size="lg" 
                         variant="outline" 
                         onClick={() => onPageChange(currentPage - 1)} 
                         disabled={currentPage === 1}
                     >
-                        <ChevronLeft className="w-4 h-4" />
+                        <ChevronLeft className="w-5 h-5" />
                     </Button>
-                    <span className="text-sm font-medium px-4">
+                    <span className="text-lg font-bold px-6">
                         {currentPage} / {totalPages}
                     </span>
                     <Button 
-                        size="sm" 
+                        size="lg" 
                         variant="outline" 
                         onClick={() => onPageChange(currentPage + 1)} 
                         disabled={currentPage === totalPages}
                     >
-                        <ChevronRight className="w-4 h-4" />
+                        <ChevronRight className="w-5 h-5" />
                     </Button>
                     <Button 
-                        size="sm" 
+                        size="lg" 
                         variant="outline" 
                         onClick={() => onPageChange(totalPages)} 
                         disabled={currentPage === totalPages}
                     >
-                        <ChevronsRight className="w-4 h-4" />
+                        <ChevronsRight className="w-5 h-5" />
                     </Button>
                 </div>
             )}

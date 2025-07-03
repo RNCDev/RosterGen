@@ -175,48 +175,6 @@ export default function ActionHeader({
                             </button>
                         </div>
                     </div>
-
-                    {/* Team Aliases (card/chip style, match group style) */}
-                    {isGroupLoaded && (
-                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full">
-                            {/* Team 1 Chip */}
-                            <div className="flex items-center gap-2 px-6 py-2 rounded-full bg-blue-50 border border-blue-200 shadow-sm">
-                                <span className="text-xs font-semibold text-gray-500 uppercase mr-2">TEAM 1</span>
-                                <input
-                                    id="team1-name"
-                                    type="text"
-                                    value={teamAlias1}
-                                    onChange={(e) => setTeamAlias1(e.target.value)}
-                                    onBlur={() => handleUpdateAlias1(teamAlias1)}
-                                    placeholder="Red"
-                                    className="bg-transparent focus:outline-none text-base font-bold text-blue-800 w-20 min-w-0 px-1"
-                                    aria-label="Team 1 Name"
-                                />
-                                <span className="ml-1 flex items-center">
-                                    {isSavingAlias1 ? <Loader2 size={16} className="animate-spin text-blue-500" /> : <Pencil size={16} className="text-blue-400 cursor-pointer hover:text-blue-600 transition" aria-label="Edit team name" />}
-                                    {showAlias1Success && <CheckCircle size={16} className="text-green-500 ml-1" />}
-                                </span>
-                            </div>
-                            {/* Team 2 Chip */}
-                            <div className="flex items-center gap-2 px-6 py-2 rounded-full bg-blue-50 border border-blue-200 shadow-sm">
-                                <span className="text-xs font-semibold text-gray-500 uppercase mr-2">TEAM 2</span>
-                                <input
-                                    id="team2-name"
-                                    type="text"
-                                    value={teamAlias2}
-                                    onChange={(e) => setTeamAlias2(e.target.value)}
-                                    onBlur={() => handleUpdateAlias2(teamAlias2)}
-                                    placeholder="White"
-                                    className="bg-transparent focus:outline-none text-base font-bold text-blue-800 w-20 min-w-0 px-1"
-                                    aria-label="Team 2 Name"
-                                />
-                                <span className="ml-1 flex items-center">
-                                    {isSavingAlias2 ? <Loader2 size={16} className="animate-spin text-blue-500" /> : <Pencil size={16} className="text-blue-400 cursor-pointer hover:text-blue-600 transition" aria-label="Edit team name" />}
-                                    {showAlias2Success && <CheckCircle size={16} className="text-green-500 ml-1" />}
-                                </span>
-                            </div>
-                        </div>
-                    )}
                 </div>
             </div>
         </div>

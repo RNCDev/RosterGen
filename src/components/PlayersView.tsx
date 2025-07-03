@@ -63,72 +63,48 @@ export default function PlayersView({
                     onClearSelection={editingState.handleClearSelection}
                 />
             )}
-            
-            <div className="flex justify-between items-center mb-4">
-                <div className="flex items-center gap-2">
-                    <Button 
-                        onClick={() => editingState.setIsTourneyOpen(true)}
-                        variant="outline"
-                        className="text-sm hidden"
-                        disabled={players.length < 2}
-                        title={players.length < 2 ? "Need at least 2 players" : "Start Player Rank Tournament"}
-                    >
-                        <Trophy className="w-4 h-4 mr-2" />
-                        Rank Tourney
-                    </Button>
-                    <Button 
-                        onClick={() => editingState.handleToggleEdit(isDirty, onSaveChanges)}
-                        variant={editingState.isEditing ? 'primary' : 'outline'}
-                        data-action={editingState.isEditing ? "Done Editing" : "Start Editing"}
-                    >
-                        {editingState.isEditing ? 'Done Editing' : 'Edit Roster'}
-                    </Button>
-                    {editingState.isEditing && (
-                        <Button
-                            onClick={editingState.handleCancelEdit}
-                            variant="secondary"
-                        >
-                            Cancel
-                        </Button>
-                    )}
+            <div className="flex flex-row items-center gap-4 mb-2">
+                <Button 
+                    onClick={() => editingState.handleToggleEdit(isDirty, onSaveChanges)}
+                    variant={editingState.isEditing ? 'primary' : 'outline'}
+                    data-action={editingState.isEditing ? "Done Editing" : "Start Editing"}
+                    className="h-10"
+                >
+                    {editingState.isEditing ? 'Done Editing' : 'Edit Roster'}
+                </Button>
+                <div className="w-full max-w-xs">
+                    <PlayerFilters
+                        positionFilter={filtersState.positionFilter}
+                        skillFilter={filtersState.skillFilter}
+                        sortConfig={filtersState.sortConfig}
+                        onPositionFilterChange={filtersState.setPositionFilter}
+                        onSkillFilterChange={filtersState.setSkillFilter}
+                        onSort={filtersState.handleSort}
+                    />
                 </div>
             </div>
-            
             {players.length === 0 ? (
                 <PlayerEmptyState />
             ) : (
-                <div className="space-y-6">
-                    <div className="flex flex-col md:flex-row gap-6 animate-slide-in-from-left">
-                        <PlayerFilters
-                            positionFilter={filtersState.positionFilter}
-                            skillFilter={filtersState.skillFilter}
-                            sortConfig={filtersState.sortConfig}
-                            onPositionFilterChange={filtersState.setPositionFilter}
-                            onSkillFilterChange={filtersState.setSkillFilter}
-                            onSort={filtersState.handleSort}
+                <div className="flex flex-row gap-4 w-full">
+                    <div className="flex-1">
+                        <PlayerTable 
+                            players={paginationState.paginatedItems} 
+                            onUpdate={handlePlayerUpdate} 
+                            isEditing={editingState.isEditing}
+                            onDeletePlayer={handleDeletePlayer}
                         />
-
-                        <div className="flex-1 animate-slide-in-from-right">
-                            <PlayerTable 
-                                players={paginationState.paginatedItems} 
-                                onUpdate={handlePlayerUpdate} 
-                                isEditing={editingState.isEditing}
-                                onDeletePlayer={handleDeletePlayer}
-                            />
-
-                            <PlayerPagination
-                                currentPage={paginationState.currentPage}
-                                totalPages={paginationState.totalPages}
-                                totalItems={filtersState.filteredPlayers.length}
-                                itemsPerPage={paginationState.rowsPerPage}
-                                onPageChange={paginationState.handlePageChange}
-                                itemName="players"
-                            />
-                        </div>
+                        <PlayerPagination
+                            currentPage={paginationState.currentPage}
+                            totalPages={paginationState.totalPages}
+                            totalItems={filtersState.filteredPlayers.length}
+                            itemsPerPage={paginationState.rowsPerPage}
+                            onPageChange={paginationState.handlePageChange}
+                            itemName="players"
+                        />
                     </div>
                 </div>
             )}
-            
             <PlayerRankTourneyDialog
                 isOpen={editingState.isTourneyOpen}
                 onClose={() => editingState.setIsTourneyOpen(false)}
