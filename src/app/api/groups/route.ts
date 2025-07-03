@@ -1,112 +1,114 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { NextRequest } from 'next/server';
+import { z } from 'zod';
 import { 
     getGroupByCode, 
     createGroup,
     deleteGroup,
     renameGroup,
 } from '@/lib/db';
+import {
+    ApiResponse,
+    createApiHandler,
+    QuerySchemas,
+    withErrorHandler
+} from '@/lib/api-utils';
+
+// =============================================================================
+// VALIDATION SCHEMAS
+// =============================================================================
+
+const createGroupSchema = z.object({
+    code: z.string().trim().min(1, 'Group code is required and must be a non-empty string.')
+});
+
+const updateGroupSchema = z.object({
+    groupId: z.number().int().positive(),
+    newCode: z.string().trim().min(1)
+});
+
+const groupCodeQuerySchema = z.object({
+    code: z.string().min(1, 'Group code is required')
+});
+
+// =============================================================================
+// ROUTE HANDLERS
+// =============================================================================
 
 /**
  * GET /api/groups?code=...
  * Retrieves a single group by its unique code.
  */
-export async function GET(request: NextRequest) {
-    const { searchParams } = new URL(request.url);
-    const groupCode = searchParams.get('code');
-
-    if (!groupCode) {
-        return NextResponse.json({ error: 'Group code is required' }, { status: 400 });
+export const GET = createApiHandler({
+    querySchema: groupCodeQuerySchema,
+    allowedMethods: ['GET']
+})(async ({ query }) => {
+    const group = await getGroupByCode(query.code);
+    
+    if (!group) {
+        return ApiResponse.notFound('Group not found');
     }
-
-    try {
-        const group = await getGroupByCode(groupCode);
-        if (!group) {
-            return NextResponse.json({ error: 'Group not found' }, { status: 404 });
-        }
-        return NextResponse.json(group);
-    } catch (error) {
-        console.error(`Failed to fetch group ${groupCode}:`, error);
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
-    }
-}
+    
+    return ApiResponse.success(group);
+});
 
 /**
  * POST /api/groups
  * Creates a new group.
  */
-export async function POST(request: NextRequest) {
-    try {
-        const { code } = await request.json();
-
-        if (!code || typeof code !== 'string' || code.trim().length === 0) {
-            return NextResponse.json({ error: 'Group code is required and must be a non-empty string.' }, { status: 400 });
-        }
-
-        // Check if the group code is already in use
-        const existingGroup = await getGroupByCode(code);
-        if (existingGroup) {
-            return NextResponse.json({ error: 'A group with this code already exists.' }, { status: 409 });
-        }
-
-        const newGroup = await createGroup(code);
-        return NextResponse.json(newGroup, { status: 201 });
-
-    } catch (e) {
-        console.error('Error in POST /api/groups:', e);
-        return NextResponse.json({ error: 'An unexpected error occurred.' }, { status: 500 });
+export const POST = createApiHandler({
+    bodySchema: createGroupSchema,
+    allowedMethods: ['POST']
+})(async ({ body }) => {
+    // Check if the group code is already in use
+    const existingGroup = await getGroupByCode(body.code);
+    if (existingGroup) {
+        return ApiResponse.conflict('A group with this code already exists.');
     }
-}
+
+    const newGroup = await createGroup(body.code);
+    return ApiResponse.created(newGroup);
+});
 
 /**
  * PUT /api/groups
  * Renames a group.
  */
-export async function PUT(request: NextRequest) {
-    try {
-        const { groupId, newCode } = await request.json();
-
-        if (!groupId || !newCode) {
-            return NextResponse.json({ error: 'Group ID and new code are required.' }, { status: 400 });
-        }
-
-        // Check if the new group code is already in use by another group
-        const existingGroup = await getGroupByCode(newCode);
-        if (existingGroup && existingGroup.id !== groupId) {
-            return NextResponse.json({ error: `Group code "${newCode}" is already in use.` }, { status: 409 });
-        }
-
-        const updatedGroup = await renameGroup(groupId, newCode);
-
-        return NextResponse.json(updatedGroup, { status: 200 });
-    } catch (e: any) {
-        console.error('Error in PUT /api/groups:', e);
-        return NextResponse.json({ error: 'An unexpected error occurred during rename.' }, { status: 500 });
+export const PUT = createApiHandler({
+    bodySchema: updateGroupSchema,
+    allowedMethods: ['PUT']
+})(async ({ body }) => {
+    // Check if the new group code is already in use by another group
+    const existingGroup = await getGroupByCode(body.newCode);
+    if (existingGroup && existingGroup.id !== body.groupId) {
+        return ApiResponse.conflict(`Group code "${body.newCode}" is already in use.`);
     }
-}
+
+    const updatedGroup = await renameGroup(body.groupId, body.newCode);
+    return ApiResponse.success(updatedGroup);
+});
 
 /**
- * DELETE /api/groups
+ * DELETE /api/groups?groupId=...
  * Deletes an entire group by its ID.
  */
-export async function DELETE(request: NextRequest) {
+export const DELETE = withErrorHandler(async (request: NextRequest) => {
     const { searchParams } = new URL(request.url);
-    const groupId = searchParams.get('groupId');
+    const groupIdParam = searchParams.get('groupId');
     
-    try {
-        if (!groupId) {
-            return NextResponse.json({ error: 'Group ID is required' }, { status: 400 });
-        }
-
-        const success = await deleteGroup(parseInt(groupId));
-        if (!success) {
-            return NextResponse.json({ error: 'Group not found or could not be deleted' }, { status: 404 });
-        }
-
-        return new NextResponse(null, { status: 204 }); // No Content
-
-    } catch (error) {
-        console.error(`Failed to delete group ${groupId}:`, error);
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    if (!groupIdParam) {
+        return ApiResponse.badRequest('Group ID is required');
     }
-}
+    
+    const groupId = parseInt(groupIdParam, 10);
+    if (isNaN(groupId) || groupId <= 0) {
+        return ApiResponse.badRequest('Group ID must be a positive integer');
+    }
+    
+    const success = await deleteGroup(groupId);
+    
+    if (!success) {
+        return ApiResponse.notFound('Group not found or could not be deleted');
+    }
+
+    return ApiResponse.noContent();
+});

@@ -1,23 +1,44 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+import { z } from 'zod';
 import { updateGroupTeamAliases } from '@/lib/db';
+import {
+    ApiResponse,
+    withErrorHandler
+} from '@/lib/api-utils';
 
-export async function PUT(req: NextRequest) {
-    try {
-        const { groupId, teamAlias1, teamAlias2 } = await req.json();
+// =============================================================================
+// VALIDATION SCHEMAS
+// =============================================================================
 
-        if (!groupId || !teamAlias1 || !teamAlias2) {
-            return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
-        }
+const updateAliasesSchema = z.object({
+    groupId: z.number().int().positive(),
+    teamAlias1: z.string().trim().min(1, 'Team alias 1 is required'),
+    teamAlias2: z.string().trim().min(1, 'Team alias 2 is required')
+});
 
-        const updatedGroup = await updateGroupTeamAliases(groupId, teamAlias1, teamAlias2);
+// =============================================================================
+// ROUTE HANDLERS
+// =============================================================================
 
-        if (!updatedGroup) {
-            return NextResponse.json({ error: 'Group not found or update failed' }, { status: 404 });
-        }
+/**
+ * PUT /api/groups/aliases
+ * Updates team alias names for a group.
+ */
+export const PUT = withErrorHandler(async (request: NextRequest) => {
+    const body = await request.json();
+    const validation = updateAliasesSchema.safeParse(body);
 
-        return NextResponse.json(updatedGroup);
-    } catch (error) {
-        console.error('Error updating group team aliases:', error);
-        return NextResponse.json({ error: 'Failed to update team aliases' }, { status: 500 });
+    if (!validation.success) {
+        return ApiResponse.badRequest('Invalid alias data', validation.error.flatten());
     }
-} 
+
+    const { groupId, teamAlias1, teamAlias2 } = validation.data;
+
+    const updatedGroup = await updateGroupTeamAliases(groupId, teamAlias1, teamAlias2);
+
+    if (!updatedGroup) {
+        return ApiResponse.notFound('Group not found or update failed');
+    }
+
+    return ApiResponse.success(updatedGroup);
+}); 

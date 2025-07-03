@@ -32,16 +32,10 @@ Overall, RosterGen is a well-structured Next.js application with a clear separat
 ### 🔧 **Areas for Improvement**
 
 **Over-Engineering & Complexity**
-1. **Excessive Animation/Styling Code**: The `globals.css` file has 284 lines with many unused animation classes and overly complex glass-morphism effects. This adds maintenance burden without significant user benefit.
-
 2. **Component Bloat**: Components like `PlayersView.tsx` (475 lines) and `EventsView.tsx` (542 lines) are doing too much. They should be broken into smaller, focused components.
-
-3. **API Route Redundancy**: Some API patterns are repetitive. Consider creating shared middleware or base API utilities.
 
 **State Management Issues**
 4. **Local State Complexity**: Multiple pieces of local state in components (editing modes, pagination, filters) could be simplified or extracted.
-
-5. **Attendance State Duplication**: `EventsView` maintains both `attendanceData` and `localAttendance`, creating potential sync issues.
 
 **Database Concerns**
 6. **Team Alias Schema**: Using `team-alias-1` and `team-alias-2` with hyphens is inconsistent with other field naming. Should be `team_alias_1` and `team_alias_2`.

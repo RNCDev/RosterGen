@@ -1,5 +1,4 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { 
     getPlayersByGroup,
@@ -7,108 +6,94 @@ import {
     deletePlayer, 
     updatePlayer 
 } from '@/lib/db';
+import {
+    ApiResponse,
+    createApiHandler,
+    withErrorHandler
+} from '@/lib/api-utils';
 
-// Zod schema for validating a single player
+// =============================================================================
+// VALIDATION SCHEMAS
+// =============================================================================
+
 const playerSchema = z.object({
     id: z.number().optional(), // Optional for creation
-    first_name: z.string().trim().min(1),
-    last_name: z.string().trim().min(1),
+    first_name: z.string().trim().min(1, 'First name is required'),
+    last_name: z.string().trim().min(1, 'Last name is required'),
     skill: z.number().int().min(1).max(10),
     is_defense: z.boolean(),
     group_id: z.number().int().positive(),
 });
 
+const createPlayerSchema = playerSchema.omit({ id: true });
+const updatePlayerSchema = playerSchema.required({ id: true });
+const deletePlayerSchema = z.object({
+    id: z.number().int().positive()
+});
+
+// =============================================================================
+// ROUTE HANDLERS
+// =============================================================================
+
 /**
  * GET /api/players?groupId=...
  * Fetches all active players for a given group ID.
  */
-export async function GET(request: NextRequest) {
+export const GET = withErrorHandler(async (request: NextRequest) => {
     const { searchParams } = new URL(request.url);
-    const groupId = searchParams.get('groupId');
+    const groupIdParam = searchParams.get('groupId');
 
-    if (!groupId) {
-        return NextResponse.json({ error: 'Group ID is required' }, { status: 400 });
+    if (!groupIdParam) {
+        return ApiResponse.badRequest('Group ID is required');
     }
 
-    try {
-        const players = await getPlayersByGroup(parseInt(groupId));
-        return NextResponse.json(players);
-    } catch (error) {
-        console.error(`Failed to fetch players for group ${groupId}:`, error);
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    const groupId = parseInt(groupIdParam, 10);
+    if (isNaN(groupId) || groupId <= 0) {
+        return ApiResponse.badRequest('Group ID must be a positive integer');
     }
-}
+
+    const players = await getPlayersByGroup(groupId);
+    return ApiResponse.success(players);
+});
 
 /**
  * POST /api/players
  * Creates a single player for a group.
  */
-export async function POST(request: NextRequest) {
-    try {
-        const body = await request.json();
-        
-        const singlePlayerCheck = playerSchema.safeParse(body);
-        if (!singlePlayerCheck.success) {
-            return NextResponse.json({ error: 'Invalid player data', details: singlePlayerCheck.error.flatten() }, { status: 400 });
-        }
-
-        const newPlayer = await createPlayer(singlePlayerCheck.data);
-        return NextResponse.json(newPlayer, { status: 201 });
-
-    } catch (error) {
-        console.error('Error in POST /api/players:', error);
-        if (error instanceof z.ZodError) {
-            return NextResponse.json({ error: 'Invalid data', details: error.flatten() }, { status: 400 });
-        }
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
-    }
-}
+export const POST = createApiHandler({
+    bodySchema: createPlayerSchema,
+    allowedMethods: ['POST']
+})(async ({ body }) => {
+    const newPlayer = await createPlayer(body);
+    return ApiResponse.created(newPlayer);
+});
 
 /**
  * PUT /api/players
  * Updates a single player.
  */
-export async function PUT(request: NextRequest) {
-    try {
-        const body = await request.json();
-        const validation = playerSchema.required({ id: true }).safeParse(body);
-
-        if (!validation.success) {
-            return NextResponse.json({ error: 'Invalid player data', details: validation.error.flatten() }, { status: 400 });
-        }
-        
-        const playerData = { ...validation.data, is_active: true };
-        const updatedPlayer = await updatePlayer(playerData);
-        return NextResponse.json(updatedPlayer);
-        
-    } catch (error) {
-        console.error('Failed to update player:', error);
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
-    }
-}
+export const PUT = createApiHandler({
+    bodySchema: updatePlayerSchema,
+    allowedMethods: ['PUT']
+})(async ({ body }) => {
+    const playerData = { ...body, is_active: true };
+    const updatedPlayer = await updatePlayer(playerData);
+    return ApiResponse.success(updatedPlayer);
+});
 
 /**
  * DELETE /api/players
  * Soft deletes a single player by their ID.
  */
-export async function DELETE(request: NextRequest) {
-    try {
-        const { id } = await request.json();
-        const validation = z.object({ id: z.number().int().positive() }).safeParse({ id });
-
-        if (!validation.success) {
-            return NextResponse.json({ error: 'A valid player ID is required' }, { status: 400 });
-        }
-
-        const success = await deletePlayer(validation.data.id);
-        
-        if (!success) {
-            return NextResponse.json({ error: 'Player not found or not deleted' }, { status: 404 });
-        }
-
-        return new NextResponse(null, { status: 204 }); // No Content
-    } catch (error) {
-        console.error('Failed to delete player:', error);
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+export const DELETE = createApiHandler({
+    bodySchema: deletePlayerSchema,
+    allowedMethods: ['DELETE']
+})(async ({ body }) => {
+    const success = await deletePlayer(body.id);
+    
+    if (!success) {
+        return ApiResponse.notFound('Player not found or not deleted');
     }
-}
+
+    return ApiResponse.noContent();
+});
