@@ -20,7 +20,7 @@ const playerSchema = z.object({
     id: z.number().optional(), // Optional for creation
     first_name: z.string().trim().min(1, 'First name is required'),
     last_name: z.string().trim().min(1, 'Last name is required'),
-    skill: z.number().int().min(1).max(10),
+    skill: z.number().int().min(1).max(7),
     is_defense: z.boolean(),
     group_id: z.number().int().positive(),
 });

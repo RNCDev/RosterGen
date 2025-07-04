@@ -41,6 +41,7 @@ interface EventsViewProps {
     onUpdateTeamAliases: (alias1: string, alias2: string) => Promise<void>;
     onSaveTeamsForEvent: (eventId: number, teams: Teams) => Promise<void>;
     onLoadTeamsForEvent: (eventId: number) => Promise<Teams>;
+    onDeleteSavedTeams: (eventId: number) => Promise<void>;
 }
 
 export default function EventsView({
@@ -62,18 +63,24 @@ export default function EventsView({
     setTeamAlias2,
     onUpdateTeamAliases,
     onSaveTeamsForEvent,
-    onLoadTeamsForEvent
+    onLoadTeamsForEvent,
+    onDeleteSavedTeams,
 }: EventsViewProps) {
     // Extract state management to custom hooks
     const eventManagement = useEventManagement(selectedEvent?.id, teamAlias1, teamAlias2);
-    const attendanceManagement = useAttendanceManagement();
+    const { handleUpdateSingleAttendance } = useAttendanceManagement();
     const paginationState = usePlayerPagination(attendanceData, 20);
 
     const handleAttendanceToggle = async (playerId: number) => {
         if (!selectedEvent) return;
         
         try {
-            await onToggleAttendance(playerId, selectedEvent.id);
+            await handleUpdateSingleAttendance(
+                playerId,
+                selectedEvent.id,
+                !(attendanceData.find(p => p.id === playerId)?.is_attending_event ?? false),
+                onToggleAttendance
+            );
         } catch (error) {
             // Error handling is now managed in useGroupManager
             console.error('Failed to update attendance:', error);
@@ -129,21 +136,15 @@ export default function EventsView({
                             <>
                                 <AttendanceControls
                                     selectedEvent={selectedEvent}
-                                    isBulkEditMode={attendanceManagement.isBulkEditMode}
                                     isGeneratingTeams={eventManagement.isGeneratingTeams}
-                                    onEnterBulkEditMode={() => attendanceManagement.handleEnterBulkEditMode(attendanceData)}
-                                    onExitBulkEditMode={attendanceManagement.handleExitBulkEditMode}
-                                    onSaveChanges={() => attendanceManagement.handleSaveChanges(selectedEvent.id, attendanceData, onUpdateAttendance)}
                                     onLoadSavedTeams={handleLoadSavedTeams}
                                     onGenerateTeams={() => group && eventManagement.handleGenerateTeams(selectedEvent, group)}
+                                    onDeleteSavedTeams={onDeleteSavedTeams}
                                 />
 
                                 <AttendanceTable
                                     players={paginationState.paginatedItems}
                                     onAttendanceToggle={handleAttendanceToggle}
-                                    isBulkEditMode={attendanceManagement.isBulkEditMode}
-                                    stagedChanges={attendanceManagement.stagedChanges}
-                                    onStagedChange={attendanceManagement.handleStagedChange}
                                 />
 
                                 <PlayerPagination

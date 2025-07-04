@@ -4,6 +4,7 @@ export interface PlayerDB {
     id: number;
     first_name: string;
     last_name: string;
+    /** Player skill level from 1 to 7. */
     skill: number;
     is_defense: boolean;
     group_id: number;
@@ -17,6 +18,7 @@ export interface PlayerDB {
 export interface PlayerInput {
     first_name: string;
     last_name: string;
+    /** Player skill level from 1 to 7. */
     skill: number;
     is_defense: boolean;
     group_id: number;
@@ -27,6 +29,7 @@ export interface PlayerInput {
 export interface FormPlayer {
     firstName: string;
     lastName: string;
+    /** Player skill level from 1 to 7. */
     skill: number;
     defense: boolean;
     groupId: number;

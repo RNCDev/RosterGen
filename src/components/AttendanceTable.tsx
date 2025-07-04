@@ -6,17 +6,11 @@ import { type PlayerWithAttendance } from '@/types/PlayerTypes';
 interface AttendanceTableProps {
     players: PlayerWithAttendance[];
     onAttendanceToggle: (playerId: number) => void;
-    isBulkEditMode: boolean;
-    stagedChanges: Map<number, boolean>;
-    onStagedChange: (playerId: number, isAttending: boolean) => void;
 }
 
 export default function AttendanceTable({
     players,
     onAttendanceToggle,
-    isBulkEditMode,
-    stagedChanges,
-    onStagedChange,
 }: AttendanceTableProps) {
     return (
         <div className="bg-white/50 backdrop-blur-sm rounded-lg border border-white/40 overflow-hidden">
@@ -37,9 +31,7 @@ export default function AttendanceTable({
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200/50">
                         {players.map((player) => {
-                            const isAttending = isBulkEditMode 
-                                ? (stagedChanges.get(player.id) ?? false) 
-                                : (player.is_attending_event ?? false);
+                            const isAttending = player.is_attending_event ?? false;
                             
                             return (
                                 <tr key={player.id} className="hover:bg-gray-100/50 transition-colors">
@@ -59,12 +51,8 @@ export default function AttendanceTable({
                                         <input
                                             type="checkbox"
                                             checked={isAttending}
-                                            onChange={(e) => {
-                                                if (isBulkEditMode) {
-                                                    onStagedChange(player.id, e.target.checked);
-                                                } else {
-                                                    onAttendanceToggle(player.id);
-                                                }
+                                            onChange={() => {
+                                                onAttendanceToggle(player.id);
                                             }}
                                             className="h-5 w-5 rounded text-blue-600 focus:ring-blue-500 border-gray-300 cursor-pointer"
                                         />

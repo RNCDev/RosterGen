@@ -13,7 +13,7 @@ import {
 } from '@/types/PlayerTypes';
 import _ from 'lodash';
 
-export function useGroupManager() {
+export function useGroupManager(onTeamDataChangeSuccess?: () => void) {
     const [groupCodeInput, setGroupCodeInput] = useState<string>(''); // User's input
     const [activeGroup, setActiveGroup] = useState<Group | null>(null);
     const [players, setPlayers] = useState<Player[]>([]);
@@ -418,22 +418,48 @@ export function useGroupManager() {
         }
     };
 
-    const handleLoadTeamsForEvent = async (eventId: number): Promise<Teams> => {
+    const handleLoadTeamsForEvent = useCallback(async (eventId: number): Promise<Teams> => {
+        if (!activeGroup) throw new Error('No active group');
+        setLoading(true);
         try {
             const response = await fetch(`/api/events/teams?eventId=${eventId}`);
-
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to load teams');
+                throw new Error(errorData.message || 'Failed to load teams for event');
             }
-
-            const data = await response.json();
-            return data.teams;
+            const { teams } = await response.json();
+            return teams;
         } catch (err) {
-            console.error('Error loading teams:', err);
-            throw err; // Re-throw so the UI can handle it
+            setError(err instanceof Error ? err.message : 'Failed to load teams for event');
+            throw err;
+        } finally {
+            setLoading(false);
         }
-    };
+    }, [activeGroup]);
+
+    const handleDeleteSavedTeams = useCallback(async (eventId: number) => {
+        if (!activeGroup) return;
+        setLoading(true);
+        try {
+            const response = await fetch('/api/events/teams', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ eventId }),
+            });
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to delete saved teams');
+            }
+            await loadEvents(activeGroup.id); // Reload events to update UI
+            if (onTeamDataChangeSuccess) {
+                onTeamDataChangeSuccess();
+            }
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to delete saved teams');
+        } finally {
+            setLoading(false);
+        }
+    }, [activeGroup, loadEvents, onTeamDataChangeSuccess]);
 
     // Computed values
     const isDirty = !_.isEqual(players, originalPlayers);
@@ -480,6 +506,7 @@ export function useGroupManager() {
         setTeamAlias2,
         handleSaveTeamsForEvent,
         handleLoadTeamsForEvent,
-        toggleAttendance
+        toggleAttendance,
+        handleDeleteSavedTeams
     };
 }

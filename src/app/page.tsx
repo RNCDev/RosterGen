@@ -45,6 +45,8 @@ const LoadingState = () => (
 );
 
 export default function Home() {
+    const [activeTab, setActiveTab] = useState('roster');
+
     const {
         groupCodeInput,
         setGroupCodeInput,
@@ -81,8 +83,9 @@ export default function Home() {
         handleUpdateTeamAliases,
         handleSaveTeamsForEvent,
         handleLoadTeamsForEvent,
-        toggleAttendance
-    } = useGroupManager();
+        toggleAttendance,
+        handleDeleteSavedTeams
+    } = useGroupManager(() => setActiveTab('events'));
     
     const [isAddPlayerOpen, setAddPlayerOpen] = useState(false);
     const [isUploadCsvOpen, setUploadCsvOpen] = useState(false);
@@ -180,7 +183,7 @@ export default function Home() {
                     ) : !activeGroup ? (
                          <WelcomeScreen onCreateGroup={() => setCreateGroupOpen(true)} />
                     ) : (
-                        <Tabs defaultValue="roster" className="w-full">
+                        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                             <TabsList className="grid w-full grid-cols-2 h-auto border-b-2 border-gray-200 mt-2 mb-2">
                                 <TabsTrigger value="roster" className="text-sm sm:text-base py-2 sm:py-3 data-[state=active]:border-b-4 data-[state=active]:border-blue-600 data-[state=active]:text-blue-700">
                                     Roster
@@ -270,6 +273,7 @@ export default function Home() {
                                     onUpdateTeamAliases={handleUpdateTeamAliases}
                                     onSaveTeamsForEvent={handleSaveTeamsForEvent}
                                     onLoadTeamsForEvent={handleLoadTeamsForEvent}
+                                    onDeleteSavedTeams={handleDeleteSavedTeams}
                                 />
                             </TabsContent>
                         </Tabs>

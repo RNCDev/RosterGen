@@ -7,24 +7,18 @@ import { Button } from '@/components/ui/Button';
 
 interface AttendanceControlsProps {
     selectedEvent: EventWithStats;
-    isBulkEditMode: boolean;
     isGeneratingTeams: boolean;
-    onEnterBulkEditMode: () => void;
-    onExitBulkEditMode: () => void;
-    onSaveChanges: () => void;
     onLoadSavedTeams?: () => void;
     onGenerateTeams: () => void;
+    onDeleteSavedTeams: (eventId: number) => Promise<void>;
 }
 
 export default function AttendanceControls({
     selectedEvent,
-    isBulkEditMode,
     isGeneratingTeams,
-    onEnterBulkEditMode,
-    onExitBulkEditMode,
-    onSaveChanges,
     onLoadSavedTeams,
-    onGenerateTeams
+    onGenerateTeams,
+    onDeleteSavedTeams,
 }: AttendanceControlsProps) {
     return (
         <div className="flex items-center justify-between">
@@ -32,43 +26,35 @@ export default function AttendanceControls({
                 Event Attendance for <span className="text-blue-600">{selectedEvent.name}</span>
             </h3>
 
-            {isBulkEditMode ? (
-                <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
+                {selectedEvent?.saved_teams_data && (
                     <Button
-                        variant="ghost"
-                        onClick={onExitBulkEditMode}
+                        variant="outline"
+                        onClick={() => onDeleteSavedTeams(selectedEvent.id)}
+                        className="btn-secondary"
                     >
-                        Cancel
+                        Delete Saved Teams
                     </Button>
-                    <Button onClick={onSaveChanges}>
-                        Save Changes
-                    </Button>
-                </div>
-            ) : (
-                <div className="flex items-center gap-2">
-                    <Button variant="outline" onClick={onEnterBulkEditMode}>
-                        Bulk Edit
-                    </Button>
-                    {selectedEvent?.saved_teams_data && onLoadSavedTeams && (
-                        <Button
-                            variant="outline"
-                            onClick={onLoadSavedTeams}
-                            className="btn-secondary"
-                        >
-                            <Users className="w-4 h-4 mr-2" />
-                            Load Saved Teams
-                        </Button>
-                    )}
+                )}
+                {selectedEvent?.saved_teams_data && onLoadSavedTeams && (
                     <Button
-                        onClick={onGenerateTeams}
-                        disabled={isGeneratingTeams}
-                        className="btn-primary"
+                        variant="outline"
+                        onClick={onLoadSavedTeams}
+                        className="btn-secondary"
                     >
-                        <ArrowRightLeft className={`w-4 h-4 mr-2 ${isGeneratingTeams ? 'animate-spin' : ''}`} />
-                        {isGeneratingTeams ? 'Generating...' : 'Generate Teams'}
+                        <Users className="w-4 h-4 mr-2" />
+                        Load Saved Teams
                     </Button>
-                </div>
-            )}
+                )}
+                <Button
+                    onClick={onGenerateTeams}
+                    disabled={isGeneratingTeams}
+                    className="btn-primary"
+                >
+                    <ArrowRightLeft className={`w-4 h-4 mr-2 ${isGeneratingTeams ? 'animate-spin' : ''}`} />
+                    {isGeneratingTeams ? 'Generating...' : 'Generate Teams'}
+                </Button>
+            </div>
         </div>
     );
 } 
