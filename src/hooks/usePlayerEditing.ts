@@ -16,6 +16,8 @@ export interface PlayerEditingState {
         setPlayers: (players: Player[]) => void
     ) => void;
     handleClearSelection: () => void;
+    handleTogglePlayerSelection: (playerId: number) => void;
+    handleToggleAllPlayers: (players: Player[]) => void;
 }
 
 export function usePlayerEditing(): PlayerEditingState {
@@ -28,12 +30,17 @@ export function usePlayerEditing(): PlayerEditingState {
             onSaveChanges();
         }
         setIsEditing(!isEditing);
+        // Clear selection when exiting edit mode
+        if (isEditing) {
+            setSelectedPlayerIds(new Set());
+        }
     };
 
     const handleCancelEdit = () => {
         // Here you would revert changes. For simplicity, we'll just exit editing mode.
         // A more robust solution would involve refetching original players.
         setIsEditing(false);
+        setSelectedPlayerIds(new Set());
     };
 
     const handleBulkUpdate = (
@@ -52,6 +59,27 @@ export function usePlayerEditing(): PlayerEditingState {
         setSelectedPlayerIds(new Set());
     };
 
+    const handleTogglePlayerSelection = (playerId: number) => {
+        setSelectedPlayerIds(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(playerId)) {
+                newSet.delete(playerId);
+            } else {
+                newSet.add(playerId);
+            }
+            return newSet;
+        });
+    };
+
+    const handleToggleAllPlayers = (players: Player[]) => {
+        const allSelected = players.length > 0 && players.every(p => selectedPlayerIds.has(p.id));
+        if (allSelected) {
+            setSelectedPlayerIds(new Set());
+        } else {
+            setSelectedPlayerIds(new Set(players.map(p => p.id)));
+        }
+    };
+
     return {
         isEditing,
         selectedPlayerIds,
@@ -62,6 +90,8 @@ export function usePlayerEditing(): PlayerEditingState {
         handleToggleEdit,
         handleCancelEdit,
         handleBulkUpdate,
-        handleClearSelection
+        handleClearSelection,
+        handleTogglePlayerSelection,
+        handleToggleAllPlayers
     };
 } 

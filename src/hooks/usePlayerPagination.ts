@@ -10,7 +10,7 @@ export interface PaginationState<T> {
     handlePageChange: (page: number) => void;
 }
 
-export function usePlayerPagination<T>(items: T[], initialRowsPerPage: number = 20): PaginationState<T> {
+export function usePlayerPagination<T>(items: T[], initialRowsPerPage: number = 10): PaginationState<T> {
     const [currentPage, setCurrentPage] = useState(1);
     const [rowsPerPage, setRowsPerPage] = useState(initialRowsPerPage);
 

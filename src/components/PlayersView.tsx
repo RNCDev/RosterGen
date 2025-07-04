@@ -9,8 +9,7 @@ import {
 import { Button } from '@/components/ui/Button';
 import PlayerRankTourneyDialog from '@/components/dialogs/PlayerRankTourneyDialog';
 import PlayerTable from '@/components/PlayerTable';
-import PlayerBulkActions from '@/components/PlayerBulkActions';
-import PlayerFilters from '@/components/PlayerFilters';
+import PlayerActionBar from '@/components/PlayerActionBar';
 import PlayerPagination from '@/components/PlayerPagination';
 import PlayerEmptyState from '@/components/PlayerEmptyState';
 import { usePlayerFilters } from '@/hooks/usePlayerFilters';
@@ -32,58 +31,50 @@ export default function PlayersView({
     isDirty,
     onSaveChanges
 }: PlayersViewProps) {
-    // Extract state management to custom hooks
+
     const filtersState = usePlayerFilters(players);
     const paginationState = usePlayerPagination(filtersState.filteredPlayers);
     const editingState = usePlayerEditing();
 
-    const handlePlayerUpdate = (updatedPlayer: Player) => {
-        setPlayers(players.map(p => (p.id === updatedPlayer.id ? updatedPlayer : p)));
+    const handlePlayerUpdate = (player: Player) => {
+        const updatedPlayers = players.map(p => p.id === player.id ? player : p);
+        setPlayers(updatedPlayers);
     };
 
     const handleDeletePlayer = (playerId: number) => {
-        setPlayers(players.filter(p => p.id !== playerId));
+        const updatedPlayers = players.filter(p => p.id !== playerId);
+        setPlayers(updatedPlayers);
+        editingState.setSelectedPlayerIds(new Set([...editingState.selectedPlayerIds].filter(id => id !== playerId)));
     };
 
-    if (loading) {
-        return (
-            <div className="text-center py-12">
-                <Users size={48} className="mx-auto text-gray-400" />
-                <h3 className="mt-4 text-lg font-semibold text-gray-700">Loading...</h3>
-            </div>
-        );
-    }
+    const handleToggleEdit = () => {
+        editingState.handleToggleEdit(isDirty, onSaveChanges);
+    };
+
+    const handleBulkUpdate = (updates: Partial<Player>) => {
+        editingState.handleBulkUpdate(updates, players, setPlayers);
+    };
 
     return (
         <div className="animate-fade-in">
-            {editingState.isEditing && editingState.selectedPlayerIds.size > 0 && (
-                <PlayerBulkActions
-                    selectedPlayers={players.filter(p => editingState.selectedPlayerIds.has(p.id))}
-                    onBulkUpdate={(updates) => editingState.handleBulkUpdate(updates, players, setPlayers)}
-                    onClearSelection={editingState.handleClearSelection}
-                />
-            )}
-            <div className="flex flex-row items-center gap-4 mb-2">
-                <Button 
-                    onClick={() => editingState.handleToggleEdit(isDirty, onSaveChanges)}
-                    variant={editingState.isEditing ? 'primary' : 'outline'}
-                    data-action={editingState.isEditing ? "Done Editing" : "Start Editing"}
-                    className="h-10"
-                >
-                    {editingState.isEditing ? 'Done Editing' : 'Edit Roster'}
-                </Button>
-                <div className="w-full max-w-xs">
-                    <PlayerFilters
-                        positionFilter={filtersState.positionFilter}
-                        skillFilter={filtersState.skillFilter}
-                        sortConfig={filtersState.sortConfig}
-                        onPositionFilterChange={filtersState.setPositionFilter}
-                        onSkillFilterChange={filtersState.setSkillFilter}
-                        onSort={filtersState.handleSort}
-                    />
-                </div>
-            </div>
-            {players.length === 0 ? (
+            <PlayerActionBar
+                isEditing={editingState.isEditing}
+                isDirty={isDirty}
+                onToggleEdit={handleToggleEdit}
+                positionFilter={filtersState.positionFilter}
+                skillFilter={filtersState.skillFilter}
+                searchQuery={filtersState.searchQuery}
+                sortConfig={filtersState.sortConfig}
+                onPositionFilterChange={filtersState.setPositionFilter}
+                onSkillFilterChange={filtersState.setSkillFilter}
+                onSearchQueryChange={filtersState.setSearchQuery}
+                onSort={filtersState.handleSort}
+                selectedPlayers={players.filter(p => editingState.selectedPlayerIds.has(p.id))}
+                onBulkUpdate={handleBulkUpdate}
+                onClearSelection={editingState.handleClearSelection}
+            />
+            
+            {loading ? (
                 <PlayerEmptyState />
             ) : (
                 <div className="flex flex-row gap-4 w-full">
@@ -93,6 +84,11 @@ export default function PlayersView({
                             onUpdate={handlePlayerUpdate} 
                             isEditing={editingState.isEditing}
                             onDeletePlayer={handleDeletePlayer}
+                            selectedPlayerIds={editingState.selectedPlayerIds}
+                            onTogglePlayerSelection={editingState.handleTogglePlayerSelection}
+                            onToggleAllPlayers={() => editingState.handleToggleAllPlayers(paginationState.paginatedItems)}
+                            sortConfig={filtersState.sortConfig}
+                            onSort={filtersState.handleSort}
                         />
                         <PlayerPagination
                             currentPage={paginationState.currentPage}

@@ -7,9 +7,11 @@ type SortDirection = 'asc' | 'desc';
 export interface PlayerFiltersState {
     positionFilter: string;
     skillFilter: string;
+    searchQuery: string;
     sortConfig: { field: SortField; direction: SortDirection };
     setPositionFilter: (filter: string) => void;
     setSkillFilter: (filter: string) => void;
+    setSearchQuery: (query: string) => void;
     handleSort: (field: SortField) => void;
     filteredPlayers: Player[];
 }
@@ -17,6 +19,7 @@ export interface PlayerFiltersState {
 export function usePlayerFilters(players: Player[]): PlayerFiltersState {
     const [positionFilter, setPositionFilter] = useState('all');
     const [skillFilter, setSkillFilter] = useState('all');
+    const [searchQuery, setSearchQuery] = useState('');
     const [sortConfig, setSortConfig] = useState<{ field: SortField; direction: SortDirection }>({ 
         field: 'name', 
         direction: 'asc' 
@@ -31,6 +34,16 @@ export function usePlayerFilters(players: Player[]): PlayerFiltersState {
 
     const filteredPlayers = useMemo(() => {
         let filtered = [...players];
+
+        // Apply search filter
+        if (searchQuery.trim()) {
+            const query = searchQuery.toLowerCase().trim();
+            filtered = filtered.filter(p => 
+                `${p.first_name} ${p.last_name}`.toLowerCase().includes(query) ||
+                p.first_name.toLowerCase().includes(query) ||
+                p.last_name.toLowerCase().includes(query)
+            );
+        }
 
         // Apply position filter
         if (positionFilter !== 'all') {
@@ -67,14 +80,16 @@ export function usePlayerFilters(players: Player[]): PlayerFiltersState {
         });
 
         return filtered;
-    }, [players, positionFilter, skillFilter, sortConfig]);
+    }, [players, positionFilter, skillFilter, searchQuery, sortConfig]);
 
     return {
         positionFilter,
         skillFilter,
+        searchQuery,
         sortConfig,
         setPositionFilter,
         setSkillFilter,
+        setSearchQuery,
         handleSort,
         filteredPlayers
     };
