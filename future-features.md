@@ -1,42 +1,5 @@
 # Future Features for RosterGen
 
-## 🔐 Administrative Features
-
-### Multi-Admin Support
-**Priority: Low**
-
-Allow multiple administrators with different permission levels.
-
-**Features:**
-- Admin role management
-- Permission levels (Super Admin, Group Admin, View Only)
-- Admin activity logging
-- Admin invitation system
-
----
-
-## Implementation Priority
-
-### Phase 1 (Next Sprint)
-1. Player attendance rate tracking
-2. Bulk event creation for recurring schedules
-
-### Phase 2 (Following Sprint)  
-1. Player self-service portal foundation
-2. Substitute integration system
-
-### Phase 3 (Future)
-1. Player preferences system
-2. Email notifications (Resend integration)
-3. Goalie management features
-
-### Phase 4 (Long-term)
-1. SMS notifications
-2. Enhanced archiving
-3. Multi-admin support
-
-# Future Features: Automated Email Reminder System
-
 ## Overview
 Transform RosterGen from a manual roster management tool into a fully automated, self-service event management system. The goal is to enable administrators to set up rosters and events once, then let the system handle attendance reminders, player responses, and final roster generation automatically.
 
