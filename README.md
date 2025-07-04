@@ -5,13 +5,12 @@ This is a Next.js application designed to help organize hockey games and manage 
 ## Core Features
 
 -   **Group Management**: Organize players into distinct groups using a unique group code. Load, create, and manage your group's roster.
--   **Player Management**: Add, edit, and delete players from your group. Set their skill level and preferred position (forward/defense).
+-   **Player Management**: Add, edit, and delete players from your group. Set their skill level (1-7) and preferred position (forward/defense). Includes bulk editing capabilities for efficient roster updates.
 -   **CSV Import**: Quickly populate your roster by uploading a CSV file of players.
 -   **Event Scheduling**: Create and manage events (games, practices, etc.) with specific dates, times, and locations.
 -   **Advanced Attendance Tracking**:
     -   View attendance status for each player for a selected event.
     -   Toggle individual player attendance with an instant UI update (no page reloads!).
-    -   **New! Bulk Edit Mode**: Efficiently update attendance for multiple players at once using a simple checkbox interface.
     -   **Smart Attendance Defaults**: When creating a new event, player attendance automatically defaults to their attendance status from the most recent previous event, saving time for groups with consistent attendance patterns.
     -   **New! Automatic Future Attendance**: When adding a new player to the roster, they are automatically added to all future events in the group with a default "not attending" status.
 -   **Advanced Team Generation & Management**:
@@ -24,7 +23,7 @@ This is a Next.js application designed to help organize hockey games and manage 
     -   **Smart Matchup Generation**: Creates approximately 1.5x the number of players in strategic pairings
     -   **Head-to-Head Comparisons**: Simple click-based interface to choose the better player in each matchup
     -   **Elo-Based Ranking System**: Uses tournament-grade rating algorithms for accurate skill assessment
-    -   **Whole Number Rankings**: Produces clean 1-10 skill levels that can be applied directly to the roster
+    -   **Whole Number Rankings**: Produces clean 1-7 skill levels that can be applied directly to the roster
     -   **Progress Tracking**: Real-time progress bar and completion counter during tournament play
     -   **Paginated Results**: Easy-to-read results table with pagination for large rosters
     -   **Direct Integration**: Apply tournament results directly to player skill levels with one click
@@ -63,13 +62,14 @@ Contains the roster of players for each group.
 | `id` | integer | Primary Key | Unique identifier for the player. |
 | `first_name` | character varying(255) | Not Null | Player's first name. |
 | `last_name` | character varying(255) | Not Null | Player's last name. |
-| `skill` | integer | | Skill level from 1-10. |
+| `skill` | integer | | Skill level from 1-7. |
 | `is_defense` | boolean | Default: `false` | Preferred position (true for defense, false for forward). |
 | `is_active` | boolean | Default: `true` | Soft delete flag. |
 | `group_id` | integer | Foreign Key (`groups.id`) | Links the player to a group. |
 | `created_at` | timestamp with time zone | Default: `CURRENT_TIMESTAMP` | Timestamp of when the player was added. |
 | `updated_at` | timestamp with time zone | Default: `CURRENT_TIMESTAMP` | Timestamp of the last update. |
-| `email` | character varying(255) | Player's email. |
+| `email` | character varying(255) | | Player's email address. |
+| `phone` | character varying(255) | | Player's phone number. |
 
 ### `events` Table
 Stores information about scheduled games or practices.
@@ -117,7 +117,8 @@ A brief overview of the key directories and files in RosterGen.
 │   │   │   │   └── aliases/ # API for updating team alias names
 │   │   │   ├── players/     # API for player CRUD operations
 │   │   │   ├── stats/       # API for generating player/team stats
-│   │   │   └── teams/       # API for team generation
+│   │   │   ├── teams/       # API for team generation
+│   │   │   └── test-generator/ # API for test data generation
 │   │   ├── globals.css    # Global stylesheets
 │   │   ├── layout.tsx     # Root layout component for the application
 │   │   └── page.tsx       # Main landing page component
@@ -137,10 +138,17 @@ A brief overview of the key directories and files in RosterGen.
 │   │   └── TeamsView.tsx    # Component to display generated teams
 │   │
 │   ├── hooks/               # Custom React hooks for shared logic
-│   │   └── useGroupManager.ts # Hook for managing active group state
+│   │   ├── useAttendanceManagement.ts # Hook for attendance operations
+│   │   ├── useEventManagement.ts # Hook for event state management
+│   │   ├── useGroupManager.ts # Hook for managing active group state
+│   │   ├── usePlayerEditing.ts # Hook for player editing operations
+│   │   ├── usePlayerFilters.ts # Hook for player filtering and sorting
+│   │   └── usePlayerPagination.ts # Hook for player pagination
 │   │
 │   ├── lib/                 # Utility functions and core logic
+│   │   ├── api-utils.ts     # API utility functions and error handling
 │   │   ├── db.ts            # Database connection and query functions
+│   │   ├── teamGenerator.analysis.ts # Team generation analysis and testing
 │   │   ├── teamGenerator.ts # Core logic for balancing and generating teams
 │   │   └── utils.ts         # General utility functions
 │   │
