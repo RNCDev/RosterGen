@@ -383,7 +383,7 @@ async function createAttendanceRecordsForEvent(eventId: number, groupId: number)
     try {
         await client.query('BEGIN');
         for (const player of activePlayers) {
-            const isAttending = attendanceMap.get(player.id) ?? false;
+            const isAttending = attendanceMap.get(player.id) ?? true;
             await client.query(
                 `INSERT INTO attendance (player_id, event_id, is_attending)
                  VALUES ($1, $2, $3)
