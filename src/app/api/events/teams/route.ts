@@ -19,7 +19,11 @@ const saveTeamsSchema = z.object({
         forwards: z.array(z.any()),
         defensemen: z.array(z.any()),
         group_code: z.string().optional()
-    }))
+    })),
+    teamNames: z.object({
+        team1: z.string(),
+        team2: z.string()
+    })
 });
 
 const deleteTeamsSchema = z.object({
@@ -42,7 +46,7 @@ export const PUT = withErrorHandler(async (request: NextRequest) => {
         return ApiResponse.badRequest('Invalid teams data', validation.error.flatten());
     }
 
-    const { eventId, teams } = validation.data;
+    const { eventId, teams, teamNames } = validation.data;
 
     // Verify the event exists
     const event = await getEventById(eventId);
@@ -51,7 +55,8 @@ export const PUT = withErrorHandler(async (request: NextRequest) => {
     }
 
     // Serialize teams data to JSON string
-    const teamsJson = JSON.stringify(teams);
+    const dataToStore = { teams, teamNames };
+    const teamsJson = JSON.stringify(dataToStore);
 
     // Update the event with saved teams data
     const updatedEvent = await updateEventSavedTeams(eventId, teamsJson);
@@ -87,8 +92,12 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
 
     // Parse the JSON string back to Teams object
     try {
-        const teams: Teams = JSON.parse(event.saved_teams_data);
-        return ApiResponse.success({ teams });
+        const savedData = JSON.parse(event.saved_teams_data);
+        // For backwards compatibility with old format
+        if (savedData.teams && savedData.teamNames) {
+            return ApiResponse.success({ teams: savedData.teams, teamNames: savedData.teamNames });
+        }
+        return ApiResponse.success({ teams: savedData, teamNames: null });
     } catch (parseError) {
         console.error('Error parsing saved teams data:', parseError);
         return ApiResponse.internalError('Invalid saved teams data');

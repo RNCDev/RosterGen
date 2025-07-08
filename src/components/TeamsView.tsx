@@ -2,7 +2,7 @@
 
 import React, { useRef, useState } from 'react';
 import { type Teams, type Player, type Team, type EventWithStats } from '@/types/PlayerTypes';
-import { Clipboard, Users, BarChart2, Hash, Trophy, Zap, Shield, Target, RefreshCw, Save, CheckCircle } from 'lucide-react';
+import { Clipboard, Users, BarChart2, Hash, Trophy, Zap, Shield, Target, RefreshCw, Save, CheckCircle, Loader2 } from 'lucide-react';
 import _ from 'lodash';
 import { Button } from '@/components/ui/Button';
 import { toBlob } from 'html-to-image';
@@ -17,7 +17,7 @@ interface TeamsViewProps {
     onBack: () => void;
     onSaveTeamNames: (alias1: string, alias2: string) => Promise<void>;
     selectedEvent: EventWithStats | null;
-    onSaveTeamsForEvent: (eventId: number, teams: Teams) => Promise<void>;
+    onSaveTeamsForEvent: (eventId: number, teams: Teams, teamNames: { team1: string, team2: string }) => Promise<void>;
 }
 
 // Helper to calculate team stats
@@ -190,7 +190,7 @@ export default function TeamsView({ teams, teamNames, setTeamNames, onGenerateTe
         
         setIsSavingTeams(true);
         try {
-            await onSaveTeamsForEvent(selectedEvent.id, teams);
+            await onSaveTeamsForEvent(selectedEvent.id, teams, teamNames);
             setShowSaveSuccess(true);
             setTimeout(() => setShowSaveSuccess(false), 3000); // Hide after 3 seconds
         } catch (error) {
@@ -249,10 +249,10 @@ export default function TeamsView({ teams, teamNames, setTeamNames, onGenerateTe
             <div className="flex items-center justify-end gap-2">
                 <Button onClick={onGenerateTeams} disabled={isGenerating}>
                     <RefreshCw className={`w-4 h-4 mr-2 ${isGenerating ? 'animate-spin' : ''}`} />
-                    {isGenerating ? 'Generating...' : 'Regenerate Teams'}
+                    {isGenerating ? 'Regenerating...' : 'Regenerate Teams'}
                 </Button>
                 {selectedEvent && (
-                    <Button 
+                     <Button 
                         onClick={handleSaveToEvent}
                         disabled={isSavingTeams || totalPlayers === 0}
                         variant="outline"
@@ -282,25 +282,27 @@ export default function TeamsView({ teams, teamNames, setTeamNames, onGenerateTe
             </div>
 
             {/* Teams Grid */}
-            <div ref={teamsContainerRef} className="grid md:grid-cols-2 gap-4 items-start">
-                <TeamCard
-                    name={teamNames.team1}
-                    team={team1Data}
-                    onNameChange={(name) => {
-                        setTeamNames({ ...teamNames, team1: name });
-                        onSaveTeamNames(name, teamNames.team2);
-                    }}
-                    teamColor="red"
-                />
-                <TeamCard
-                    name={teamNames.team2}
-                    team={team2Data}
-                    onNameChange={(name) => {
-                        setTeamNames({ ...teamNames, team2: name });
-                        onSaveTeamNames(teamNames.team1, name);
-                    }}
-                    teamColor="blue"
-                />
+            <div ref={teamsContainerRef} className="bg-slate-50 p-4">
+                <div className="grid md:grid-cols-2 gap-4 items-start">
+                    <TeamCard
+                        name={teamNames.team1}
+                        team={team1Data}
+                        onNameChange={(name) => {
+                            setTeamNames({ ...teamNames, team1: name });
+                            onSaveTeamNames(name, teamNames.team2);
+                        }}
+                        teamColor="red"
+                    />
+                    <TeamCard
+                        name={teamNames.team2}
+                        team={team2Data}
+                        onNameChange={(name) => {
+                            setTeamNames({ ...teamNames, team2: name });
+                            onSaveTeamNames(teamNames.team1, name);
+                        }}
+                        teamColor="blue"
+                    />
+                </div>
             </div>
         </div>
     );

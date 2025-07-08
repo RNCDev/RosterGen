@@ -395,12 +395,12 @@ export function useGroupManager(onTeamDataChangeSuccess?: () => void) {
         }
     };
 
-    const handleSaveTeamsForEvent = async (eventId: number, teams: Teams): Promise<void> => {
+    const handleSaveTeamsForEvent = async (eventId: number, teams: Teams, teamNames: { team1: string, team2: string }): Promise<void> => {
         try {
             const response = await fetch('/api/events/teams', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ eventId, teams })
+                body: JSON.stringify({ eventId, teams, teamNames })
             });
 
             if (!response.ok) {
@@ -418,28 +418,24 @@ export function useGroupManager(onTeamDataChangeSuccess?: () => void) {
         }
     };
 
-    const handleLoadTeamsForEvent = useCallback(async (eventId: number): Promise<Teams> => {
+    const handleLoadTeamsForEvent = useCallback(async (eventId: number): Promise<{ teams: Teams, teamNames: { team1: string, team2: string } | null }> => {
         if (!activeGroup) throw new Error('No active group');
-        setLoading(true);
         try {
             const response = await fetch(`/api/events/teams?eventId=${eventId}`);
             if (!response.ok) {
                 const errorData = await response.json();
                 throw new Error(errorData.message || 'Failed to load teams for event');
             }
-            const { teams } = await response.json();
-            return teams;
+            const data = await response.json();
+            return data;
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to load teams for event');
             throw err;
-        } finally {
-            setLoading(false);
         }
     }, [activeGroup]);
 
     const handleDeleteSavedTeams = useCallback(async (eventId: number) => {
         if (!activeGroup) return;
-        setLoading(true);
         try {
             const response = await fetch('/api/events/teams', {
                 method: 'DELETE',
@@ -456,8 +452,6 @@ export function useGroupManager(onTeamDataChangeSuccess?: () => void) {
             }
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to delete saved teams');
-        } finally {
-            setLoading(false);
         }
     }, [activeGroup, loadEvents, onTeamDataChangeSuccess]);
 

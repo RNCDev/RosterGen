@@ -77,9 +77,7 @@ export default function Home() {
         handleSaveChanges,
         duplicateEvent,
         teamAlias1,
-        setTeamAlias1,
         teamAlias2,
-        setTeamAlias2,
         handleUpdateTeamAliases,
         handleSaveTeamsForEvent,
         handleLoadTeamsForEvent,
@@ -124,10 +122,7 @@ export default function Home() {
         }
     };
 
-    const handleUpdateTeamName = async (team: 'team1' | 'team2') => {
-        const alias1 = team === 'team1' ? teamAlias1 : teamAlias1;
-        const alias2 = team === 'team2' ? teamAlias2 : teamAlias2;
-
+    const handleUpdateTeamName = async (team: 'team1' | 'team2', newAlias: string) => {
         if (team === 'team1') {
             setIsSavingAlias1(true);
         } else {
@@ -135,7 +130,10 @@ export default function Home() {
         }
 
         try {
-            await handleUpdateTeamAliases(alias1, alias2);
+            await handleUpdateTeamAliases(
+                team === 'team1' ? newAlias : teamAlias1,
+                team === 'team2' ? newAlias : teamAlias2
+            );
             if (team === 'team1') {
                 setShowAlias1Success(true);
                 setTimeout(() => setShowAlias1Success(false), 2000);
@@ -167,11 +165,6 @@ export default function Home() {
                 isPlayerListDirty={isDirty}
                 isLoading={loading}
                 isGroupLoaded={!!activeGroup}
-                teamAlias1={teamAlias1}
-                setTeamAlias1={setTeamAlias1}
-                teamAlias2={teamAlias2}
-                setTeamAlias2={setTeamAlias2}
-                onUpdateTeamAliases={handleUpdateTeamAliases}
             />
 
             <main className="flex-1">
@@ -199,9 +192,8 @@ export default function Home() {
                                         <input
                                             id="team1-name"
                                             type="text"
-                                            value={teamAlias1}
-                                            onChange={e => setTeamAlias1(e.target.value)}
-                                            onBlur={() => handleUpdateTeamName('team1')}
+                                            defaultValue={teamAlias1}
+                                            onBlur={(e) => handleUpdateTeamName('team1', e.target.value)}
                                             onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
                                             placeholder="Red"
                                             className="bg-transparent focus:outline-none text-base font-bold text-blue-800 w-32 min-w-0 px-1"
@@ -217,9 +209,8 @@ export default function Home() {
                                         <input
                                             id="team2-name"
                                             type="text"
-                                            value={teamAlias2}
-                                            onChange={e => setTeamAlias2(e.target.value)}
-                                            onBlur={() => handleUpdateTeamName('team2')}
+                                            defaultValue={teamAlias2}
+                                            onBlur={(e) => handleUpdateTeamName('team2', e.target.value)}
                                             onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
                                             placeholder="White"
                                             className="bg-transparent focus:outline-none text-base font-bold text-blue-800 w-32 min-w-0 px-1"
@@ -266,10 +257,6 @@ export default function Home() {
                                     group={activeGroup}
                                     eventsLoading={eventsLoading}
                                     attendanceLoading={attendanceLoading}
-                                    teamAlias1={teamAlias1}
-                                    setTeamAlias1={setTeamAlias1}
-                                    teamAlias2={teamAlias2}
-                                    setTeamAlias2={setTeamAlias2}
                                     onUpdateTeamAliases={handleUpdateTeamAliases}
                                     onSaveTeamsForEvent={handleSaveTeamsForEvent}
                                     onLoadTeamsForEvent={handleLoadTeamsForEvent}

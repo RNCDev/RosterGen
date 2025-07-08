@@ -34,13 +34,9 @@ interface EventsViewProps {
     group: Group | null;
     eventsLoading: boolean;
     attendanceLoading: boolean;
-    teamAlias1: string;
-    setTeamAlias1: React.Dispatch<React.SetStateAction<string>>;
-    teamAlias2: string;
-    setTeamAlias2: React.Dispatch<React.SetStateAction<string>>;
     onUpdateTeamAliases: (alias1: string, alias2: string) => Promise<void>;
-    onSaveTeamsForEvent: (eventId: number, teams: Teams) => Promise<void>;
-    onLoadTeamsForEvent: (eventId: number) => Promise<Teams>;
+    onSaveTeamsForEvent: (eventId: number, teams: Teams, teamNames: { team1: string, team2: string }) => Promise<void>;
+    onLoadTeamsForEvent: (eventId: number) => Promise<{ teams: Teams; teamNames: { team1: string; team2: string; } | null; }>;
     onDeleteSavedTeams: (eventId: number) => Promise<void>;
 }
 
@@ -57,17 +53,13 @@ export default function EventsView({
     group,
     eventsLoading,
     attendanceLoading,
-    teamAlias1,
-    setTeamAlias1,
-    teamAlias2,
-    setTeamAlias2,
     onUpdateTeamAliases,
     onSaveTeamsForEvent,
     onLoadTeamsForEvent,
     onDeleteSavedTeams,
 }: EventsViewProps) {
     // Extract state management to custom hooks
-    const eventManagement = useEventManagement(selectedEvent?.id, teamAlias1, teamAlias2);
+    const eventManagement = useEventManagement(selectedEvent?.id);
     const { handleUpdateSingleAttendance } = useAttendanceManagement();
     const paginationState = usePlayerPagination(attendanceData, 20);
 
@@ -90,7 +82,10 @@ export default function EventsView({
     const handleLoadSavedTeams = async () => {
         if (!selectedEvent) return;
         try {
-            const savedTeams = await onLoadTeamsForEvent(selectedEvent.id);
+            const { teams: savedTeams, teamNames: savedTeamNames } = await onLoadTeamsForEvent(selectedEvent.id);
+            if (savedTeamNames) {
+                eventManagement.setTeamNames(savedTeamNames);
+            }
             eventManagement.setTeams(savedTeams);
             eventManagement.setShowTeams(true);
         } catch (error) {
@@ -138,7 +133,7 @@ export default function EventsView({
                                     selectedEvent={selectedEvent}
                                     isGeneratingTeams={eventManagement.isGeneratingTeams}
                                     onLoadSavedTeams={handleLoadSavedTeams}
-                                    onGenerateTeams={() => group && eventManagement.handleGenerateTeams(selectedEvent, group)}
+                                    onGenerateTeams={() => group && eventManagement.handleGenerateTeams(selectedEvent, group, eventManagement.teamNames)}
                                     onDeleteSavedTeams={onDeleteSavedTeams}
                                 />
 
@@ -157,20 +152,17 @@ export default function EventsView({
                                 />
                             </>
                         ) : (
-                            <TeamsView 
+                            <TeamsView
                                 teams={eventManagement.teams}
-                                teamNames={{ team1: teamAlias1, team2: teamAlias2 }}
-                                setTeamNames={({ team1, team2 }) => {
-                                    setTeamAlias1(team1);
-                                    setTeamAlias2(team2);
-                                }}
-                                onGenerateTeams={() => group && eventManagement.handleGenerateTeams(selectedEvent, group)}
+                                teamNames={eventManagement.teamNames}
+                                setTeamNames={eventManagement.setTeamNames}
+                                onGenerateTeams={() => group && eventManagement.handleGenerateTeams(selectedEvent, group, eventManagement.teamNames)}
                                 attendingPlayerCount={attendanceData.filter(p => p.is_attending_event).length}
                                 isGenerating={eventManagement.isGeneratingTeams}
                                 onBack={() => eventManagement.setShowTeams(false)}
                                 onSaveTeamNames={onUpdateTeamAliases}
                                 selectedEvent={selectedEvent}
-                                onSaveTeamsForEvent={onSaveTeamsForEvent}
+                                onSaveTeamsForEvent={(eventId, teams) => onSaveTeamsForEvent(eventId, teams, eventManagement.teamNames)}
                             />
                         )}
                     </>

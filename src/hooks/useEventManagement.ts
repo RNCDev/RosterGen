@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { type EventWithStats, type Teams, type Group } from '@/types/PlayerTypes';
 
 export interface EventManagementState {
@@ -8,21 +8,21 @@ export interface EventManagementState {
     showTeams: boolean;
     teams: Teams;
     isGeneratingTeams: boolean;
+    teamNames: { team1: string, team2: string };
     setCreateEventOpen: (open: boolean) => void;
     setDuplicateEventOpen: (open: boolean) => void;
     setEventToDuplicate: (event: EventWithStats | null) => void;
     setShowTeams: (show: boolean) => void;
     setTeams: (teams: Teams) => void;
+    setTeamNames: (names: { team1: string, team2: string }) => void;
     setIsGeneratingTeams: (generating: boolean) => void;
     handleDuplicateEvent: (event: EventWithStats) => void;
-    handleGenerateTeams: (selectedEvent: EventWithStats, group: Group) => Promise<void>;
+    handleGenerateTeams: (selectedEvent: EventWithStats, group: Group, currentTeamNames: { team1: string, team2: string }) => Promise<void>;
     resetTeamsState: () => void;
 }
 
 export function useEventManagement(
-    selectedEventId?: number,
-    teamAlias1?: string,
-    teamAlias2?: string
+    selectedEventId?: number
 ): EventManagementState {
     const [isCreateEventOpen, setCreateEventOpen] = useState(false);
     const [isDuplicateEventOpen, setDuplicateEventOpen] = useState(false);
@@ -30,35 +30,37 @@ export function useEventManagement(
     const [showTeams, setShowTeams] = useState(false);
     const [teams, setTeams] = useState<Teams>({});
     const [isGeneratingTeams, setIsGeneratingTeams] = useState(false);
+    const [teamNames, setTeamNames] = useState({ team1: 'Red', team2: 'White' });
 
-    // Reset teams when selected event or team aliases change
+    // Reset teams view completely when a new event is selected
     useEffect(() => {
         setShowTeams(false);
         setTeams({});
-    }, [selectedEventId, teamAlias1, teamAlias2]);
+    }, [selectedEventId]);
 
     const handleDuplicateEvent = (event: EventWithStats) => {
         setEventToDuplicate(event);
         setDuplicateEventOpen(true);
     };
 
-    const handleGenerateTeams = async (selectedEvent: EventWithStats, group: Group) => {
+    const handleGenerateTeams = useCallback(async (selectedEvent: EventWithStats, group: Group, currentTeamNames: { team1: string, team2: string }) => {
         setIsGeneratingTeams(true);
         try {
             const response = await fetch(`/api/teams?action=generate`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    event_id: selectedEvent.id, 
-                    group: group 
+                body: JSON.stringify({
+                    event_id: selectedEvent.id,
+                    group: group,
+                    team_names: currentTeamNames,
                 }),
             });
 
             if (!response.ok) throw new Error(await response.text());
-            
+
             const data = await response.json();
             setTeams(data.teams);
-            
+
             setTimeout(() => {
                 setIsGeneratingTeams(false);
                 setShowTeams(true);
@@ -68,7 +70,7 @@ export function useEventManagement(
             console.error('Failed to generate teams:', error);
             setIsGeneratingTeams(false);
         }
-    };
+    }, []);
 
     const resetTeamsState = () => {
         setShowTeams(false);
@@ -82,11 +84,13 @@ export function useEventManagement(
         showTeams,
         teams,
         isGeneratingTeams,
+        teamNames,
         setCreateEventOpen,
         setDuplicateEventOpen,
         setEventToDuplicate,
         setShowTeams,
         setTeams,
+        setTeamNames,
         setIsGeneratingTeams,
         handleDuplicateEvent,
         handleGenerateTeams,
