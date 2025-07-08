@@ -4,7 +4,7 @@ import React from 'react';
 import { Calendar, Plus } from 'lucide-react';
 import { type EventWithStats } from '@/types/PlayerTypes';
 import { Button } from '@/components/ui/Button';
-import EventCard from '@/components/EventCard';
+import EventCardNew from '@/components/EventCardNew';
 
 interface EventsListProps {
     events: EventWithStats[];
@@ -14,6 +14,8 @@ interface EventsListProps {
     onCreateEvent: () => void;
     onDeleteEvent: (eventId: number) => void;
     onDuplicateEvent: (event: EventWithStats) => void;
+    onLoadSavedTeams: (eventId: number) => void;
+    onDeleteSavedTeams: (eventId: number) => void;
 }
 
 export default function EventsList({
@@ -23,7 +25,9 @@ export default function EventsList({
     onEventSelect,
     onCreateEvent,
     onDeleteEvent,
-    onDuplicateEvent
+    onDuplicateEvent,
+    onLoadSavedTeams,
+    onDeleteSavedTeams
 }: EventsListProps) {
     return (
         <div className="w-full md:w-72 lg:w-80 flex-shrink-0 space-y-6">
@@ -50,13 +54,15 @@ export default function EventsList({
                     </div>
                 ) : (
                     events.map((event) => (
-                        <EventCard
+                        <EventCardNew
                             key={event.id}
                             event={event}
                             isSelected={selectedEvent?.id === event.id}
                             onClick={() => onEventSelect(event)}
                             onDelete={() => onDeleteEvent(event.id)}
                             onDuplicate={() => onDuplicateEvent(event)}
+                            onLoadSavedTeams={() => onLoadSavedTeams(event.id)}
+                            onDeleteSavedTeams={() => onDeleteSavedTeams(event.id)}
                         />
                     ))
                 )}

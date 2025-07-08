@@ -1,0 +1,122 @@
+'use client';
+
+import React from 'react';
+import { Copy, Trash2, ShieldCheck, Trash } from 'lucide-react';
+import { type EventWithStats } from '@/types/PlayerTypes';
+
+interface EventCardProps {
+    event: EventWithStats;
+    isSelected: boolean;
+    onClick: () => void;
+    onDelete: () => void;
+    onDuplicate: () => void;
+    onLoadSavedTeams: () => void;
+    onDeleteSavedTeams: () => void;
+}
+
+export default function EventCardNew({
+    event,
+    isSelected,
+    onClick,
+    onDelete,
+    onDuplicate,
+    onLoadSavedTeams,
+    onDeleteSavedTeams
+}: EventCardProps) {
+    const hasSavedTeams = event.saved_teams_data && Object.keys(JSON.parse(event.saved_teams_data)).length > 0;
+
+    const handleDelete = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (window.confirm(`Are you sure you want to delete the event "${event.name}"?`)) {
+            onDelete();
+        }
+    };
+
+    const handleDuplicate = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        onDuplicate();
+    };
+    
+    const handleLoadTeams = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        onLoadSavedTeams();
+    };
+
+    const handleDeleteSavedTeams = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (window.confirm(`Are you sure you want to delete the saved teams for "${event.name}"? This cannot be undone.`)) {
+            onDeleteSavedTeams();
+        }
+    };
+
+    const cardBaseClasses = "w-full rounded-lg border p-3 cursor-pointer transition-all duration-200 ease-in-out transform";
+    const cardStateClasses = isSelected
+        ? "bg-blue-900/95 border-blue-700 text-white shadow-lg -translate-y-1"
+        : "bg-white/60 border-white/40 text-gray-800 hover:border-gray-300/80 hover:-translate-y-0.5";
+
+    return (
+        <div className="flex flex-col">
+            <div onClick={onClick} className={`${cardBaseClasses} ${cardStateClasses} ${hasSavedTeams && isSelected ? 'rounded-b-none' : ''}`}>
+                <div className="flex justify-between items-center">
+                    <div className="flex-1">
+                        <p className={`font-bold text-lg ${isSelected ? 'text-white' : 'text-gray-900'}`}>
+                            {event.name}
+                        </p>
+                        <p className={`text-sm ${isSelected ? 'text-blue-200' : 'text-gray-600'}`}>
+                            {new Date(event.event_date).toLocaleDateString('en-US', {
+                                weekday: 'long',
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric',
+                                timeZone: 'UTC'
+                            })}
+                        </p>
+                    </div>
+                    <div className="flex items-center gap-1">
+                        <button
+                            onClick={handleDuplicate}
+                            className={`p-1.5 rounded-full transition-colors ${isSelected
+                                    ? 'text-blue-300 hover:bg-blue-800/50'
+                                    : 'text-gray-400 hover:bg-gray-200/80'
+                                }`}
+                            title="Duplicate Event"
+                        >
+                            <Copy size={16} />
+                        </button>
+                        <button
+                            onClick={handleDelete}
+                            className={`p-1.5 rounded-full transition-colors ${isSelected
+                                    ? 'text-blue-300 hover:bg-blue-800/50'
+                                    : 'text-gray-400 hover:bg-gray-200/80'
+                                }`}
+                            title="Delete Event"
+                        >
+                            <Trash2 size={16} />
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            {hasSavedTeams && isSelected && (
+                 <div className="animate-swing-in-and-settle bg-gradient-to-r from-yellow-600/70 via-yellow-500/70 to-yellow-600/70 border-t-2 border-yellow-500/90 rounded-b-lg px-3 py-2 shadow-md -mt-1 z-10">
+                    <div className="flex justify-between items-center">
+                        <button 
+                            onClick={handleLoadTeams}
+                            className="flex items-center gap-2 text-black font-semibold text-sm px-2 py-1 rounded-md hover:bg-black/10 transition-all duration-200"
+                        >
+                            <ShieldCheck size={16} />
+                            Load Saved Teams
+                        </button>
+                        <button
+                            onClick={handleDeleteSavedTeams}
+                            className="p-1.5 rounded-full text-black/80 hover:bg-black/10 hover:text-black transition-colors"
+                            title="Delete Saved Teams"
+                        >
+                            <Trash size={16} />
+                        </button>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+} 

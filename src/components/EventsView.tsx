@@ -79,19 +79,22 @@ export default function EventsView({
         }
     };
 
-    const handleLoadSavedTeams = async () => {
-        if (!selectedEvent) return;
+    const handleLoadTeamsForEvent = async (eventId: number) => {
         try {
-            const { teams: savedTeams, teamNames: savedTeamNames } = await onLoadTeamsForEvent(selectedEvent.id);
+            const { teams: savedTeams, teamNames: savedTeamNames } = await onLoadTeamsForEvent(eventId);
             if (savedTeamNames) {
                 eventManagement.setTeamNames(savedTeamNames);
             }
             eventManagement.setTeams(savedTeams);
             eventManagement.setShowTeams(true);
         } catch (error) {
-            console.error('Failed to load saved teams:', error);
-            // You could show a user-friendly error message here
+            console.error('Failed to load saved teams for event:', eventId, error);
         }
+    };
+    
+    const handleLoadSavedTeams = async () => {
+        if (!selectedEvent) return;
+        await handleLoadTeamsForEvent(selectedEvent.id);
     };
 
     const handleDuplicateSubmit = async (eventId: number, newName: string, newDate: string, newTime?: string, newLocation?: string) => {
@@ -121,6 +124,8 @@ export default function EventsView({
                 onCreateEvent={() => eventManagement.setCreateEventOpen(true)}
                 onDeleteEvent={onDeleteEvent}
                 onDuplicateEvent={eventManagement.handleDuplicateEvent}
+                onLoadSavedTeams={handleLoadTeamsForEvent}
+                onDeleteSavedTeams={onDeleteSavedTeams}
             />
 
             {/* Right Column: Attendance */}
@@ -132,9 +137,7 @@ export default function EventsView({
                                 <AttendanceControls
                                     selectedEvent={selectedEvent}
                                     isGeneratingTeams={eventManagement.isGeneratingTeams}
-                                    onLoadSavedTeams={handleLoadSavedTeams}
                                     onGenerateTeams={() => group && eventManagement.handleGenerateTeams(selectedEvent, group, eventManagement.teamNames)}
-                                    onDeleteSavedTeams={onDeleteSavedTeams}
                                 />
 
                                 <AttendanceTable
