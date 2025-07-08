@@ -155,6 +155,7 @@ export default function EventsView({
                             <TeamsView
                                 teams={eventManagement.teams}
                                 teamNames={eventManagement.teamNames}
+                                setTeams={eventManagement.setTeams}
                                 setTeamNames={eventManagement.setTeamNames}
                                 onGenerateTeams={() => group && eventManagement.handleGenerateTeams(selectedEvent, group, eventManagement.teamNames)}
                                 attendingPlayerCount={attendanceData.filter(p => p.is_attending_event).length}

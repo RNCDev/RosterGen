@@ -2,7 +2,7 @@
 
 import React, { useRef, useState } from 'react';
 import { type Teams, type Player, type Team, type EventWithStats } from '@/types/PlayerTypes';
-import { Clipboard, Users, BarChart2, Hash, Trophy, Zap, Shield, Target, RefreshCw, Save, CheckCircle, Loader2 } from 'lucide-react';
+import { Clipboard, Users, BarChart2, Hash, Trophy, Zap, Shield, Target, RefreshCw, Save, CheckCircle, Loader2, ArrowRightLeft } from 'lucide-react';
 import _ from 'lodash';
 import { Button } from '@/components/ui/Button';
 import { toBlob } from 'html-to-image';
@@ -10,6 +10,7 @@ import { toBlob } from 'html-to-image';
 interface TeamsViewProps {
     teams: Teams;
     teamNames: { team1: string; team2: string };
+    setTeams: (teams: Teams) => void;
     setTeamNames: (names: { team1: string; team2: string }) => void;
     onGenerateTeams: () => void;
     attendingPlayerCount: number;
@@ -42,12 +43,14 @@ const TeamCard = ({
     name, 
     team, 
     onNameChange, 
-    teamColor 
+    teamColor,
+    onPlayerMove
 }: { 
     name: string; 
     team: Teams['red']; 
     onNameChange: (newName: string) => void;
     teamColor: 'red' | 'blue';
+    onPlayerMove: (player: Player, position: 'forwards' | 'defensemen') => void;
 }) => {
     const stats = calculateStats(team);
     
@@ -114,11 +117,20 @@ const TeamCard = ({
                         </div>
                         <div className="grid grid-cols-2 gap-1">
                             {team.forwards.map(p => (
-                                <div key={p.id} className="flex items-center justify-between px-2 py-1 bg-orange-50/70 rounded text-xs">
+                                <div key={p.id} className="flex items-center justify-between px-2 py-1 bg-orange-50/70 rounded text-xs group">
                                     <span className="font-medium text-gray-800 truncate">{p.first_name} {p.last_name}</span>
-                                    <span className="bg-orange-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 ml-1">
-                                        {p.skill}
-                                    </span>
+                                    <div className="flex items-center">
+                                        <span className="bg-orange-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 ml-1">
+                                            {p.skill}
+                                        </span>
+                                        <button 
+                                            onClick={() => onPlayerMove(p, 'forwards')}
+                                            className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                                            title="Move Player"
+                                        >
+                                            <ArrowRightLeft size={14} className="text-gray-500 hover:text-blue-600" />
+                                        </button>
+                                    </div>
                                 </div>
                             ))}
                         </div>
@@ -136,11 +148,20 @@ const TeamCard = ({
                         </div>
                         <div className="grid grid-cols-2 gap-1">
                             {team.defensemen.map(p => (
-                                <div key={p.id} className="flex items-center justify-between px-2 py-1 bg-purple-50/70 rounded text-xs">
+                                <div key={p.id} className="flex items-center justify-between px-2 py-1 bg-purple-50/70 rounded text-xs group">
                                     <span className="font-medium text-gray-800 truncate">{p.first_name} {p.last_name}</span>
-                                    <span className="bg-purple-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 ml-1">
-                                        {p.skill}
-                                    </span>
+                                    <div className="flex items-center">
+                                        <span className="bg-purple-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 ml-1">
+                                            {p.skill}
+                                        </span>
+                                        <button 
+                                            onClick={() => onPlayerMove(p, 'defensemen')}
+                                            className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                                            title="Move Player"
+                                        >
+                                            <ArrowRightLeft size={14} className="text-gray-500 hover:text-blue-600" />
+                                        </button>
+                                    </div>
                                 </div>
                             ))}
                         </div>
@@ -156,7 +177,7 @@ const TeamCard = ({
     );
 };
 
-export default function TeamsView({ teams, teamNames, setTeamNames, onGenerateTeams, attendingPlayerCount, isGenerating, onBack, onSaveTeamNames, selectedEvent, onSaveTeamsForEvent }: TeamsViewProps) {
+export default function TeamsView({ teams, teamNames, setTeams, setTeamNames, onGenerateTeams, attendingPlayerCount, isGenerating, onBack, onSaveTeamNames, selectedEvent, onSaveTeamsForEvent }: TeamsViewProps) {
     const teamsContainerRef = useRef<HTMLDivElement>(null);
     const [isSavingTeams, setIsSavingTeams] = useState(false);
     const [showSaveSuccess, setShowSaveSuccess] = useState(false);
@@ -201,6 +222,21 @@ export default function TeamsView({ teams, teamNames, setTeamNames, onGenerateTe
         }
     };
     
+    const handlePlayerMove = (player: Player, fromTeamKey: string, fromPosition: 'forwards' | 'defensemen') => {
+        const toTeamKey = Object.keys(teams).find(key => key.toLowerCase() !== fromTeamKey.toLowerCase());
+        if (!toTeamKey) return;
+
+        const updatedTeams = _.cloneDeep(teams);
+
+        // Remove from source team
+        _.remove(updatedTeams[fromTeamKey.toLowerCase()][fromPosition], p => p.id === player.id);
+        
+        // Add to destination team
+        updatedTeams[toTeamKey.toLowerCase()][fromPosition].push(player);
+
+        setTeams(updatedTeams);
+    };
+
     // Access teams using dynamic keys from teamNames
     const team1Data = teams[teamNames.team1.toLowerCase()];
     const team2Data = teams[teamNames.team2.toLowerCase()];
@@ -292,6 +328,7 @@ export default function TeamsView({ teams, teamNames, setTeamNames, onGenerateTe
                             onSaveTeamNames(name, teamNames.team2);
                         }}
                         teamColor="red"
+                        onPlayerMove={(player, position) => handlePlayerMove(player, teamNames.team1.toLowerCase(), position)}
                     />
                     <TeamCard
                         name={teamNames.team2}
@@ -301,6 +338,7 @@ export default function TeamsView({ teams, teamNames, setTeamNames, onGenerateTe
                             onSaveTeamNames(teamNames.team1, name);
                         }}
                         teamColor="blue"
+                        onPlayerMove={(player, position) => handlePlayerMove(player, teamNames.team2.toLowerCase(), position)}
                     />
                 </div>
             </div>
