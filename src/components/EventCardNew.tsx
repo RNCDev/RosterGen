@@ -4,6 +4,14 @@ import React from 'react';
 import { Copy, Trash2, ShieldCheck, Trash } from 'lucide-react';
 import { type EventWithStats } from '@/types/PlayerTypes';
 
+// Function to convert 24-hour time format to 12-hour format
+const formatTime12Hour = (time24: string): string => {
+    const [hours, minutes] = time24.split(':').map(Number);
+    const period = hours >= 12 ? 'PM' : 'AM';
+    const hours12 = hours % 12 || 12; // Convert 0 to 12 for 12 AM
+    return `${hours12}:${minutes.toString().padStart(2, '0')} ${period}`;
+};
+
 interface EventCardProps {
     event: EventWithStats;
     isSelected: boolean;
@@ -64,12 +72,11 @@ export default function EventCardNew({
                         </p>
                         <p className={`text-sm ${isSelected ? 'text-blue-200' : 'text-gray-600'}`}>
                             {new Date(event.event_date).toLocaleDateString('en-US', {
-                                weekday: 'long',
                                 year: 'numeric',
-                                month: 'long',
-                                day: 'numeric',
-                                timeZone: 'UTC'
+                                month: 'short',
+                                day: 'numeric'
                             })}
+                            {event.event_time && ` @ ${formatTime12Hour(event.event_time)}`}
                         </p>
                     </div>
                     <div className="flex items-center gap-1">

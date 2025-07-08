@@ -153,12 +153,18 @@ export const eventToForm = (event: EventDB): EventForm => ({
     location: event.location || ''
 });
 
-export const formToEventInput = (formData: EventForm, groupId: number): EventInput => ({
-    name: formData.name,
-    description: formData.description || undefined,
-    event_date: new Date(formData.date),
-    event_time: formData.time || undefined,
-    location: formData.location || undefined,
-    group_id: groupId,
-    is_active: true
-});
+export const formToEventInput = (formData: EventForm, groupId: number): EventInput => {
+    // Create date at noon to avoid timezone issues
+    const dateParts = formData.date.split('-').map(part => parseInt(part));
+    const eventDate = new Date(dateParts[0], dateParts[1] - 1, dateParts[2], 12, 0, 0);
+    
+    return {
+        name: formData.name,
+        description: formData.description || undefined,
+        event_date: eventDate,
+        event_time: formData.time || undefined,
+        location: formData.location || undefined,
+        group_id: groupId,
+        is_active: true
+    };
+};

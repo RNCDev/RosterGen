@@ -139,8 +139,7 @@ export default function DuplicateEventDialog({
                                 weekday: 'long', 
                                 year: 'numeric', 
                                 month: 'long', 
-                                day: 'numeric',
-                                timeZone: 'UTC'
+                                day: 'numeric'
                             })}
                         </p>
                     </div>

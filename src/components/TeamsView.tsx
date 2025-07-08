@@ -6,6 +6,7 @@ import { Clipboard, Users, BarChart2, Hash, Trophy, Zap, Shield, Target, Refresh
 import _ from 'lodash';
 import { Button } from '@/components/ui/Button';
 import { toBlob } from 'html-to-image';
+import { Toast, useToast } from '@/components/ui/toast';
 
 interface TeamsViewProps {
     teams: Teams;
@@ -181,29 +182,60 @@ export default function TeamsView({ teams, teamNames, setTeams, setTeamNames, on
     const teamsContainerRef = useRef<HTMLDivElement>(null);
     const [isSavingTeams, setIsSavingTeams] = useState(false);
     const [showSaveSuccess, setShowSaveSuccess] = useState(false);
+    const { toast, dismiss, open, message, type } = useToast();
 
     const handleCopyToClipboard = () => {
         if (teamsContainerRef.current === null) {
             return;
         }
 
-        toBlob(teamsContainerRef.current, { cacheBust: true })
+        // Add padding to ensure we capture all content
+        const originalPadding = teamsContainerRef.current.style.padding;
+        teamsContainerRef.current.style.padding = '20px';
+        
+        // Add a small delay to ensure everything is rendered properly
+        setTimeout(() => {
+            // Use quality: 1 for better image and pixelRatio: 2 for higher resolution
+            toBlob(teamsContainerRef.current!, { 
+                cacheBust: true,
+                quality: 1,
+                pixelRatio: 2,
+                height: teamsContainerRef.current?.scrollHeight,
+                width: teamsContainerRef.current?.scrollWidth,
+                style: {
+                    margin: '20px',
+                    boxShadow: 'none'
+                }
+            })
             .then((blob) => {
                 if (blob) {
                     navigator.clipboard.write([
                         new ClipboardItem({ 'image/png': blob })
                     ]).then(() => {
-                        alert('Teams image copied to clipboard!');
+                        toast({ message: 'Teams image copied to clipboard!', type: 'success' });
+                        // Restore original padding
+                        if (teamsContainerRef.current) {
+                            teamsContainerRef.current.style.padding = originalPadding;
+                        }
                     }).catch(err => {
                         console.error('Failed to copy image: ', err);
-                        alert('Failed to copy image to clipboard.');
+                        toast({ message: 'Failed to copy image to clipboard.', type: 'error' });
+                        // Restore original padding
+                        if (teamsContainerRef.current) {
+                            teamsContainerRef.current.style.padding = originalPadding;
+                        }
                     });
                 }
             })
             .catch((err) => {
                 console.error('Failed to convert HTML to image: ', err);
-                alert('Failed to create image of teams.');
+                toast({ message: 'Failed to create image of teams.', type: 'error' });
+                // Restore original padding
+                if (teamsContainerRef.current) {
+                    teamsContainerRef.current.style.padding = originalPadding;
+                }
             });
+        }, 100); // Small delay to ensure rendering
     };
 
     const handleSaveToEvent = async () => {
@@ -266,82 +298,92 @@ export default function TeamsView({ teams, teamNames, setTeams, setTeamNames, on
     const skillDifference = Math.abs(team1Stats.totalSkill - team2Stats.totalSkill);
 
     return (
-        <div className="space-y-6 animate-fade-in">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4 text-sm text-gray-600">
-                    <span><strong className="text-gray-800">{totalPlayers}</strong> Players</span>
-                    <span className="h-4 w-px bg-gray-300"></span>
-                    <span>Skill Diff: <strong className="text-gray-800">{skillDifference}</strong></span>
-                    <span className="h-4 w-px bg-gray-300"></span>
-                     <span>Balance: <strong className="text-gray-800">{skillDifference <= 2 ? 'Excellent' : skillDifference <= 5 ? 'Good' : 'Fair'}</strong></span>
+        <>
+            <div className="space-y-6 animate-fade-in">
+                {/* Header */}
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4 text-sm text-gray-600">
+                        <span><strong className="text-gray-800">{totalPlayers}</strong> Players</span>
+                        <span className="h-4 w-px bg-gray-300"></span>
+                        <span>Skill Diff: <strong className="text-gray-800">{skillDifference}</strong></span>
+                        <span className="h-4 w-px bg-gray-300"></span>
+                         <span>Balance: <strong className="text-gray-800">{skillDifference <= 2 ? 'Excellent' : skillDifference <= 5 ? 'Good' : 'Fair'}</strong></span>
+                    </div>
+                    <Button variant="outline" onClick={onBack}>
+                        Back to Attendance
+                    </Button>
                 </div>
-                <Button variant="outline" onClick={onBack}>
-                    Back to Attendance
-                </Button>
+                
+                {/* Action Bar */}
+                <div className="flex items-center justify-end gap-2">
+                    <Button onClick={onGenerateTeams} disabled={isGenerating}>
+                        <RefreshCw className={`w-4 h-4 mr-2 ${isGenerating ? 'animate-spin' : ''}`} />
+                        {isGenerating ? 'Regenerating...' : 'Regenerate Teams'}
+                    </Button>
+                    {selectedEvent && (
+                         <Button 
+                            onClick={handleSaveToEvent}
+                            disabled={isSavingTeams || totalPlayers === 0}
+                            variant="outline"
+                        >
+                            {isSavingTeams ? (
+                                <>
+                                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                                    Saving...
+                                </>
+                            ) : showSaveSuccess ? (
+                                <>
+                                    <CheckCircle className="w-4 h-4 mr-2 text-green-500" />
+                                    Saved!
+                                </>
+                            ) : (
+                                <>
+                                    <Save className="w-4 h-4 mr-2" />
+                                    Save to Event
+                                </>
+                            )}
+                        </Button>
+                    )}
+                    <Button variant="outline" onClick={handleCopyToClipboard}>
+                        <Clipboard className="w-4 h-4 mr-2" />
+                        Copy to Clipboard
+                    </Button>
+                </div>
+
+                {/* Teams Grid */}
+                <div ref={teamsContainerRef} className="bg-slate-50 p-6 rounded-lg overflow-visible">
+                    <div className="grid md:grid-cols-2 gap-6 items-start">
+                        <TeamCard
+                            name={teamNames.team1}
+                            team={team1Data}
+                            onNameChange={(name) => {
+                                setTeamNames({ ...teamNames, team1: name });
+                                onSaveTeamNames(name, teamNames.team2);
+                            }}
+                            teamColor="red"
+                            onPlayerMove={(player, position) => handlePlayerMove(player, teamNames.team1.toLowerCase(), position)}
+                        />
+                        <TeamCard
+                            name={teamNames.team2}
+                            team={team2Data}
+                            onNameChange={(name) => {
+                                setTeamNames({ ...teamNames, team2: name });
+                                onSaveTeamNames(teamNames.team1, name);
+                            }}
+                            teamColor="blue"
+                            onPlayerMove={(player, position) => handlePlayerMove(player, teamNames.team2.toLowerCase(), position)}
+                        />
+                    </div>
+                </div>
             </div>
             
-            {/* Action Bar */}
-            <div className="flex items-center justify-end gap-2">
-                <Button onClick={onGenerateTeams} disabled={isGenerating}>
-                    <RefreshCw className={`w-4 h-4 mr-2 ${isGenerating ? 'animate-spin' : ''}`} />
-                    {isGenerating ? 'Regenerating...' : 'Regenerate Teams'}
-                </Button>
-                {selectedEvent && (
-                     <Button 
-                        onClick={handleSaveToEvent}
-                        disabled={isSavingTeams || totalPlayers === 0}
-                        variant="outline"
-                    >
-                        {isSavingTeams ? (
-                            <>
-                                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                                Saving...
-                            </>
-                        ) : showSaveSuccess ? (
-                            <>
-                                <CheckCircle className="w-4 h-4 mr-2 text-green-500" />
-                                Saved!
-                            </>
-                        ) : (
-                            <>
-                                <Save className="w-4 h-4 mr-2" />
-                                Save to Event
-                            </>
-                        )}
-                    </Button>
-                )}
-                <Button variant="outline" onClick={handleCopyToClipboard}>
-                    <Clipboard className="w-4 h-4 mr-2" />
-                    Copy to Clipboard
-                </Button>
-            </div>
-
-            {/* Teams Grid */}
-            <div ref={teamsContainerRef} className="bg-slate-50 p-4">
-                <div className="grid md:grid-cols-2 gap-4 items-start">
-                    <TeamCard
-                        name={teamNames.team1}
-                        team={team1Data}
-                        onNameChange={(name) => {
-                            setTeamNames({ ...teamNames, team1: name });
-                            onSaveTeamNames(name, teamNames.team2);
-                        }}
-                        teamColor="red"
-                        onPlayerMove={(player, position) => handlePlayerMove(player, teamNames.team1.toLowerCase(), position)}
-                    />
-                    <TeamCard
-                        name={teamNames.team2}
-                        team={team2Data}
-                        onNameChange={(name) => {
-                            setTeamNames({ ...teamNames, team2: name });
-                            onSaveTeamNames(teamNames.team1, name);
-                        }}
-                        teamColor="blue"
-                        onPlayerMove={(player, position) => handlePlayerMove(player, teamNames.team2.toLowerCase(), position)}
-                    />
-                </div>
-            </div>
-        </div>
+            {/* Toast notification - moved outside main container */}
+            <Toast 
+                open={open} 
+                message={message} 
+                type={type} 
+                onClose={dismiss} 
+            />
+        </>
     );
 } 

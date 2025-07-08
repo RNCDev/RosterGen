@@ -103,6 +103,16 @@ export default function EventsView({
         eventManagement.setEventToDuplicate(null);
     };
     
+    const handleDeleteSavedTeams = async (eventId: number) => {
+        try {
+            await onDeleteSavedTeams(eventId);
+            // Return to attendance view after deleting saved teams
+            eventManagement.setShowTeams(false);
+        } catch (error) {
+            console.error('Failed to delete saved teams:', error);
+        }
+    };
+
     if (!group) {
         return (
             <div className="text-center py-16">
@@ -125,7 +135,7 @@ export default function EventsView({
                 onDeleteEvent={onDeleteEvent}
                 onDuplicateEvent={eventManagement.handleDuplicateEvent}
                 onLoadSavedTeams={handleLoadTeamsForEvent}
-                onDeleteSavedTeams={onDeleteSavedTeams}
+                onDeleteSavedTeams={handleDeleteSavedTeams}
             />
 
             {/* Right Column: Attendance */}
