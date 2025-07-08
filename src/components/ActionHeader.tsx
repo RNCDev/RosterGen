@@ -28,12 +28,6 @@ interface ActionHeaderProps {
     isPlayerListDirty: boolean;
     isLoading: boolean;
     isGroupLoaded: boolean;
-    // Team alias props
-    teamAlias1: string;
-    setTeamAlias1: React.Dispatch<React.SetStateAction<string>>;
-    teamAlias2: string;
-    setTeamAlias2: React.Dispatch<React.SetStateAction<string>>;
-    onUpdateTeamAliases: (alias1: string, alias2: string) => Promise<void>;
 }
 
 export default function ActionHeader({
@@ -46,18 +40,8 @@ export default function ActionHeader({
     isGroupNameDirty,
     isPlayerListDirty,
     isLoading,
-    isGroupLoaded,
-    teamAlias1,
-    setTeamAlias1,
-    teamAlias2,
-    setTeamAlias2,
-    onUpdateTeamAliases
+    isGroupLoaded
 }: ActionHeaderProps) {
-
-    const [isSavingAlias1, setIsSavingAlias1] = useState(false);
-    const [isSavingAlias2, setIsSavingAlias2] = useState(false);
-    const [showAlias1Success, setShowAlias1Success] = useState(false);
-    const [showAlias2Success, setShowAlias2Success] = useState(false);
 
     const handleLoadWithPrompt = () => {
         if (isPlayerListDirty && !window.confirm('You have unsaved changes to your roster. Are you sure you want to load a new group? Your current changes will be lost.')) {
@@ -78,34 +62,6 @@ export default function ActionHeader({
             return;
         }
         onDeleteGroup();
-    };
-
-    const handleUpdateAlias1 = async (value: string) => {
-        setIsSavingAlias1(true);
-        try {
-            await onUpdateTeamAliases(value, teamAlias2);
-            setShowAlias1Success(true);
-            setTimeout(() => setShowAlias1Success(false), 2000); // Hide after 2 seconds
-        } catch (error) {
-            console.error("Failed to update Team 1 alias:", error);
-            // Handle error feedback if necessary
-        } finally {
-            setIsSavingAlias1(false);
-        }
-    };
-
-    const handleUpdateAlias2 = async (value: string) => {
-        setIsSavingAlias2(true);
-        try {
-            await onUpdateTeamAliases(teamAlias1, value);
-            setShowAlias2Success(true);
-            setTimeout(() => setShowAlias2Success(false), 2000); // Hide after 2 seconds
-        } catch (error) {
-            console.error("Failed to update Team 2 alias:", error);
-            // Handle error feedback if necessary
-        } finally {
-            setIsSavingAlias2(false);
-        }
     };
 
     return (
