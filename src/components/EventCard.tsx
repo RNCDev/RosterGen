@@ -22,7 +22,7 @@ interface EventCardProps {
     onDeleteSavedTeams: () => void;
 }
 
-export default function EventCardNew({
+export default function EventCard({
     event,
     isSelected,
     onClick,

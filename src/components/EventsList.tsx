@@ -4,7 +4,7 @@ import React from 'react';
 import { Calendar, Plus } from 'lucide-react';
 import { type EventWithStats } from '@/types/PlayerTypes';
 import { Button } from '@/components/ui/Button';
-import EventCardNew from '@/components/EventCardNew';
+import EventCard from '@/components/EventCard';
 
 interface EventsListProps {
     events: EventWithStats[];
@@ -54,7 +54,7 @@ export default function EventsList({
                     </div>
                 ) : (
                     events.map((event) => (
-                        <EventCardNew
+                        <EventCard
                             key={event.id}
                             event={event}
                             isSelected={selectedEvent?.id === event.id}
