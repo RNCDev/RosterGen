@@ -8,7 +8,7 @@ export interface PlayerEditingState {
     setIsEditing: (editing: boolean) => void;
     setSelectedPlayerIds: (ids: Set<number>) => void;
     setIsTourneyOpen: (open: boolean) => void;
-    handleToggleEdit: (isDirty: boolean, onSaveChanges: () => void) => void;
+    handleToggleEdit: (isDirty: boolean, onSaveChanges: () => Promise<void>) => Promise<void>;
     handleCancelEdit: () => void;
     handleBulkUpdate: (
         updates: Partial<Player>, 
@@ -25,9 +25,9 @@ export function usePlayerEditing(): PlayerEditingState {
     const [selectedPlayerIds, setSelectedPlayerIds] = useState<Set<number>>(new Set());
     const [isTourneyOpen, setIsTourneyOpen] = useState(false);
 
-    const handleToggleEdit = (isDirty: boolean, onSaveChanges: () => void) => {
+    const handleToggleEdit = async (isDirty: boolean, onSaveChanges: () => Promise<void>) => {
         if (isEditing && isDirty) {
-            onSaveChanges();
+            await onSaveChanges();
         }
         setIsEditing(!isEditing);
         // Clear selection when exiting edit mode

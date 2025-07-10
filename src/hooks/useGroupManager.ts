@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 import { useGroupState } from './useGroupState';
 import { usePlayerManagement } from './usePlayerManagement';
 import { useEventsAndAttendance } from './useEventsAndAttendance';
@@ -11,40 +11,62 @@ export function useGroupManager(onTeamDataChangeSuccess?: () => void) {
     const playerState = usePlayerManagement();
     const eventsState = useEventsAndAttendance(groupState.setError);
 
+    const loadPlayersAndEvents = useCallback(async (groupId: number) => {
+        try {
+            // Load players first
+            const playersResponse = await fetch(`/api/players?groupId=${groupId}`);
+            if (playersResponse.ok) {
+                const playersData: Player[] = await playersResponse.json();
+                playerState.setPlayers(playersData);
+                playerState.setOriginalPlayers(playersData);
+            } else if (playersResponse.status !== 404) {
+                throw new Error('Failed to fetch players');
+            }
+            
+            // Then load events
+            const eventsData = await eventsState.loadEvents(groupId);
+
+            // If events are found, select the first one by default
+            if (eventsData && eventsData.length > 0) {
+                await eventsState.selectEvent(eventsData[0]);
+            } else {
+                // No events found - clear selected event and attendance data
+                eventsState.setSelectedEvent(null);
+                eventsState.setAttendanceData([]);
+            }
+
+        } catch (err) {
+            groupState.setError(err instanceof Error ? err.message : 'Failed to load data');
+        }
+    }, [
+        playerState.setPlayers, 
+        playerState.setOriginalPlayers, 
+        eventsState.loadEvents,
+        eventsState.selectEvent,
+        eventsState.setSelectedEvent,
+        eventsState.setAttendanceData,
+        groupState.setError
+    ]);
+
     // Load players when group changes
     useEffect(() => {
-        const loadPlayers = async () => {
-            if (!groupState.activeGroup) {
-                playerState.clearPlayers();
-                eventsState.clearEvents();
-                return;
-            }
-
-            try {
-                const playersResponse = await fetch(`/api/players?groupId=${groupState.activeGroup.id}`);
-                if (playersResponse.ok) {
-                    const playersData: Player[] = await playersResponse.json();
-                    playerState.setPlayers(playersData);
-                    playerState.setOriginalPlayers(playersData);
-                } else if (playersResponse.status !== 404) {
-                    throw new Error('Failed to fetch players');
-                }
-                
-                await eventsState.loadEvents(groupState.activeGroup.id);
-            } catch (err) {
-                groupState.setError(err instanceof Error ? err.message : 'Failed to load data');
-            }
-        };
-
         if (groupState.activeGroup) {
-            loadPlayers();
+            loadPlayersAndEvents(groupState.activeGroup.id);
+        } else {
+            playerState.clearPlayers();
+            eventsState.clearEvents();
         }
-    }, [groupState.activeGroup?.id]);
+    }, [
+        groupState.activeGroup, 
+        loadPlayersAndEvents, 
+        playerState.clearPlayers, 
+        eventsState.clearEvents
+    ]);
 
     // Helper function to reload all data
     const reloadData = async () => {
         if (groupState.activeGroup) {
-            await groupState.handleLoadGroup(groupState.activeGroup.code);
+            await loadPlayersAndEvents(groupState.activeGroup.id);
         }
     };
 
@@ -128,7 +150,7 @@ export function useGroupManager(onTeamDataChangeSuccess?: () => void) {
         setError: groupState.setError,
         isGroupNameDirty: groupState.isGroupNameDirty,
         handleLoadGroup: groupState.handleLoadGroup,
-        handleClearGroup: groupState.handleClearGroup,
+        handleClearGroup: () => groupState.handleClearGroup(playerState.clearPlayers),
         handleCreateGroup: groupState.handleCreateGroup,
         handleRenameGroup: groupState.handleRenameGroup,
         handleDeleteGroup: groupState.handleDeleteGroup,

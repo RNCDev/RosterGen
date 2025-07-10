@@ -44,6 +44,7 @@ export default function PlayerFilters({
                     value={searchQuery}
                     onChange={(e) => onSearchQueryChange(e.target.value)}
                     className="w-full pl-10 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/80 backdrop-blur-sm"
+                    suppressHydrationWarning={true}
                 />
                 <button
                     onClick={() => setIsFilterOpen(!isFilterOpen)}

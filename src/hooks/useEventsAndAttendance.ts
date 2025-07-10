@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { 
   type EventWithStats, 
   type PlayerWithAttendance, 
@@ -18,7 +18,7 @@ export interface EventsAndAttendanceState {
   setEvents: (events: EventWithStats[]) => void;
   setSelectedEvent: (event: EventWithStats | null) => void;
   setAttendanceData: (data: PlayerWithAttendance[]) => void;
-  loadEvents: (groupId: number) => Promise<void>;
+  loadEvents: (groupId: number) => Promise<EventWithStats[] | null>;
   loadAttendanceForEvent: (eventId: number) => Promise<void>;
   selectEvent: (event: EventWithStats) => Promise<void>;
   createEvent: (eventData: Omit<EventInput, 'group_id'>, groupId: number) => Promise<void>;
@@ -39,32 +39,6 @@ export function useEventsAndAttendance(setError: (error: string | null) => void)
   const [eventsLoading, setEventsLoading] = useState<boolean>(false);
   const [attendanceLoading, setAttendanceLoading] = useState<boolean>(false);
 
-  const loadEvents = useCallback(async (groupId: number) => {
-    if (!groupId) return;
-    setEventsLoading(true);
-    try {
-      const response = await fetch(`/api/events?groupId=${groupId}`);
-      if (!response.ok) throw new Error('Failed to fetch events');
-      const eventsData: EventWithStats[] = await response.json();
-      setEvents(eventsData);
-
-      if (eventsData.length > 0) {
-        const eventToSelect = selectedEvent 
-          ? eventsData.find(e => e.id === selectedEvent.id) || eventsData[0]
-          : eventsData[0];
-        await selectEvent(eventToSelect);
-      } else {
-        setSelectedEvent(null);
-        setAttendanceData([]);
-      }
-    } catch (err) {
-      console.error('Failed to load events:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load events');
-    } finally {
-      setEventsLoading(false);
-    }
-  }, [selectedEvent, setError]);
-
   const loadAttendanceForEvent = useCallback(async (eventId: number) => {
     setAttendanceLoading(true);
     try {
@@ -79,11 +53,29 @@ export function useEventsAndAttendance(setError: (error: string | null) => void)
       setAttendanceLoading(false);
     }
   }, [setError]);
-
+  
   const selectEvent = useCallback(async (event: EventWithStats) => {
     setSelectedEvent(event);
     await loadAttendanceForEvent(event.id);
   }, [loadAttendanceForEvent]);
+
+  const loadEvents = useCallback(async (groupId: number): Promise<EventWithStats[] | null> => {
+    if (!groupId) return null;
+    setEventsLoading(true);
+    try {
+      const response = await fetch(`/api/events?groupId=${groupId}`);
+      if (!response.ok) throw new Error('Failed to fetch events');
+      const eventsData: EventWithStats[] = await response.json();
+      setEvents(eventsData);
+      return eventsData;
+    } catch (err) {
+      console.error('Failed to load events:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load events');
+      return null;
+    } finally {
+      setEventsLoading(false);
+    }
+  }, [setError]);
 
   const createEvent = useCallback(async (eventData: Omit<EventInput, 'group_id'>, groupId: number) => {
     const response = await fetch('/api/events', {
@@ -100,18 +92,32 @@ export function useEventsAndAttendance(setError: (error: string | null) => void)
 
   const deleteEvent = useCallback(async (eventId: number, groupId: number) => {
     try {
+      const wasSelectedEvent = selectedEvent?.id === eventId;
+      
       const response = await fetch(`/api/events?eventId=${eventId}`, { method: 'DELETE' });
       if (!response.ok) throw new Error('Failed to delete event');
-      await loadEvents(groupId);
+      
+      const eventsData = await loadEvents(groupId);
+      
+      // If we deleted the currently selected event, handle state cleanup
+      if (wasSelectedEvent) {
+        if (eventsData && eventsData.length > 0) {
+          // Select the first available event
+          await selectEvent(eventsData[0]);
+        } else {
+          // No events left - clear selected event and attendance data
+          setSelectedEvent(null);
+          setAttendanceData([]);
+        }
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete event');
     }
-  }, [loadEvents, setError]);
+  }, [loadEvents, setError, selectedEvent, selectEvent]);
 
   const updateAttendance = useCallback(async (eventId: number, updates: AttendanceInput[], groupId: number) => {
     const originalAttendanceData = [...attendanceData];
     
-    // Optimistic update
     const optimisticUpdate = attendanceData.map(player => {
       const update = updates.find(u => u.player_id === player.id);
       if (update) {
@@ -153,7 +159,7 @@ export function useEventsAndAttendance(setError: (error: string | null) => void)
     await updateAttendance(eventId, updates, groupId);
   }, [attendanceData, updateAttendance]);
 
-  const duplicateEvent = async (eventId: number, newName: string, newDate: string, newTime?: string, newLocation?: string, groupId?: number) => {
+  const duplicateEvent = useCallback(async (eventId: number, newName: string, newDate: string, newTime?: string, newLocation?: string, groupId?: number) => {
     try {
       const response = await fetch('/api/events', {
         method: 'PATCH',
@@ -178,9 +184,9 @@ export function useEventsAndAttendance(setError: (error: string | null) => void)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to duplicate event');
     }
-  };
+  }, [loadEvents, setError]);
 
-  const handleSaveTeamsForEvent = async (
+  const handleSaveTeamsForEvent = useCallback(async (
     eventId: number, 
     teams: Teams, 
     teamNames: { team1: string, team2: string }, 
@@ -207,7 +213,7 @@ export function useEventsAndAttendance(setError: (error: string | null) => void)
       console.error('Error saving teams:', err);
       throw err;
     }
-  };
+  }, [loadEvents]);
 
   const handleLoadTeamsForEvent = useCallback(async (eventId: number): Promise<{ teams: Teams, teamNames: { team1: string, team2: string } | null }> => {
     try {
@@ -244,11 +250,11 @@ export function useEventsAndAttendance(setError: (error: string | null) => void)
     }
   }, [loadEvents, setError]);
 
-  const clearEvents = () => {
+  const clearEvents = useCallback(() => {
     setEvents([]);
     setSelectedEvent(null);
     setAttendanceData([]);
-  };
+  }, []);
 
   return {
     events,

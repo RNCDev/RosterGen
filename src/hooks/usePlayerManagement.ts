@@ -22,7 +22,7 @@ export function usePlayerManagement(): PlayerManagementState {
 
   const isDirty = !isEqual(players, originalPlayers);
 
-  const handleAddPlayer = async (
+  const handleAddPlayer = useCallback(async (
     playerData: Omit<Player, 'id' | 'group_id'>, 
     groupId: number,
     onReload: () => Promise<void>
@@ -37,9 +37,9 @@ export function usePlayerManagement(): PlayerManagementState {
       throw new Error(error || 'Failed to add player');
     }
     await onReload();
-  };
+  }, []);
 
-  const handleCsvUpload = async (
+  const handleCsvUpload = useCallback(async (
     csvPlayers: Omit<Player, 'id' | 'group_id'>[], 
     groupId: number,
     onReload: () => Promise<void>
@@ -54,10 +54,11 @@ export function usePlayerManagement(): PlayerManagementState {
       throw new Error(error || 'Failed to upload CSV');
     }
     await onReload();
-  };
+  }, []);
 
-  const handleSaveChanges = async (groupId: number, onReload: () => Promise<void>) => {
-    if (!isDirty) return;
+  const handleSaveChanges = useCallback(async (groupId: number, onReload: () => Promise<void>) => {
+    const isDirtyCheck = !isEqual(players, originalPlayers);
+    if (!isDirtyCheck) return;
 
     const playersToCreate = players
       .filter(p => typeof p.id === 'string' || p.id < 0)
@@ -89,12 +90,12 @@ export function usePlayerManagement(): PlayerManagementState {
     }
 
     await onReload();
-  };
+  }, [players, originalPlayers]);
 
-  const clearPlayers = () => {
+  const clearPlayers = useCallback(() => {
     setPlayers([]);
     setOriginalPlayers([]);
-  };
+  }, []);
 
   return {
     players,

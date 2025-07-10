@@ -21,7 +21,7 @@ interface PlayersViewProps {
     setPlayers: (players: Player[]) => void;
     loading: boolean;
     isDirty: boolean;
-    onSaveChanges: () => void;
+    onSaveChanges: () => Promise<void>;
 }
 
 export default function PlayersView({ 
@@ -47,8 +47,8 @@ export default function PlayersView({
         editingState.setSelectedPlayerIds(new Set([...editingState.selectedPlayerIds].filter(id => id !== playerId)));
     };
 
-    const handleToggleEdit = () => {
-        editingState.handleToggleEdit(isDirty, onSaveChanges);
+    const handleToggleEdit = async () => {
+        await editingState.handleToggleEdit(isDirty, onSaveChanges);
     };
 
     const handleBulkUpdate = (updates: Partial<Player>) => {

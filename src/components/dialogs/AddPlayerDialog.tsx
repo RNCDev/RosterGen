@@ -25,7 +25,7 @@ export default function AddPlayerDialog({ isOpen, onClose, onAddPlayer }: AddPla
     const [player, setPlayer] = useState<NewPlayerData>({
         first_name: '',
         last_name: '',
-        skill: 5,
+        skill: 3,
         is_defense: false,
     });
 
@@ -44,6 +44,10 @@ export default function AddPlayerDialog({ isOpen, onClose, onAddPlayer }: AddPla
         setPlayer({ ...player, [name]: processedValue });
     };
 
+    const handleStarClick = (starValue: number) => {
+        setPlayer({ ...player, skill: starValue });
+    };
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         onAddPlayer(player);
@@ -51,7 +55,7 @@ export default function AddPlayerDialog({ isOpen, onClose, onAddPlayer }: AddPla
         setPlayer({
             first_name: '',
             last_name: '',
-            skill: 5,
+            skill: 3,
             is_defense: false,
         });
         onClose();
@@ -62,7 +66,7 @@ export default function AddPlayerDialog({ isOpen, onClose, onAddPlayer }: AddPla
         setPlayer({
             first_name: '',
             last_name: '',
-            skill: 5,
+            skill: 3,
             is_defense: false,
         });
         onClose();
@@ -125,30 +129,37 @@ export default function AddPlayerDialog({ isOpen, onClose, onAddPlayer }: AddPla
 
                     {/* Skill Level */}
                     <div className="space-y-3">
-                        <label htmlFor="skill" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                        <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
                             <Star className="w-4 h-4" />
                             Skill Level
                         </label>
                         <div className="card-modern p-4">
-                            <div className="flex items-center gap-4">
-                                <span className="text-sm font-medium text-gray-600 w-8">1</span>
-                                <input 
-                                    type="range" 
-                                    min="1" 
-                                    max="10" 
-                                    name="skill" 
-                                    id="skill" 
-                                    value={player.skill} 
-                                    onChange={handleChange} 
-                                    className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-                                />
-                                <span className="text-sm font-medium text-gray-600 w-8">10</span>
-                                <div className="w-16 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center shadow-md">
-                                    <span className="text-white font-bold text-lg">{player.skill}</span>
-                                </div>
+                            <div className="flex items-center justify-center gap-1">
+                                {[1, 2, 3, 4, 5, 6, 7].map((star) => (
+                                    <button
+                                        key={star}
+                                        type="button"
+                                        onClick={() => handleStarClick(star)}
+                                        className="p-1 hover:scale-110 transition-transform"
+                                        title={`${star} star${star > 1 ? 's' : ''}`}
+                                    >
+                                        <Star
+                                            className={`w-8 h-8 transition-colors ${
+                                                star <= player.skill
+                                                    ? 'text-yellow-400 fill-yellow-400'
+                                                    : 'text-gray-300 hover:text-yellow-200'
+                                            }`}
+                                        />
+                                    </button>
+                                ))}
                             </div>
-                            <div className="mt-2 text-xs text-gray-500 text-center">
-                                Drag to set player skill level (1 = Beginner, 10 = Expert)
+                            <div className="mt-3 text-center">
+                                <span className="text-sm font-medium text-gray-700">
+                                    {player.skill} star{player.skill > 1 ? 's' : ''}
+                                </span>
+                                <div className="text-xs text-gray-500 mt-1">
+                                    Click stars to set skill level (1 = Beginner, 7 = Expert)
+                                </div>
                             </div>
                         </div>
                     </div>

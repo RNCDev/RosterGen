@@ -145,12 +145,14 @@ export default function PlayerTable({
                                                 value={player.first_name}
                                                 onChange={(e) => onUpdate({ ...player, first_name: e.target.value })}
                                                 className="w-32 text-sm border border-gray-200 rounded px-2 py-1 bg-white/80 focus:outline-none focus:ring-1 focus:ring-blue-400"
+                                                suppressHydrationWarning={true}
                                             />
                                             <input
                                                 type="text"
                                                 value={player.last_name}
                                                 onChange={(e) => onUpdate({ ...player, last_name: e.target.value })}
                                                 className="w-32 text-sm border border-gray-200 rounded px-2 py-1 bg-white/80 focus:outline-none focus:ring-1 focus:ring-blue-400"
+                                                suppressHydrationWarning={true}
                                             />
                                         </div>
                                     ) : (

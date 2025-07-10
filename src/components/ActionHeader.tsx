@@ -78,7 +78,7 @@ export default function ActionHeader({
                         {/* Group Code Input with Label, styled as pill */}
                         <div className="flex flex-col items-start gap-2 w-full sm:w-auto">
                             <div className="flex flex-row items-center gap-2 w-full sm:w-auto">
-                                <div className="flex items-center gap-2 px-6 py-2 rounded-full bg-blue-50 border border-blue-200 shadow-sm min-w-[140px]">
+                                <div className="flex items-center gap-2 px-6 py-2 rounded-full bg-blue-50 border border-blue-200 shadow-sm min-w-[140px]" suppressHydrationWarning={true}>
                                     <span className="text-xs font-semibold text-gray-500 uppercase mr-2">GROUP</span>
                                     <input
                                         type="text"
@@ -88,12 +88,14 @@ export default function ActionHeader({
                                         placeholder="Group Code"
                                         className="bg-transparent focus:outline-none text-base font-bold text-blue-800 w-28 min-w-0 px-1"
                                         aria-label="Group Code"
+                                        suppressHydrationWarning={true}
                                     />
                                     <button
                                         onClick={handleLoadWithPrompt}
                                         disabled={!groupCode.trim() || isLoading}
                                         className="p-2 hover:bg-blue-100 rounded-md transition-colors disabled:opacity-50 flex-shrink-0"
                                         title="Load Group"
+                                        suppressHydrationWarning={true}
                                     >
                                         <Search size={18} className="text-blue-600" />
                                     </button>
@@ -111,6 +113,7 @@ export default function ActionHeader({
                                         : 'bg-gray-100 text-gray-400 border-gray-200'
                                 }`}
                                 title={isGroupNameDirty ? "Save New Group Name" : "Group Name Saved"}
+                                suppressHydrationWarning={true}
                             >
                                 {isGroupNameDirty ? (
                                     <Save size={18} />
@@ -120,8 +123,10 @@ export default function ActionHeader({
                             </button>
                             <button
                                 onClick={handleClearWithPrompt}
+                                disabled={isLoading}
                                 className="px-3 py-2 rounded-md font-semibold bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200 transition-colors shadow-sm"
                                 title="Clear Workspace"
+                                suppressHydrationWarning={true}
                             >
                                 <X size={18} />
                             </button>
@@ -130,6 +135,7 @@ export default function ActionHeader({
                                 disabled={!groupCode.trim() || isLoading || !isGroupLoaded}
                                 className="px-3 py-2 rounded-md font-semibold bg-red-100 text-red-600 border border-red-200 hover:bg-red-200 transition-colors shadow-sm disabled:opacity-50"
                                 title="Delete Group"
+                                suppressHydrationWarning={true}
                             >
                                 <Trash2 size={18} />
                             </button>

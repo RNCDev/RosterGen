@@ -10,24 +10,44 @@ export function cn(...inputs: ClassValue[]) {
 /**
  * Shallow equality check for objects and arrays
  */
-export function isEqual<T>(a: T, b: T): boolean {
-  if (a === b) return true;
-  if (a == null || b == null) return false;
-  if (typeof a !== typeof b) return false;
-  
-  if (Array.isArray(a) && Array.isArray(b)) {
-    if (a.length !== b.length) return false;
-    return a.every((item, index) => isEqual(item, b[index]));
-  }
-  
-  if (typeof a === 'object' && typeof b === 'object') {
-    const keysA = Object.keys(a as object);
-    const keysB = Object.keys(b as object);
-    if (keysA.length !== keysB.length) return false;
-    return keysA.every(key => isEqual((a as any)[key], (b as any)[key]));
-  }
-  
-  return false;
+export function isEqual(a: any, b: any): boolean {
+    if (a === b) return true;
+    if (a == null || b == null) return false;
+    if (a.constructor !== b.constructor) return false;
+
+    if (Array.isArray(a)) {
+        if (a.length !== b.length) return false;
+        for (let i = 0; i < a.length; i++) {
+            if (!isEqual(a[i], b[i])) return false;
+        }
+        return true;
+    }
+
+    if (typeof a === 'object') {
+        const getKeys = (obj: object) => Object.keys(obj)
+            .filter(key => key !== 'created_at' && key !== 'updated_at')
+            .sort();
+
+        const keysA = getKeys(a);
+        const keysB = getKeys(b);
+
+        if (keysA.length !== keysB.length) {
+            return false;
+        }
+
+        for (let i = 0; i < keysA.length; i++) {
+            const keyA = keysA[i];
+            const keyB = keysB[i];
+            
+            if (keyA !== keyB || !isEqual(a[keyA], b[keyB])) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    return false;
 }
 
 /**

@@ -15,7 +15,7 @@ export interface GroupState {
   handleCreateGroup: (code: string) => Promise<Group>;
   handleRenameGroup: (newCode: string) => Promise<void>;
   handleDeleteGroup: () => Promise<void>;
-  handleClearGroup: () => void;
+  handleClearGroup: (clearPlayers: () => void) => void;
   handleUpdateTeamAliases: (alias1: string, alias2: string) => Promise<void>;
   teamAlias1: string;
   teamAlias2: string;
@@ -152,9 +152,10 @@ export function useGroupState(): GroupState {
     }
   };
 
-  const handleClearGroup = () => {
+  const handleClearGroup = (clearPlayers: () => void) => {
     setGroupCodeInput('');
     clearGroupState();
+    clearPlayers();
   };
 
   const isGroupNameDirty = activeGroup ? groupCodeInput !== activeGroup.code : false;

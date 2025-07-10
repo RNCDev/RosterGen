@@ -46,6 +46,21 @@ export function useEventManagement(
     const handleGenerateTeams = useCallback(async (selectedEvent: EventWithStats, group: Group, currentTeamNames: { team1: string, team2: string }) => {
         setIsGeneratingTeams(true);
         try {
+            // Add validation logging
+            console.log('Team generation request:', {
+                event_id: selectedEvent.id,
+                group: group,
+                team_names: currentTeamNames,
+            });
+
+            // Validate required data before making the request
+            if (!selectedEvent?.id) {
+                throw new Error('No event selected for team generation');
+            }
+            if (!group?.code) {
+                throw new Error('Group is missing required code property');
+            }
+
             const response = await fetch(`/api/teams?action=generate`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -56,7 +71,11 @@ export function useEventManagement(
                 }),
             });
 
-            if (!response.ok) throw new Error(await response.text());
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Team generation API error:', errorText);
+                throw new Error(`Failed to generate teams: ${errorText}`);
+            }
 
             const data = await response.json();
             setTeams(data.teams);
@@ -69,6 +88,7 @@ export function useEventManagement(
         } catch (error) {
             console.error('Failed to generate teams:', error);
             setIsGeneratingTeams(false);
+            // You might want to show a toast or error message to the user here
         }
     }, []);
 

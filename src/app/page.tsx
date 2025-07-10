@@ -203,6 +203,7 @@ export default function Home() {
                                             placeholder="Red"
                                             className="bg-transparent focus:outline-none text-base font-bold text-blue-800 w-32 min-w-0 px-1"
                                             aria-label="Team 1 Name"
+                                            suppressHydrationWarning={true}
                                         />
                                         <span className="ml-1 flex items-center">
                                             {aliasState.saving.team1 ? <Loader2 size={16} className="animate-spin text-blue-500" /> : null}
@@ -220,6 +221,7 @@ export default function Home() {
                                             placeholder="White"
                                             className="bg-transparent focus:outline-none text-base font-bold text-blue-800 w-32 min-w-0 px-1"
                                             aria-label="Team 2 Name"
+                                            suppressHydrationWarning={true}
                                         />
                                         <span className="ml-1 flex items-center">
                                             {aliasState.saving.team2 ? <Loader2 size={16} className="animate-spin text-blue-500" /> : null}
