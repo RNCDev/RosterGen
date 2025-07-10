@@ -1,6 +1,6 @@
 {
   "name": "roster-generator",
-  "version": "3.1.0",
+  "version": "3.2.0",
   "description": "Webapp for managing hockey rosters and events",
   "private": true,
   "scripts": {
@@ -16,10 +16,8 @@
     "@radix-ui/react-tabs": "^1.1.12",
     "@radix-ui/react-tooltip": "^1.2.7",
     "@vercel/postgres": "latest",
-    "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "dotenv": "^16.5.0",
-    "framer-motion": "^12.18.1",
     "html-to-image": "^1.11.13",
     "lodash": "^4.17.21",
     "lucide-react": "^0.263.1",
@@ -27,7 +25,6 @@
     "papaparse": "^5.4.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "shadcn-ui": "^0.9.4",
     "tailwind-merge": "^3.3.1",
     "tailwindcss": "^3.4.3",
     "tailwindcss-animate": "^1.0.7",

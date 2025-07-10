@@ -117,8 +117,7 @@ A brief overview of the key directories and files in RosterGen.
 │   │   │   │   └── aliases/ # API for updating team alias names
 │   │   │   ├── players/     # API for player CRUD operations
 │   │   │   ├── stats/       # API for generating player/team stats
-│   │   │   ├── teams/       # API for team generation
-│   │   │   └── test-generator/ # API for test data generation
+│   │   │   └── teams/       # API for team generation
 │   │   ├── globals.css    # Global stylesheets
 │   │   ├── layout.tsx     # Root layout component for the application
 │   │   └── page.tsx       # Main landing page component
@@ -148,7 +147,6 @@ A brief overview of the key directories and files in RosterGen.
 │   ├── lib/                 # Utility functions and core logic
 │   │   ├── api-utils.ts     # API utility functions and error handling
 │   │   ├── db.ts            # Database connection and query functions
-│   │   ├── teamGenerator.analysis.ts # Team generation analysis and testing
 │   │   ├── teamGenerator.ts # Core logic for balancing and generating teams
 │   │   └── utils.ts         # General utility functions
 │   │

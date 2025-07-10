@@ -13,6 +13,7 @@ import {
     Clipboard,
     Pencil
 } from 'lucide-react';
+import { useConfirmDialog } from '@/hooks/useConfirmDialog';
 // Import package.json to get version
 import packageJson from '../../package.json';
 
@@ -42,26 +43,29 @@ export default function ActionHeader({
     isLoading,
     isGroupLoaded
 }: ActionHeaderProps) {
+    const confirmDialog = useConfirmDialog();
 
-    const handleLoadWithPrompt = () => {
-        if (isPlayerListDirty && !window.confirm('You have unsaved changes to your roster. Are you sure you want to load a new group? Your current changes will be lost.')) {
-            return;
+    const handleLoadWithPrompt = async () => {
+        if (isPlayerListDirty) {
+            const confirmed = await confirmDialog.confirmUnsavedChanges('load a new group');
+            if (!confirmed) return;
         }
         onLoadGroup();
     };
     
-    const handleClearWithPrompt = () => {
-        if (isPlayerListDirty && !window.confirm('You have unsaved changes to your roster. Are you sure you want to clear the workspace?')) {
-            return;
+    const handleClearWithPrompt = async () => {
+        if (isPlayerListDirty) {
+            const confirmed = await confirmDialog.confirmUnsavedChanges('clear the workspace');
+            if (!confirmed) return;
         }
         onClearGroup();
     };
 
-    const handleDeleteWithPrompt = () => {
-        if (!window.confirm(`Are you sure you want to permanently delete the group "${groupCode}"? This action cannot be undone.`)) {
-            return;
+    const handleDeleteWithPrompt = async () => {
+        const confirmed = await confirmDialog.confirmDeletion(groupCode, 'group');
+        if (confirmed) {
+            onDeleteGroup();
         }
-        onDeleteGroup();
     };
 
     return (

@@ -3,6 +3,7 @@
 import React from 'react';
 import { Copy, Trash2, ShieldCheck, Trash } from 'lucide-react';
 import { type EventWithStats } from '@/types/PlayerTypes';
+import { useConfirmDialog } from '@/hooks/useConfirmDialog';
 
 // Function to convert 24-hour time format to 12-hour format
 const formatTime12Hour = (time24: string): string => {
@@ -22,7 +23,7 @@ interface EventCardProps {
     onDeleteSavedTeams: () => void;
 }
 
-export default function EventCard({
+const EventCard = React.memo(function EventCard({
     event,
     isSelected,
     onClick,
@@ -31,11 +32,13 @@ export default function EventCard({
     onLoadSavedTeams,
     onDeleteSavedTeams
 }: EventCardProps) {
+    const confirmDialog = useConfirmDialog();
     const hasSavedTeams = event.saved_teams_data && Object.keys(JSON.parse(event.saved_teams_data)).length > 0;
 
-    const handleDelete = (e: React.MouseEvent) => {
+    const handleDelete = async (e: React.MouseEvent) => {
         e.stopPropagation();
-        if (window.confirm(`Are you sure you want to delete the event "${event.name}"?`)) {
+        const confirmed = await confirmDialog.confirmDeletion(event.name, 'event');
+        if (confirmed) {
             onDelete();
         }
     };
@@ -50,9 +53,15 @@ export default function EventCard({
         onLoadSavedTeams();
     };
 
-    const handleDeleteSavedTeams = (e: React.MouseEvent) => {
+    const handleDeleteSavedTeams = async (e: React.MouseEvent) => {
         e.stopPropagation();
-        if (window.confirm(`Are you sure you want to delete the saved teams for "${event.name}"? This cannot be undone.`)) {
+        const confirmed = await confirmDialog.confirm({
+            title: 'Delete Saved Teams',
+            message: `Are you sure you want to delete the saved teams for "${event.name}"? This cannot be undone.`,
+            confirmText: 'Delete',
+            cancelText: 'Cancel'
+        });
+        if (confirmed) {
             onDeleteSavedTeams();
         }
     };
@@ -126,4 +135,6 @@ export default function EventCard({
             )}
         </div>
     );
-} 
+});
+
+export default EventCard; 

@@ -1,11 +1,11 @@
 import { type Player, type Teams } from '@/types/PlayerTypes';
-import _ from 'lodash';
 import { type Group } from '@/types/PlayerTypes';
+import { orderBy, shuffle, meanBy } from '@/lib/utils';
 
 export function generateTeams(players: Player[], group: Group): Teams {
     // Players are now pre-filtered by attendance before calling this function.
     // Shuffle players to ensure randomness for tie-breaking, then sort by skill
-    const sortedPlayers = _.orderBy(_.shuffle(players), 'skill', 'desc');
+    const sortedPlayers = orderBy(shuffle(players), 'skill', 'desc');
 
     // Initialize teams with dynamic names from group aliases
     const teams: Teams = {
@@ -45,8 +45,8 @@ export function generateTeams(players: Player[], group: Group): Teams {
             } else {
                 // Sizes are balanced, move to final priority.
                 // Priority 3: Overall team skill.
-                const team1Skill = _.meanBy([...teams[team1Alias].forwards, ...teams[team1Alias].defensemen], 'skill') || 0;
-                const team2Skill = _.meanBy([...teams[team2Alias].forwards, ...teams[team2Alias].defensemen], 'skill') || 0;
+                const team1Skill = meanBy([...teams[team1Alias].forwards, ...teams[team1Alias].defensemen], 'skill') || 0;
+                const team2Skill = meanBy([...teams[team2Alias].forwards, ...teams[team2Alias].defensemen], 'skill') || 0;
 
                 assignToTeam1 = team1Skill <= team2Skill;
             }

@@ -85,18 +85,23 @@ export default function Home() {
         handleDeleteSavedTeams
     } = useGroupManager(() => setActiveTab('events'));
     
-    const [isAddPlayerOpen, setAddPlayerOpen] = useState(false);
-    const [isUploadCsvOpen, setUploadCsvOpen] = useState(false);
-    const [isCreateGroupOpen, setCreateGroupOpen] = useState(false);
-    const [isSavingAlias1, setIsSavingAlias1] = useState(false);
-    const [isSavingAlias2, setIsSavingAlias2] = useState(false);
-    const [showAlias1Success, setShowAlias1Success] = useState(false);
-    const [showAlias2Success, setShowAlias2Success] = useState(false);
+    // Consolidated dialog state
+    const [dialogState, setDialogState] = useState({
+        addPlayer: false,
+        uploadCsv: false,
+        createGroup: false,
+    });
+
+    // Consolidated alias state
+    const [aliasState, setAliasState] = useState({
+        saving: { team1: false, team2: false },
+        success: { team1: false, team2: false },
+    });
 
     const onAddPlayer = async (playerData: Omit<PlayerInput, 'group_id'>) => {
         try {
-            await handleAddPlayer({ ...playerData, is_active: true });
-            setAddPlayerOpen(false);
+            await handleAddPlayer(playerData);
+            setDialogState(prev => ({ ...prev, addPlayer: false }));
         } catch (e: any) {
             setError(e.message);
         }
@@ -104,9 +109,8 @@ export default function Home() {
     
     const onCsvUpload = async (csvPlayers: Omit<PlayerInput, 'group_id'>[]) => {
         try {
-            const playersWithActive = csvPlayers.map(p => ({ ...p, is_active: true }));
-            await handleCsvUpload(playersWithActive);
-            setUploadCsvOpen(false);
+            await handleCsvUpload(csvPlayers);
+            setDialogState(prev => ({ ...prev, uploadCsv: false }));
         } catch (e: any) {
             setError(e.message);
         }
@@ -115,7 +119,7 @@ export default function Home() {
     const onCreateGroup = async (newGroupCode: string) => {
         try {
             await handleCreateGroup(newGroupCode);
-            setCreateGroupOpen(false);
+            setDialogState(prev => ({ ...prev, createGroup: false }));
         } catch (e: any) {
             // Let the dialog handle its own error state
             throw e;
@@ -123,32 +127,33 @@ export default function Home() {
     };
 
     const handleUpdateTeamName = async (team: 'team1' | 'team2', newAlias: string) => {
-        if (team === 'team1') {
-            setIsSavingAlias1(true);
-        } else {
-            setIsSavingAlias2(true);
-        }
+        setAliasState(prev => ({
+            ...prev,
+            saving: { ...prev.saving, [team]: true }
+        }));
 
         try {
             await handleUpdateTeamAliases(
                 team === 'team1' ? newAlias : teamAlias1,
                 team === 'team2' ? newAlias : teamAlias2
             );
-            if (team === 'team1') {
-                setShowAlias1Success(true);
-                setTimeout(() => setShowAlias1Success(false), 2000);
-            } else {
-                setShowAlias2Success(true);
-                setTimeout(() => setShowAlias2Success(false), 2000);
-            }
+            setAliasState(prev => ({
+                ...prev,
+                success: { ...prev.success, [team]: true }
+            }));
+            setTimeout(() => {
+                setAliasState(prev => ({
+                    ...prev,
+                    success: { ...prev.success, [team]: false }
+                }));
+            }, 2000);
         } catch (error) {
             console.error(`Failed to update Team ${team === 'team1' ? 1 : 2} alias:`, error);
         } finally {
-            if (team === 'team1') {
-                setIsSavingAlias1(false);
-            } else {
-                setIsSavingAlias2(false);
-            }
+            setAliasState(prev => ({
+                ...prev,
+                saving: { ...prev.saving, [team]: false }
+            }));
         }
     };
 
@@ -174,7 +179,7 @@ export default function Home() {
                     {loading ? (
                         <LoadingState />
                     ) : !activeGroup ? (
-                         <WelcomeScreen onCreateGroup={() => setCreateGroupOpen(true)} />
+                         <WelcomeScreen onCreateGroup={() => setDialogState(prev => ({ ...prev, createGroup: true }))} />
                     ) : (
                         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                             <TabsList className="grid w-full grid-cols-2 h-auto border-b-2 border-gray-200 mt-2 mb-2">
@@ -200,8 +205,8 @@ export default function Home() {
                                             aria-label="Team 1 Name"
                                         />
                                         <span className="ml-1 flex items-center">
-                                            {isSavingAlias1 ? <Loader2 size={16} className="animate-spin text-blue-500" /> : null}
-                                            {showAlias1Success && <CheckCircle size={16} className="text-green-500 ml-1" />}
+                                            {aliasState.saving.team1 ? <Loader2 size={16} className="animate-spin text-blue-500" /> : null}
+                                            {aliasState.success.team1 && <CheckCircle size={16} className="text-green-500 ml-1" />}
                                         </span>
                                     </div>
                                     <div className="flex items-center gap-2 px-6 py-2 min-w-[200px] rounded-full bg-blue-50 border border-blue-200 shadow-sm">
@@ -217,8 +222,8 @@ export default function Home() {
                                             aria-label="Team 2 Name"
                                         />
                                         <span className="ml-1 flex items-center">
-                                            {isSavingAlias2 ? <Loader2 size={16} className="animate-spin text-blue-500" /> : null}
-                                            {showAlias2Success && <CheckCircle size={16} className="text-green-500 ml-1" />}
+                                            {aliasState.saving.team2 ? <Loader2 size={16} className="animate-spin text-blue-500" /> : null}
+                                            {aliasState.success.team2 && <CheckCircle size={16} className="text-green-500 ml-1" />}
                                         </span>
                                     </div>
                                 </div>
@@ -227,10 +232,10 @@ export default function Home() {
                                         Roster Management
                                     </h2>
                                     <div className="flex flex-row items-center gap-2">
-                                        <Button variant="outline" onClick={() => setAddPlayerOpen(true)} className="text-sm sm:text-base h-10">
+                                        <Button variant="outline" onClick={() => setDialogState(prev => ({ ...prev, addPlayer: true }))} className="text-sm sm:text-base h-10">
                                             <Plus className="mr-2 h-4 w-4" /> Add Player
                                         </Button>
-                                        <Button variant="outline" onClick={() => setUploadCsvOpen(true)} className="text-sm sm:text-base h-10">
+                                        <Button variant="outline" onClick={() => setDialogState(prev => ({ ...prev, uploadCsv: true }))} className="text-sm sm:text-base h-10">
                                             <Upload className="mr-2 h-4 w-4" /> Upload CSV
                                         </Button>
                                     </div>
@@ -269,20 +274,20 @@ export default function Home() {
             </main>
             
             <AddPlayerDialog
-                isOpen={isAddPlayerOpen}
-                onClose={() => setAddPlayerOpen(false)}
+                isOpen={dialogState.addPlayer}
+                onClose={() => setDialogState(prev => ({ ...prev, addPlayer: false }))}
                 onAddPlayer={onAddPlayer}
             />
             
             <UploadCsvDialog
-                isOpen={isUploadCsvOpen}
-                onClose={() => setUploadCsvOpen(false)}
+                isOpen={dialogState.uploadCsv}
+                onClose={() => setDialogState(prev => ({ ...prev, uploadCsv: false }))}
                 onUpload={onCsvUpload}
             />
 
             <CreateGroupDialog
-                isOpen={isCreateGroupOpen}
-                onClose={() => setCreateGroupOpen(false)}
+                isOpen={dialogState.createGroup}
+                onClose={() => setDialogState(prev => ({ ...prev, createGroup: false }))}
                 onCreate={onCreateGroup}
             />
         </div>

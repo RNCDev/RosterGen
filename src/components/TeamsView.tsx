@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useMemo, useCallback } from 'react';
 import { type Teams, type Player, type Team, type EventWithStats } from '@/types/PlayerTypes';
 import { Clipboard, Users, BarChart2, Hash, Trophy, Zap, Shield, Target, RefreshCw, Save, CheckCircle, Loader2, ArrowRightLeft } from 'lucide-react';
-import _ from 'lodash';
 import { Button } from '@/components/ui/Button';
+import { round, meanBy, sumBy, cloneDeep, remove } from '@/lib/utils';
 import { toBlob } from 'html-to-image';
 import { Toast, useToast } from '@/components/ui/toast';
 
@@ -22,7 +22,7 @@ interface TeamsViewProps {
     onSaveTeamsForEvent: (eventId: number, teams: Teams, teamNames: { team1: string, team2: string }) => Promise<void>;
 }
 
-// Helper to calculate team stats
+// Helper to calculate team stats (memoized)
 const calculateStats = (team: Team) => {
     const allPlayers = [...team.forwards, ...team.defensemen];
     if (allPlayers.length === 0) {
@@ -34,8 +34,8 @@ const calculateStats = (team: Team) => {
     }
     return {
         totalPlayers: allPlayers.length,
-        averageSkill: _.round(_.meanBy(allPlayers, 'skill'), 1),
-        totalSkill: _.sumBy(allPlayers, 'skill'),
+        averageSkill: round(meanBy(allPlayers, 'skill'), 1),
+        totalSkill: sumBy(allPlayers, 'skill'),
     };
 };
 
@@ -178,13 +178,13 @@ const TeamCard = ({
     );
 };
 
-export default function TeamsView({ teams, teamNames, setTeams, setTeamNames, onGenerateTeams, attendingPlayerCount, isGenerating, onBack, onSaveTeamNames, selectedEvent, onSaveTeamsForEvent }: TeamsViewProps) {
+const TeamsView = React.memo(function TeamsView({ teams, teamNames, setTeams, setTeamNames, onGenerateTeams, attendingPlayerCount, isGenerating, onBack, onSaveTeamNames, selectedEvent, onSaveTeamsForEvent }: TeamsViewProps) {
     const teamsContainerRef = useRef<HTMLDivElement>(null);
     const [isSavingTeams, setIsSavingTeams] = useState(false);
     const [showSaveSuccess, setShowSaveSuccess] = useState(false);
     const { toast, dismiss, open, message, type } = useToast();
 
-    const handleCopyToClipboard = () => {
+    const handleCopyToClipboard = useCallback(() => {
         if (teamsContainerRef.current === null) {
             return;
         }
@@ -236,7 +236,7 @@ export default function TeamsView({ teams, teamNames, setTeams, setTeamNames, on
                 }
             });
         }, 100); // Small delay to ensure rendering
-    };
+    }, []);
 
     const handleSaveToEvent = async () => {
         if (!selectedEvent) return;
@@ -254,20 +254,20 @@ export default function TeamsView({ teams, teamNames, setTeams, setTeamNames, on
         }
     };
     
-    const handlePlayerMove = (player: Player, fromTeamKey: string, fromPosition: 'forwards' | 'defensemen') => {
+    const handlePlayerMove = useCallback((player: Player, fromTeamKey: string, fromPosition: 'forwards' | 'defensemen') => {
         const toTeamKey = Object.keys(teams).find(key => key.toLowerCase() !== fromTeamKey.toLowerCase());
         if (!toTeamKey) return;
 
-        const updatedTeams = _.cloneDeep(teams);
+        const updatedTeams = cloneDeep(teams);
 
         // Remove from source team
-        _.remove(updatedTeams[fromTeamKey.toLowerCase()][fromPosition], p => p.id === player.id);
+        remove(updatedTeams[fromTeamKey.toLowerCase()][fromPosition], p => p.id === player.id);
         
         // Add to destination team
         updatedTeams[toTeamKey.toLowerCase()][fromPosition].push(player);
 
         setTeams(updatedTeams);
-    };
+    }, [teams, setTeams]);
 
     // Access teams using dynamic keys from teamNames
     const team1Data = teams[teamNames.team1.toLowerCase()];
@@ -292,10 +292,14 @@ export default function TeamsView({ teams, teamNames, setTeams, setTeamNames, on
         );
     }
 
-    const totalPlayers = team1Data.forwards.length + team1Data.defensemen.length + team2Data.forwards.length + team2Data.defensemen.length;
-    const team1Stats = calculateStats(team1Data);
-    const team2Stats = calculateStats(team2Data);
-    const skillDifference = Math.abs(team1Stats.totalSkill - team2Stats.totalSkill);
+    const team1Stats = useMemo(() => calculateStats(team1Data), [team1Data]);
+    const team2Stats = useMemo(() => calculateStats(team2Data), [team2Data]);
+    
+    const { totalPlayers, skillDifference } = useMemo(() => {
+        const totalPlayers = team1Data.forwards.length + team1Data.defensemen.length + team2Data.forwards.length + team2Data.defensemen.length;
+        const skillDifference = Math.abs(team1Stats.totalSkill - team2Stats.totalSkill);
+        return { totalPlayers, skillDifference };
+    }, [team1Data, team2Data, team1Stats.totalSkill, team2Stats.totalSkill]);
 
     return (
         <>
@@ -386,4 +390,6 @@ export default function TeamsView({ teams, teamNames, setTeams, setTeamNames, on
             />
         </>
     );
-} 
+});
+
+export default TeamsView; 
