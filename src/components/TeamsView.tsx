@@ -236,7 +236,7 @@ const TeamsView = React.memo(function TeamsView({ teams, teamNames, setTeams, se
                 }
             });
         }, 100); // Small delay to ensure rendering
-    }, []);
+    }, [toast]);
 
     const handleSaveToEvent = async () => {
         if (!selectedEvent) return;
