@@ -1,6 +1,6 @@
 {
   "name": "roster-generator",
-  "version": "3.4.9",
+  "version": "3.5.0",
   "description": "Webapp for managing hockey rosters and events",
   "private": true,
   "scripts": {
@@ -18,7 +18,6 @@
     "@vercel/postgres": "latest",
     "clsx": "^2.1.1",
     "dotenv": "^16.5.0",
-    "html-to-image": "^1.11.13",
     "lodash": "^4.17.21",
     "lucide-react": "^0.263.1",
     "next": "^14.2.22",

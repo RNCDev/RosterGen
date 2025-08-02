@@ -1,11 +1,10 @@
 'use client';
 
-import React, { useRef, useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { type Teams, type Player, type Team, type EventWithStats } from '@/types/PlayerTypes';
 import { Clipboard, Users, BarChart2, Hash, Trophy, Zap, Shield, Target, RefreshCw, Save, CheckCircle, Loader2, ArrowRightLeft, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { round, meanBy, sumBy, cloneDeep, remove } from '@/lib/utils';
-import { toBlob } from 'html-to-image';
 import { Toast, useToast } from '@/components/ui/toast';
 
 interface TeamsViewProps {
@@ -186,65 +185,118 @@ const TeamCard = ({
 };
 
 const TeamsView = React.memo(function TeamsView({ teams, teamNames, setTeams, setTeamNames, onGenerateTeams, attendingPlayerCount, isGenerating, onBack, onSaveTeamNames, selectedEvent, onSaveTeamsForEvent }: TeamsViewProps) {
-    const teamsContainerRef = useRef<HTMLDivElement>(null);
     const [isSavingTeams, setIsSavingTeams] = useState(false);
     const [showSaveSuccess, setShowSaveSuccess] = useState(false);
     const [showSkillLevels, setShowSkillLevels] = useState(false);
     const { toast, dismiss, open, message, type } = useToast();
 
-    const handleCopyToClipboard = useCallback(() => {
-        if (teamsContainerRef.current === null) {
-            return;
-        }
-
-        // Add padding to ensure we capture all content
-        const originalPadding = teamsContainerRef.current.style.padding;
-        teamsContainerRef.current.style.padding = '20px';
+    const formatTeamsAsText = useCallback(() => {
+        const team1Data = teams[teamNames.team1.toLowerCase()];
+        const team2Data = teams[teamNames.team2.toLowerCase()];
         
-        // Add a small delay to ensure everything is rendered properly
-        setTimeout(() => {
-            // Use quality: 1 for better image and pixelRatio: 2 for higher resolution
-            toBlob(teamsContainerRef.current!, { 
-                cacheBust: true,
-                quality: 1,
-                pixelRatio: 2,
-                height: teamsContainerRef.current?.scrollHeight,
-                width: teamsContainerRef.current?.scrollWidth,
-                style: {
-                    margin: '20px',
-                    boxShadow: 'none'
-                }
-            })
-            .then((blob) => {
-                if (blob) {
-                    navigator.clipboard.write([
-                        new ClipboardItem({ 'image/png': blob })
-                    ]).then(() => {
-                        toast({ message: 'Teams image copied to clipboard!', type: 'success' });
-                        // Restore original padding
-                        if (teamsContainerRef.current) {
-                            teamsContainerRef.current.style.padding = originalPadding;
-                        }
-                    }).catch(err => {
-                        console.error('Failed to copy image: ', err);
-                        toast({ message: 'Failed to copy image to clipboard.', type: 'error' });
-                        // Restore original padding
-                        if (teamsContainerRef.current) {
-                            teamsContainerRef.current.style.padding = originalPadding;
-                        }
-                    });
-                }
-            })
-            .catch((err) => {
-                console.error('Failed to convert HTML to image: ', err);
-                toast({ message: 'Failed to create image of teams.', type: 'error' });
-                // Restore original padding
-                if (teamsContainerRef.current) {
-                    teamsContainerRef.current.style.padding = originalPadding;
-                }
+        if (!team1Data || !team2Data) return '';
+
+        const formatPlayerList = (players: Player[], position: string) => {
+            if (players.length === 0) return '';
+            
+            const playerLines = players.map(player => {
+                const skillPart = showSkillLevels ? ` (${player.skill})` : '';
+                return `  - ${player.first_name} ${player.last_name}${skillPart}`;
             });
-        }, 100); // Small delay to ensure rendering
-    }, [toast]);
+            
+            return `${position} [${players.length}]\n${playerLines.join('\n')}`;
+        };
+
+        const formatTeam = (teamName: string, team: Team) => {
+            const stats = calculateStats(team);
+            
+            let result = `${teamName} [${stats.totalPlayers} players]\n`;
+            result += `---\n`;
+            
+            if (team.forwards.length > 0) {
+                result += formatPlayerList(team.forwards, 'Forwards') + '\n';
+            }
+            
+            if (team.defensemen.length > 0) {
+                result += formatPlayerList(team.defensemen, 'Defense') + '\n';
+            }
+            
+            return result;
+        };
+
+        const team1Text = formatTeam(teamNames.team1, team1Data);
+        const team2Text = formatTeam(teamNames.team2, team2Data);
+        
+        const totalPlayers = team1Data.forwards.length + team1Data.defensemen.length + 
+                            team2Data.forwards.length + team2Data.defensemen.length;
+        
+        // Format the date more nicely
+        const formatDate = (dateStr: string) => {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('en-US', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+        };
+        
+        const eventText = selectedEvent ? `${selectedEvent.name}\n` : '';
+        const dateText = selectedEvent && selectedEvent.event_date ? 
+            `${formatDate(selectedEvent.event_date.toString())}\n` : '';
+        
+        return `Team Roster\n` +
+               `${eventText}${dateText}` +
+               `Total Players: ${totalPlayers}\n\n` +
+               `${team1Text}\n=========\n\n${team2Text}\n========`;
+
+    }, [teams, teamNames, showSkillLevels, selectedEvent]);
+
+    const handleCopyToClipboard = useCallback(async () => {
+        try {
+            const textContent = formatTeamsAsText();
+            
+            if (!textContent) {
+                toast({ message: 'No team data to copy.', type: 'error' });
+                return;
+            }
+
+            // Modern clipboard API (preferred)
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                await navigator.clipboard.writeText(textContent);
+                toast({ message: 'Team rosters copied to clipboard!', type: 'success' });
+            } 
+            // Fallback for older browsers
+            else {
+                const textArea = document.createElement('textarea');
+                textArea.value = textContent;
+                textArea.style.position = 'fixed';
+                textArea.style.top = '-1000px';
+                textArea.style.left = '-1000px';
+                textArea.style.opacity = '0';
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                
+                try {
+                    const successful = document.execCommand('copy');
+                    if (successful) {
+                        toast({ message: 'Team rosters copied to clipboard!', type: 'success' });
+                    } else {
+                        throw new Error('Copy command failed');
+                    }
+                } catch (err) {
+                    console.error('Fallback copy failed:', err);
+                    toast({ message: 'Failed to copy to clipboard.', type: 'error' });
+                } finally {
+                    document.body.removeChild(textArea);
+                }
+            }
+        } catch (error) {
+            console.error('Copy to clipboard failed:', error);
+            toast({ message: 'Failed to copy to clipboard.', type: 'error' });
+        }
+    }, [formatTeamsAsText, toast]);
 
     const handleSaveToEvent = async () => {
         if (!selectedEvent) return;
@@ -379,12 +431,12 @@ const TeamsView = React.memo(function TeamsView({ teams, teamNames, setTeams, se
                     )}
                     <Button variant="outline" onClick={handleCopyToClipboard}>
                         <Clipboard className="w-4 h-4 mr-2" />
-                        Copy to Clipboard
+                        Copy Team Rosters
                     </Button>
                 </div>
 
                 {/* Teams Grid */}
-                <div ref={teamsContainerRef} className="bg-slate-50 p-6 rounded-lg overflow-visible">
+                <div className="bg-slate-50 p-6 rounded-lg overflow-visible">
                     <div className="grid md:grid-cols-2 gap-6 items-start">
                         <TeamCard
                             name={teamNames.team1}
