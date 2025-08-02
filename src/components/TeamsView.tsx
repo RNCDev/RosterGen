@@ -2,7 +2,7 @@
 
 import React, { useRef, useState, useMemo, useCallback } from 'react';
 import { type Teams, type Player, type Team, type EventWithStats } from '@/types/PlayerTypes';
-import { Clipboard, Users, BarChart2, Hash, Trophy, Zap, Shield, Target, RefreshCw, Save, CheckCircle, Loader2, ArrowRightLeft } from 'lucide-react';
+import { Clipboard, Users, BarChart2, Hash, Trophy, Zap, Shield, Target, RefreshCw, Save, CheckCircle, Loader2, ArrowRightLeft, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { round, meanBy, sumBy, cloneDeep, remove } from '@/lib/utils';
 import { toBlob } from 'html-to-image';
@@ -45,13 +45,15 @@ const TeamCard = ({
     team, 
     onNameChange, 
     teamColor,
-    onPlayerMove
+    onPlayerMove,
+    showSkillLevels
 }: { 
     name: string; 
     team: Teams['red']; 
     onNameChange: (newName: string) => void;
     teamColor: 'red' | 'blue';
     onPlayerMove: (player: Player, position: 'forwards' | 'defensemen') => void;
+    showSkillLevels: boolean;
 }) => {
     const stats = calculateStats(team);
     
@@ -81,7 +83,7 @@ const TeamCard = ({
     return (
         <div className={`bg-white/70 backdrop-blur-sm rounded-lg border-2 ${colors.border} overflow-hidden`}>
             {/* Compact Team Header */}
-            <div className={`${colors.headerBg} px-4 py-3 border-b ${colors.border}`}>
+            <div className={`${colors.headerBg} px-4 py-2 border-b ${colors.border}`}>
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className={`w-8 h-8 bg-gradient-to-br ${colors.gradient} rounded-lg flex items-center justify-center shadow-sm`}>
@@ -96,12 +98,13 @@ const TeamCard = ({
                             placeholder="Team Name"
                         />
                     </div>
-                    <div className="text-right">
-                        <div className="text-sm font-bold text-gray-700">
-                            {team.forwards.length}F {team.defensemen.length}D
-                        </div>
-                        <div className="text-xs text-gray-500">Avg: {stats.averageSkill.toFixed(1)}</div>
-                    </div>
+                </div>
+                {/* Stats row */}
+                <div className="flex justify-end mt-1 text-sm">
+                    {showSkillLevels && (
+                        <span className="text-gray-500 mr-3">avg {stats.averageSkill.toFixed(1)}</span>
+                    )}
+                    <span className="font-bold text-gray-700">{team.forwards.length}F {team.defensemen.length}D</span>
                 </div>
             </div>
             
@@ -120,10 +123,12 @@ const TeamCard = ({
                             {team.forwards.map(p => (
                                 <div key={p.id} className="flex items-center justify-between px-2 py-1 bg-orange-50/70 rounded text-xs group">
                                     <span className="font-medium text-gray-800 truncate">{p.first_name} {p.last_name}</span>
-                                    <div className="flex items-center">
-                                        <span className="bg-orange-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 ml-1">
-                                            {p.skill}
-                                        </span>
+                                    <div className="flex items-center pl-1">
+                                        {showSkillLevels && (
+                                            <span className="text-gray-500 text-xs font-medium flex-shrink-0 w-3 text-right">
+                                                {p.skill}
+                                            </span>
+                                        )}
                                         <button 
                                             onClick={() => onPlayerMove(p, 'forwards')}
                                             className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity"
@@ -151,10 +156,12 @@ const TeamCard = ({
                             {team.defensemen.map(p => (
                                 <div key={p.id} className="flex items-center justify-between px-2 py-1 bg-purple-50/70 rounded text-xs group">
                                     <span className="font-medium text-gray-800 truncate">{p.first_name} {p.last_name}</span>
-                                    <div className="flex items-center">
-                                        <span className="bg-purple-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 ml-1">
-                                            {p.skill}
-                                        </span>
+                                    <div className="flex items-center pl-1">
+                                        {showSkillLevels && (
+                                            <span className="text-gray-500 text-xs font-medium flex-shrink-0 w-3 text-right">
+                                                {p.skill}
+                                            </span>
+                                        )}
                                         <button 
                                             onClick={() => onPlayerMove(p, 'defensemen')}
                                             className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity"
@@ -182,6 +189,7 @@ const TeamsView = React.memo(function TeamsView({ teams, teamNames, setTeams, se
     const teamsContainerRef = useRef<HTMLDivElement>(null);
     const [isSavingTeams, setIsSavingTeams] = useState(false);
     const [showSaveSuccess, setShowSaveSuccess] = useState(false);
+    const [showSkillLevels, setShowSkillLevels] = useState(false);
     const { toast, dismiss, open, message, type } = useToast();
 
     const handleCopyToClipboard = useCallback(() => {
@@ -308,10 +316,14 @@ const TeamsView = React.memo(function TeamsView({ teams, teamNames, setTeams, se
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4 text-sm text-gray-600">
                         <span><strong className="text-gray-800">{totalPlayers}</strong> Players</span>
-                        <span className="h-4 w-px bg-gray-300"></span>
-                        <span>Skill Diff: <strong className="text-gray-800">{skillDifference}</strong></span>
-                        <span className="h-4 w-px bg-gray-300"></span>
-                         <span>Balance: <strong className="text-gray-800">{skillDifference <= 2 ? 'Excellent' : skillDifference <= 5 ? 'Good' : 'Fair'}</strong></span>
+                        {showSkillLevels && (
+                            <>
+                                <span className="h-4 w-px bg-gray-300"></span>
+                                <span>Skill Diff: <strong className="text-gray-800">{skillDifference}</strong></span>
+                                <span className="h-4 w-px bg-gray-300"></span>
+                                <span>Balance: <strong className="text-gray-800">{skillDifference <= 2 ? 'Excellent' : skillDifference <= 5 ? 'Good' : 'Fair'}</strong></span>
+                            </>
+                        )}
                     </div>
                     <Button variant="outline" onClick={onBack}>
                         Back to Attendance
@@ -323,6 +335,23 @@ const TeamsView = React.memo(function TeamsView({ teams, teamNames, setTeams, se
                     <Button onClick={onGenerateTeams} disabled={isGenerating}>
                         <RefreshCw className={`w-4 h-4 mr-2 ${isGenerating ? 'animate-spin' : ''}`} />
                         {isGenerating ? 'Regenerating...' : 'Regenerate Teams'}
+                    </Button>
+                    <Button 
+                        variant="outline" 
+                        onClick={() => setShowSkillLevels(!showSkillLevels)} 
+                        title={showSkillLevels ? "Hide skill levels" : "Show skill levels"}
+                    >
+                        {showSkillLevels ? (
+                            <>
+                                <EyeOff className="w-4 h-4 mr-2" />
+                                Hide Skills
+                            </>
+                        ) : (
+                            <>
+                                <Eye className="w-4 h-4 mr-2" />
+                                Show Skills
+                            </>
+                        )}
                     </Button>
                     {selectedEvent && (
                          <Button 
@@ -366,6 +395,7 @@ const TeamsView = React.memo(function TeamsView({ teams, teamNames, setTeams, se
                             }}
                             teamColor="red"
                             onPlayerMove={(player, position) => handlePlayerMove(player, teamNames.team1.toLowerCase(), position)}
+                            showSkillLevels={showSkillLevels}
                         />
                         <TeamCard
                             name={teamNames.team2}
@@ -376,6 +406,7 @@ const TeamsView = React.memo(function TeamsView({ teams, teamNames, setTeams, se
                             }}
                             teamColor="blue"
                             onPlayerMove={(player, position) => handlePlayerMove(player, teamNames.team2.toLowerCase(), position)}
+                            showSkillLevels={showSkillLevels}
                         />
                     </div>
                 </div>
