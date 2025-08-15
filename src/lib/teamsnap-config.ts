@@ -6,19 +6,13 @@
  * Get the appropriate redirect URI based on the environment
  */
 export function getTeamSnapRedirectUri(): string {
-  // For production, always construct the HTTPS URI from VERCEL_URL.
+  // For production and preview deployments on Vercel, always use the canonical production URL.
+  // This is required because the TeamSnap application only has one allowed production redirect URI.
   if (process.env.NODE_ENV === 'production') {
-    const vercelUrl = process.env.VERCEL_URL;
-    if (!vercelUrl) {
-      console.warn("VERCEL_URL is not set in production. Falling back to TEAMSNAP_REDIRECT_URI env var.");
-      // Fallback to the environment variable if VERCEL_URL isn't available for some reason.
-      return process.env.TEAMSNAP_REDIRECT_URI || 'https://roster-gen.vercel.app/api/teamsnap/callback';
-    }
-    return `https://${vercelUrl}/api/teamsnap/callback`;
+    return 'https://roster-gen.vercel.app/api/teamsnap/callback';
   }
 
-  // For development, use the explicitly set environment variable.
-  // This allows for ngrok or other tunneling services.
+  // For local development, use the explicitly set environment variable.
   return process.env.TEAMSNAP_REDIRECT_URI || 'http://127.0.0.1:3000/api/teamsnap/callback';
 }
 
