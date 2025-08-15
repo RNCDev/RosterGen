@@ -46,7 +46,7 @@ export function TeamSnapSyncDialog({
   const [syncState, setSyncState] = useState<SyncState>('idle');
   const [error, setError] = useState<string | null>(null);
   const [syncDetails, setSyncDetails] = useState<SyncDetails | null>(null);
-  const { isAuthenticated, login, loading: authLoading } = useTeamSnapAuth();
+  const { isAuthenticated, login, isLoading: authLoading } = useTeamSnapAuth();
 
   useEffect(() => {
     // Reset state when dialog is opened/closed
@@ -238,10 +238,10 @@ export function TeamSnapSyncDialog({
                 Cancel
               </Button>
               <Button 
-                onClick={() => onSync(teamId, teamSnapEventId)}
-                disabled={!teamSnapEventId || !teamId}
+                onClick={handleSync}
+                disabled={!teamSnapEventId || (!teamId && !teamSnapTeamId)}
               >
-                Sync Attendance
+                Preview Sync
               </Button>
             </>
           )}
