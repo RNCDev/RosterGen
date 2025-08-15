@@ -43,7 +43,9 @@ export function useTeamSnapAuth() {
       ? `/api/teamsnap/auth?redirect_url=${encodeURIComponent(redirectUrl)}`
       : '/api/teamsnap/auth';
     
-    router.push(authUrl);
+    // Use window.location.href for a full page redirect to ensure clean OAuth flow.
+    // This avoids issues with Next.js client-side router interfering with the external redirect.
+    window.location.href = authUrl;
   };
 
   const logout = async () => {
