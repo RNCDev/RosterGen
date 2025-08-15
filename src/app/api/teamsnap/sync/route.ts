@@ -121,7 +121,7 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
       if (!memberId) return;
       
       // Try to find matching player in our system
-      const matchedPlayer = ourPlayers.find(p => 
+      const matchedPlayer = ourPlayers.find((p: RosterPlayer) => 
         p.first_name.toLowerCase() === firstName.toLowerCase() && 
         p.last_name.toLowerCase() === lastName.toLowerCase()
       );
