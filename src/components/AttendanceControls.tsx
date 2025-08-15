@@ -128,7 +128,7 @@ export default function AttendanceControls({
                 open={showTeamSnapDialog}
                 onOpenChange={setShowTeamSnapDialog}
                 eventId={selectedEvent.id}
-                teamSnapTeamId={teamSnapTeamId || undefined}
+                teamSnapTeamId={teamSnapTeamId || null}
                 onSync={handleSyncFromDialog}
             />
 
