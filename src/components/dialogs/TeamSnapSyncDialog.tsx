@@ -10,7 +10,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
+import { Input } from '@/components/ui/Input';
 import { Loader2, CheckCircle, AlertCircle, ExternalLink } from 'lucide-react';
 import { useTeamSnapAuth } from '@/hooks/useTeamSnapAuth';
 
