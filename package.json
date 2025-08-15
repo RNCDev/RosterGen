@@ -1,6 +1,6 @@
 {
   "name": "roster-generator",
-  "version": "3.3.0",
+  "version": "3.3.1",
   "description": "Webapp for managing hockey rosters and events",
   "private": true,
   "scripts": {
@@ -42,6 +42,7 @@
     "autoprefixer": "^10.4.19",
     "jest": "^30.0.2",
     "jest-environment-jsdom": "^30.0.2",
+    "ngrok": "^5.0.0-beta.2",
     "postcss": "^8.4.38",
     "tailwindcss": "^3.4.3",
     "ts-jest": "^29.4.0",
