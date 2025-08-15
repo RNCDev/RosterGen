@@ -80,7 +80,7 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
     const eventData: EventInput = {
         name: body.name.trim(),
         description: body.description || undefined,
-        event_date: typeof body.event_date === 'string' ? new Date(body.event_date) : body.event_date,
+        event_date: body.event_date, // Pass the date string directly
         event_time: body.event_time || undefined,
         location: body.location || undefined,
         group_id: parseInt(body.group_id),

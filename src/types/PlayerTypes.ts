@@ -63,7 +63,7 @@ export interface EventDB {
 export interface EventInput {
     name: string;
     description?: string;
-    event_date: Date;
+    event_date: string | Date; // Allow string for direct pass-through
     event_time?: string;
     location?: string;
     group_id: number;

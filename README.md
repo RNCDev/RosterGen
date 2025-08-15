@@ -31,6 +31,11 @@ This is a Next.js application designed to help organize hockey games and manage 
 -   Create and manage events with specific dates, times, and locations.
 -   **New! Duplicate Events**: Quickly duplicate existing events with a new name and date using the copy icon on event cards, perfect for recurring events.
 
+-   **New! TeamSnap Integration (In Progress)**:
+    -   Connect your TeamSnap account directly to RosterGen via a secure OAuth2 flow.
+    -   Link your RosterGen group to a specific TeamSnap team using the TeamSnap Team ID.
+    -   Fetch event attendance data directly from TeamSnap to quickly populate your roster for an event.
+
 ## Tech Stack
 
 -   **Framework**: [Next.js](https://nextjs.org/)
@@ -264,36 +269,25 @@ This project uses Vercel Postgres. You will need to create a Postgres database o
 
 ### TeamSnap Integration Setup
 
-This project includes optional TeamSnap integration for syncing attendance data from TeamSnap events.
+This project includes a TeamSnap integration for syncing attendance data. The authentication flow is complete, and data fetching is in progress.
 
-1.  **TeamSnap API Credentials** (Already configured):
-    The TeamSnap OAuth application has been registered. The following environment variables are required in your `.env.local` file:
+1.  **TeamSnap API Credentials**:
+    To enable the integration, you must register an application with TeamSnap and add the following environment variables to your `.env.local` file and your Vercel project:
     ```bash
     # TeamSnap OAuth Configuration
     TEAMSNAP_CLIENT_ID=your_client_id_here
     TEAMSNAP_CLIENT_SECRET=your_client_secret_here
-    # For local development
-    TEAMSNAP_REDIRECT_URI=http://127.0.0.1:3000/api/teamsnap/callback
     ```
 
 2.  **Authorized Redirect URIs**:
-    - Development: `http://127.0.0.1:3000/api/teamsnap/callback`
-    - Production: The app automatically uses your Vercel deployment URL
-    
-    **Note**: You must add your production redirect URI to your TeamSnap application settings:
-    `https://your-app-domain.vercel.app/api/teamsnap/callback`
+    In your TeamSnap application settings, you must add the following Redirect URIs:
+    -   **Production**: `https://roster-gen.vercel.app/api/teamsnap/callback`
+    -   **Local Development**: `http://127.0.0.1:3000/api/teamsnap/callback` (or your local port)
 
-3.  **OAuth Flow Implementation**:
-    The application includes complete OAuth routes:
-    - `/api/teamsnap/auth` - Initiates OAuth flow
-    - `/api/teamsnap/callback` - Handles OAuth callback
-    - `/api/teamsnap/status` - Checks authentication status
-    - `/api/teamsnap/logout` - Clears authentication
-
-4.  **Important Notes**:
-    - Keep the `TEAMSNAP_CLIENT_SECRET` secure and never commit it to version control
-    - For local development, use `127.0.0.1` instead of `localhost` due to TeamSnap OAuth restrictions
-    - The app automatically handles redirect URIs based on environment
+3.  **How it Works**:
+    -   The application uses a secure OAuth2 flow to connect to a user's TeamSnap account.
+    -   The redirect URI for production is hardcoded to ensure consistency across Vercel's preview and production deployments.
+    -   For local development, the redirect URI is configured via the `TEAMSNAP_REDIRECT_URI` environment variable.
 
 ### Installation
 
