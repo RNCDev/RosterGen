@@ -142,6 +142,13 @@ export class TeamSnapAPI {
   }
 
   /**
+   * Get team members
+   */
+  async getTeamMembers(teamId: string, accessToken: string): Promise<any> {
+    return this.makeApiRequest(`/members/search?team_id=${teamId}`, accessToken);
+  }
+
+  /**
    * Get a single team member's details
    */
   async getMemberDetails(memberId: string, accessToken: string): Promise<any> {
