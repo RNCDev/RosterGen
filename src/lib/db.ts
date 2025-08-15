@@ -14,12 +14,12 @@ import {
 // ===== GROUP OPERATIONS =====
 
 export async function getGroupById(groupId: number): Promise<Group | null> {
-    const { rows } = await sql<Group>`SELECT id, code, created_at, "team-alias-1", "team-alias-2" FROM groups WHERE id = ${groupId}`;
+    const { rows } = await sql<Group>`SELECT id, code, created_at, "team-alias-1", "team-alias-2", teamsnap_team_id FROM groups WHERE id = ${groupId}`;
     return rows[0] || null;
 }
 
 export async function getGroupByCode(groupCode: string): Promise<Group | null> {
-    const { rows } = await sql<Group>`SELECT id, code, created_at, "team-alias-1", "team-alias-2" FROM groups WHERE code = ${groupCode}`;
+    const { rows } = await sql<Group>`SELECT id, code, created_at, "team-alias-1", "team-alias-2", teamsnap_team_id FROM groups WHERE code = ${groupCode}`;
     return rows[0] || null;
 }
 

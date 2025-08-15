@@ -42,6 +42,7 @@ export interface Group {
     created_at: Date;
     "team-alias-1": string;
     "team-alias-2": string;
+    teamsnap_team_id?: string | null;
 }
 
 // Event types

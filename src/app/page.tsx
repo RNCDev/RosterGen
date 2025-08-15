@@ -13,7 +13,7 @@ import packageJson from '../../package.json';
 import { useGroupManager } from '@/hooks/useGroupManager';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/Button';
-import { Plus, Upload, Users, Loader2, CheckCircle } from 'lucide-react';
+import { Plus, Upload, Users, Loader2, CheckCircle, Link2 } from 'lucide-react';
 import { useTeamSnapAuth } from '@/hooks/useTeamSnapAuth';
 
 // A simple welcome screen component to guide new users.
@@ -118,7 +118,9 @@ export default function Home() {
         duplicateEvent,
         teamAlias1,
         teamAlias2,
+        teamSnapTeamId,
         handleUpdateTeamAliases,
+        handleUpdateTeamSnapId,
         handleSaveTeamsForEvent,
         handleLoadTeamsForEvent,
         toggleAttendance,
@@ -134,8 +136,8 @@ export default function Home() {
 
     // Consolidated alias state
     const [aliasState, setAliasState] = useState({
-        saving: { team1: false, team2: false },
-        success: { team1: false, team2: false },
+        saving: { team1: false, team2: false, teamsnap: false },
+        success: { team1: false, team2: false, teamsnap: false },
     });
 
     const onAddPlayer = async (playerData: Omit<PlayerInput, 'group_id'>) => {
@@ -193,6 +195,34 @@ export default function Home() {
             setAliasState(prev => ({
                 ...prev,
                 saving: { ...prev.saving, [team]: false }
+            }));
+        }
+    };
+
+    const handleUpdateTeamSnapTeamId = async (teamId: string) => {
+        setAliasState(prev => ({
+            ...prev,
+            saving: { ...prev.saving, teamsnap: true }
+        }));
+
+        try {
+            await handleUpdateTeamSnapId(teamId);
+            setAliasState(prev => ({
+                ...prev,
+                success: { ...prev.success, teamsnap: true }
+            }));
+            setTimeout(() => {
+                setAliasState(prev => ({
+                    ...prev,
+                    success: { ...prev.success, teamsnap: false }
+                }));
+            }, 2000);
+        } catch (error) {
+            console.error('Failed to update TeamSnap team ID:', error);
+        } finally {
+            setAliasState(prev => ({
+                ...prev,
+                saving: { ...prev.saving, teamsnap: false }
             }));
         }
     };
@@ -269,6 +299,26 @@ export default function Home() {
                                         <span className="ml-1 flex items-center">
                                             {aliasState.saving.team2 ? <Loader2 size={16} className="animate-spin text-blue-500" /> : null}
                                             {aliasState.success.team2 && <CheckCircle size={16} className="text-green-500 ml-1" />}
+                                        </span>
+                                    </div>
+                                    
+                                    <div className="flex items-center gap-2 px-6 py-2 min-w-[200px] rounded-full bg-green-50 border border-green-200 shadow-sm ml-auto">
+                                        <Link2 className="h-4 w-4 text-green-600" />
+                                        <span className="text-xs font-semibold text-gray-500 uppercase mr-2">TEAMSNAP</span>
+                                        <input
+                                            id="teamsnap-id"
+                                            type="text"
+                                            defaultValue={teamSnapTeamId}
+                                            onBlur={(e) => handleUpdateTeamSnapTeamId(e.target.value)}
+                                            onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
+                                            placeholder="Team ID"
+                                            className="bg-transparent focus:outline-none text-base font-bold text-green-800 w-32 min-w-0 px-1"
+                                            aria-label="TeamSnap Team ID"
+                                            suppressHydrationWarning={true}
+                                        />
+                                        <span className="ml-1 flex items-center">
+                                            {aliasState.saving.teamsnap ? <Loader2 size={16} className="animate-spin text-green-500" /> : null}
+                                            {aliasState.success.teamsnap && <CheckCircle size={16} className="text-green-500 ml-1" />}
                                         </span>
                                     </div>
                                 </div>

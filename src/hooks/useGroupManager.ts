@@ -155,10 +155,13 @@ export function useGroupManager(onTeamDataChangeSuccess?: () => void) {
         handleRenameGroup: groupState.handleRenameGroup,
         handleDeleteGroup: groupState.handleDeleteGroup,
         handleUpdateTeamAliases: groupState.handleUpdateTeamAliases,
+        handleUpdateTeamSnapId: groupState.handleUpdateTeamSnapId,
         teamAlias1: groupState.teamAlias1,
         teamAlias2: groupState.teamAlias2,
+        teamSnapTeamId: groupState.teamSnapTeamId,
         setTeamAlias1: groupState.setTeamAlias1,
         setTeamAlias2: groupState.setTeamAlias2,
+        setTeamSnapTeamId: groupState.setTeamSnapTeamId,
 
         // Player state
         players: playerState.players,

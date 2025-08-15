@@ -10,21 +10,25 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import { Loader2, CheckCircle, AlertCircle, ExternalLink } from 'lucide-react';
 import { useTeamSnapAuth } from '@/hooks/useTeamSnapAuth';
 
 interface TeamSnapSyncDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   eventId: number;
+  teamSnapTeamId?: string;
   onSyncComplete?: () => void;
+  onSync?: (teamId: string, eventId: string) => void;
 }
 
 export function TeamSnapSyncDialog({
   open,
   onOpenChange,
   eventId,
-  onSyncComplete
+  teamSnapTeamId,
+  onSyncComplete,
+  onSync
 }: TeamSnapSyncDialogProps) {
   const { isAuthenticated, isLoading: authLoading, login } = useTeamSnapAuth();
   const [syncState, setSyncState] = useState<'idle' | 'syncing' | 'success' | 'error'>('idle');
@@ -34,14 +38,36 @@ export function TeamSnapSyncDialog({
     syncedPlayers?: number;
     unmatchedPlayers?: string[];
   }>({});
+  const [teamSnapUrl, setTeamSnapUrl] = useState('');
+  const [teamId, setTeamId] = useState(teamSnapTeamId || '');
+  const [teamSnapEventId, setTeamSnapEventId] = useState('');
 
   const handleSync = async () => {
+    // Use the stored team ID if available, otherwise use the manually entered one
+    const finalTeamId = teamId || teamSnapTeamId || '';
+    
+    // If using the new onSync callback for interim display
+    if (onSync && finalTeamId && teamSnapEventId) {
+      setSyncState('syncing');
+      setError(null);
+      
+      try {
+        await onSync(finalTeamId, teamSnapEventId);
+        // The parent component handles the sync and display
+        // We just close the dialog
+        onOpenChange(false);
+      } catch (err) {
+        setSyncState('error');
+        setError(err instanceof Error ? err.message : 'An error occurred during sync');
+      }
+      return;
+    }
+
+    // Original sync logic (for future use)
     setSyncState('syncing');
     setError(null);
 
     try {
-      // TODO: Implement actual sync logic
-      // This will call the sync API endpoint once implemented
       const response = await fetch(`/api/teamsnap/sync`, {
         method: 'POST',
         headers: {
@@ -68,6 +94,27 @@ export function TeamSnapSyncDialog({
     } catch (err) {
       setSyncState('error');
       setError(err instanceof Error ? err.message : 'An error occurred during sync');
+    }
+  };
+
+  // Parse TeamSnap URL to extract IDs
+  const parseTeamSnapUrl = (url: string) => {
+    try {
+      // Example URLs:
+      // https://go.teamsnap.com/1234567/events/8901234
+      // https://go.teamsnap.com/teams/1234567/events/8901234
+      const urlParts = url.split('/');
+      const teamIndex = urlParts.indexOf('teams') + 1 || urlParts.findIndex(p => /^\d+$/.test(p));
+      const eventIndex = urlParts.indexOf('events') + 1;
+      
+      if (teamIndex > 0 && teamIndex < urlParts.length) {
+        setTeamId(urlParts[teamIndex]);
+      }
+      if (eventIndex > 0 && eventIndex < urlParts.length) {
+        setTeamSnapEventId(urlParts[eventIndex]);
+      }
+    } catch (e) {
+      console.error('Failed to parse TeamSnap URL:', e);
     }
   };
 
@@ -99,16 +146,144 @@ export function TeamSnapSyncDialog({
 
     switch (syncState) {
       case 'idle':
+        // If we have a stored team ID, show simplified UI
+        if (teamSnapTeamId) {
+          return (
+            <div className="space-y-4">
+              <p>
+                Enter the TeamSnap event ID to sync attendance data.
+                Players will be matched by name.
+              </p>
+              
+              <div className="space-y-3">
+                <div className="bg-gray-50 rounded-md p-3 text-sm">
+                  <p className="font-medium text-gray-700">TeamSnap Team ID: {teamSnapTeamId}</p>
+                </div>
+                
+                <div>
+                  <label htmlFor="teamsnap-url" className="block text-sm font-medium text-gray-700 mb-1">
+                    TeamSnap Event URL
+                  </label>
+                  <input
+                    id="teamsnap-url"
+                    type="text"
+                    value={teamSnapUrl}
+                    onChange={(e) => {
+                      setTeamSnapUrl(e.target.value);
+                      parseTeamSnapUrl(e.target.value);
+                      // Auto-set team ID from stored value
+                      if (!teamId && teamSnapTeamId) {
+                        setTeamId(teamSnapTeamId);
+                      }
+                    }}
+                    placeholder="https://go.teamsnap.com/1234567/events/8901234"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Paste the URL from your TeamSnap event page
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 h-px bg-gray-200"></div>
+                  <span className="text-sm text-gray-500">or enter event ID manually</span>
+                  <div className="flex-1 h-px bg-gray-200"></div>
+                </div>
+
+                <div>
+                  <label htmlFor="event-id" className="block text-sm font-medium text-gray-700 mb-1">
+                    TeamSnap Event ID
+                  </label>
+                  <input
+                    id="event-id"
+                    type="text"
+                    value={teamSnapEventId}
+                    onChange={(e) => setTeamSnapEventId(e.target.value)}
+                    placeholder="8901234"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+              
+              <div className="bg-amber-50 border border-amber-200 rounded-md p-3">
+                <p className="text-sm text-amber-800">
+                  <strong>Note:</strong> This is a preview that will show attendance data in a notification. 
+                  Database updates will be implemented in the next phase.
+                </p>
+              </div>
+            </div>
+          );
+        }
+        
+        // Show full UI if no team ID is stored
         return (
           <div className="space-y-4">
-            <p>
-              This will sync attendance data from TeamSnap for this event. 
-              Players will be matched by name.
-            </p>
             <div className="bg-amber-50 border border-amber-200 rounded-md p-3">
               <p className="text-sm text-amber-800">
-                <strong>Note:</strong> This will overwrite any existing attendance data for this event.
+                <strong>TeamSnap Team ID not set!</strong> Please set your TeamSnap Team ID in the Roster tab first.
               </p>
+            </div>
+            
+            <p>
+              Enter the TeamSnap event URL or the team and event IDs to sync attendance data.
+              Players will be matched by name.
+            </p>
+            
+            <div className="space-y-3">
+              <div>
+                <label htmlFor="teamsnap-url" className="block text-sm font-medium text-gray-700 mb-1">
+                  TeamSnap Event URL (optional)
+                </label>
+                <input
+                  id="teamsnap-url"
+                  type="text"
+                  value={teamSnapUrl}
+                  onChange={(e) => {
+                    setTeamSnapUrl(e.target.value);
+                    parseTeamSnapUrl(e.target.value);
+                  }}
+                  placeholder="https://go.teamsnap.com/1234567/events/8901234"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Paste the URL from your TeamSnap event page
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <div className="flex-1 h-px bg-gray-200"></div>
+                <span className="text-sm text-gray-500">or enter IDs manually</span>
+                <div className="flex-1 h-px bg-gray-200"></div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label htmlFor="team-id" className="block text-sm font-medium text-gray-700 mb-1">
+                    Team ID
+                  </label>
+                  <input
+                    id="team-id"
+                    type="text"
+                    value={teamId}
+                    onChange={(e) => setTeamId(e.target.value)}
+                    placeholder="1234567"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="event-id" className="block text-sm font-medium text-gray-700 mb-1">
+                    TeamSnap Event ID
+                  </label>
+                  <input
+                    id="event-id"
+                    type="text"
+                    value={teamSnapEventId}
+                    onChange={(e) => setTeamSnapEventId(e.target.value)}
+                    placeholder="8901234"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
             </div>
           </div>
         );
@@ -183,8 +358,11 @@ export function TeamSnapSyncDialog({
               <Button variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
-              <Button onClick={handleSync}>
-                Start Sync
+              <Button 
+                onClick={handleSync}
+                disabled={!teamSnapEventId || (!teamId && !teamSnapTeamId)}
+              >
+                Preview Sync
               </Button>
             </>
           )}

@@ -17,10 +17,13 @@ export interface GroupState {
   handleDeleteGroup: () => Promise<void>;
   handleClearGroup: (clearPlayers: () => void) => void;
   handleUpdateTeamAliases: (alias1: string, alias2: string) => Promise<void>;
+  handleUpdateTeamSnapId: (teamId: string) => Promise<void>;
   teamAlias1: string;
   teamAlias2: string;
+  teamSnapTeamId: string;
   setTeamAlias1: (alias: string) => void;
   setTeamAlias2: (alias: string) => void;
+  setTeamSnapTeamId: (id: string) => void;
 }
 
 export function useGroupState(): GroupState {
@@ -30,6 +33,7 @@ export function useGroupState(): GroupState {
   const [error, setError] = useState<string | null>(null);
   const [teamAlias1, setTeamAlias1] = useState<string>('Red');
   const [teamAlias2, setTeamAlias2] = useState<string>('White');
+  const [teamSnapTeamId, setTeamSnapTeamId] = useState<string>('');
 
   // Initial load from localStorage
   useEffect(() => {
@@ -42,6 +46,7 @@ export function useGroupState(): GroupState {
 
   const clearGroupState = () => {
     setActiveGroup(null);
+    setTeamSnapTeamId('');
     localStorage.removeItem('activeGroupCode');
   };
 
@@ -73,6 +78,7 @@ export function useGroupState(): GroupState {
       localStorage.setItem('activeGroupCode', sanitizedGroupData.code);
       setTeamAlias1(sanitizedGroupData["team-alias-1"]);
       setTeamAlias2(sanitizedGroupData["team-alias-2"]);
+      setTeamSnapTeamId(sanitizedGroupData.teamsnap_team_id || '');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load group');
       clearGroupState();
@@ -140,6 +146,26 @@ export function useGroupState(): GroupState {
     }
   }, [activeGroup]);
 
+  const handleUpdateTeamSnapId = useCallback(async (teamId: string) => {
+    if (!activeGroup) return;
+    try {
+      const response = await fetch('/api/groups/update-teamsnap', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ groupId: activeGroup.id, teamSnapTeamId: teamId })
+      });
+      if (!response.ok) {
+        const { error } = await response.json();
+        throw new Error(error || 'Failed to update TeamSnap team ID');
+      }
+      const { teamSnapTeamId } = await response.json();
+      setActiveGroup({ ...activeGroup, teamsnap_team_id: teamSnapTeamId });
+      setTeamSnapTeamId(teamSnapTeamId || '');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update TeamSnap team ID');
+    }
+  }, [activeGroup]);
+
   const handleDeleteGroup = async () => {
     if (!activeGroup) return;
     try {
@@ -174,9 +200,12 @@ export function useGroupState(): GroupState {
     handleDeleteGroup,
     handleClearGroup,
     handleUpdateTeamAliases,
+    handleUpdateTeamSnapId,
     teamAlias1,
     teamAlias2,
+    teamSnapTeamId,
     setTeamAlias1,
     setTeamAlias2,
+    setTeamSnapTeamId,
   };
 } 
