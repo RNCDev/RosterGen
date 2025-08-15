@@ -159,14 +159,7 @@ export const eventToForm = (event: EventDB): EventForm => ({
 });
 
 export const formToEventInput = (formData: EventForm, groupId: number): EventInput => {
-    // DEBUG: Log the form data
-    console.log('=== FORM TO EVENT INPUT DEBUG ===');
-    console.log('Form data:', JSON.stringify(formData, null, 2));
-    console.log('teamsnap_event_id type:', typeof formData.teamsnap_event_id);
-    console.log('teamsnap_event_id value:', formData.teamsnap_event_id);
-    console.log('teamsnap_event_id length:', formData.teamsnap_event_id?.length);
-    
-    const result = {
+    return {
         name: formData.name,
         description: formData.description || undefined,
         event_date: formData.date, // Pass the YYYY-MM-DD string directly
@@ -176,9 +169,4 @@ export const formToEventInput = (formData: EventForm, groupId: number): EventInp
         group_id: groupId,
         is_active: true
     };
-    
-    console.log('Result teamsnap_event_id:', result.teamsnap_event_id);
-    console.log('========================');
-    
-    return result;
 };

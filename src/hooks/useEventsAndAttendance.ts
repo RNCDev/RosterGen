@@ -78,29 +78,15 @@ export function useEventsAndAttendance(setError: (error: string | null) => void)
   }, [setError]);
 
   const createEvent = useCallback(async (eventData: Omit<EventInput, 'group_id'>, groupId: number) => {
-    // DEBUG: Log the data being sent to API
-    const requestData = { ...eventData, group_id: groupId };
-    console.log('=== CREATE EVENT API CALL DEBUG ===');
-    console.log('Event data before API call:', JSON.stringify(requestData, null, 2));
-    console.log('teamsnap_event_id in request:', requestData.teamsnap_event_id);
-    console.log('=================================');
-    
     const response = await fetch('/api/events', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(requestData)
+      body: JSON.stringify({ ...eventData, group_id: groupId })
     });
-    
     if (!response.ok) {
       const { error } = await response.json();
       throw new Error(error || 'Failed to create event');
     }
-    
-    // DEBUG: Log the response
-    const responseData = await response.json();
-    console.log('API Response:', JSON.stringify(responseData, null, 2));
-    console.log('teamsnap_event_id in response:', responseData.teamsnap_event_id);
-    
     await loadEvents(groupId);
   }, [loadEvents]);
 

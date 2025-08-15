@@ -71,13 +71,6 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
 export const POST = withErrorHandler(async (request: NextRequest) => {
     const body = await request.json();
     
-    // DEBUG: Log the request body
-    console.log('=== EVENT CREATION DEBUG ===');
-    console.log('Full request body:', JSON.stringify(body, null, 2));
-    console.log('teamsnap_event_id type:', typeof body.teamsnap_event_id);
-    console.log('teamsnap_event_id value:', body.teamsnap_event_id);
-    console.log('teamsnap_event_id length:', body.teamsnap_event_id?.length);
-    
     // Validate required fields
     if (!body.name || !body.event_date || !body.group_id) {
         return ApiResponse.badRequest('Name, event_date, and group_id are required');

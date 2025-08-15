@@ -271,8 +271,8 @@ export async function bulkUpdatePlayers(
 
 export async function createEvent(event: EventInput): Promise<EventDB> {
     const { rows } = await sql<EventDB>`
-        INSERT INTO events (name, description, event_date, event_time, location, group_id, is_active)
-        VALUES (${event.name}, ${event.description}, ${event.event_date}, ${event.event_time}, ${event.location}, ${event.group_id}, ${event.is_active || true})
+        INSERT INTO events (name, description, event_date, event_time, location, group_id, is_active, teamsnap_event_id)
+        VALUES (${event.name}, ${event.description}, ${event.event_date}, ${event.event_time}, ${event.location}, ${event.group_id}, ${event.is_active || true}, ${event.teamsnap_event_id || null})
         RETURNING *;
     `;
     const newEvent = rows[0];

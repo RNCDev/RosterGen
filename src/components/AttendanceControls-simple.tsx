@@ -26,7 +26,7 @@ export default function AttendanceControls({
     const { isAuthenticated } = useTeamSnapAuth();
     const toastState = useToast();
 
-    const handleTeamSnapUpdate = () => {
+    const handleTeamSnapUpdate = async () => {
         toastState.toast({
             message: 'Sync test - button clicked!',
             type: 'success'
