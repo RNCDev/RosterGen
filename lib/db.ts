@@ -181,12 +181,24 @@ export async function renameGroup(groupId: number, newCode: string): Promise<Gro
  * Creates a new event for a group.
  */
 export async function createEvent(event: EventInput): Promise<EventDB> {
+    // DEBUG: Log what we're trying to insert
+    console.log('=== DATABASE INSERT DEBUG ===');
+    console.log('Event data for DB insert:', JSON.stringify(event, null, 2));
+    console.log('teamsnap_event_id value:', event.teamsnap_event_id);
+    console.log('teamsnap_event_id type:', typeof event.teamsnap_event_id);
+    console.log('Converted value (|| null):', event.teamsnap_event_id || null);
+    console.log('============================');
+    
     const { rows } = await sql<EventDB>`
         INSERT INTO events (name, description, event_date, event_time, location, group_id, is_active, teamsnap_event_id)
         VALUES (${event.name}, ${event.description}, ${event.event_date}, ${event.event_time}, ${event.location}, ${event.group_id}, ${event.is_active || true}, ${event.teamsnap_event_id || null})
         RETURNING *;
     `;
     const newEvent = rows[0];
+    
+    console.log('=== DATABASE RESULT DEBUG ===');
+    console.log('Inserted event:', JSON.stringify(newEvent, null, 2));
+    console.log('============================');
     
     // Create attendance records for all active players in the group
     await createAttendanceRecordsForEvent(newEvent.id, newEvent.group_id);
