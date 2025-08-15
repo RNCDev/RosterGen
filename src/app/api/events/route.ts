@@ -84,7 +84,8 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
         event_time: body.event_time || undefined,
         location: body.location || undefined,
         group_id: parseInt(body.group_id),
-        is_active: body.is_active !== undefined ? body.is_active : true
+        is_active: body.is_active !== undefined ? body.is_active : true,
+        teamsnap_event_id: body.teamsnap_event_id || undefined
     };
     
     const newEvent = await createEvent(eventData);
