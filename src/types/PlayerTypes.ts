@@ -172,7 +172,7 @@ export const formToEventInput = (formData: EventForm, groupId: number): EventInp
         event_date: formData.date, // Pass the YYYY-MM-DD string directly
         event_time: formData.time || undefined,
         location: formData.location || undefined,
-        teamsnap_event_id: formData.teamsnap_event_id && formData.teamsnap_event_id.trim() ? formData.teamsnap_event_id.trim() : undefined,
+        teamsnap_event_id: formData.teamsnap_event_id || undefined,
         group_id: groupId,
         is_active: true
     };
