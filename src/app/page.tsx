@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { type Player, type PlayerInput } from '@/types/PlayerTypes';
 import ActionHeader from '@/components/ActionHeader';
 import PlayersView from '@/components/PlayersView';
@@ -14,9 +14,10 @@ import { useGroupManager } from '@/hooks/useGroupManager';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/Button';
 import { Plus, Upload, Users, Loader2, CheckCircle } from 'lucide-react';
+import { useTeamSnapAuth } from '@/hooks/useTeamSnapAuth';
 
 // A simple welcome screen component to guide new users.
-const WelcomeScreen = ({ onCreateGroup }: { onCreateGroup: () => void }) => (
+const WelcomeScreen = ({ onCreateGroup, teamSnapAuth }: { onCreateGroup: () => void; teamSnapAuth: any }) => (
     <div className="flex items-center justify-center min-h-[60vh] sm:h-[calc(100vh-200px)] animate-fade-in px-4">
         <div className="text-center p-6 sm:p-12 lg:p-16 bg-white/60 backdrop-blur-xl rounded-2xl sm:rounded-3xl shadow-2xl border border-white/40 w-full max-w-2xl">
             <h2 className="text-3xl sm:text-4xl lg:text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r bg-gradient-to-r from-neutral-300 to-stone-400 mb-4 sm:mb-6 pb-8">
@@ -32,6 +33,44 @@ const WelcomeScreen = ({ onCreateGroup }: { onCreateGroup: () => void }) => (
             >
                 Create New Group
             </Button>
+            
+            {/* TeamSnap Test Section */}
+            <div className="mt-12 pt-8 border-t border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-700 mb-4">TeamSnap Integration</h3>
+                {teamSnapAuth.isLoading ? (
+                    <div className="flex items-center justify-center gap-2">
+                        <Loader2 className="animate-spin h-5 w-5" />
+                        <span>Checking TeamSnap status...</span>
+                    </div>
+                ) : teamSnapAuth.isAuthenticated ? (
+                    <div className="space-y-3">
+                        <div className="flex items-center justify-center gap-2 text-green-600">
+                            <CheckCircle className="h-5 w-5" />
+                            <span className="font-medium">Connected to TeamSnap</span>
+                        </div>
+                        <Button
+                            onClick={() => teamSnapAuth.logout()}
+                            variant="outline"
+                            className="text-sm"
+                        >
+                            Disconnect TeamSnap
+                        </Button>
+                    </div>
+                ) : (
+                    <div className="space-y-3">
+                        <p className="text-sm text-gray-600">Connect to TeamSnap to sync attendance data</p>
+                        <Button
+                            onClick={() => teamSnapAuth.login()}
+                            className="bg-blue-600 hover:bg-blue-700 text-white"
+                        >
+                            Connect TeamSnap
+                        </Button>
+                    </div>
+                )}
+                {teamSnapAuth.error && (
+                    <p className="mt-2 text-sm text-red-600">{teamSnapAuth.error}</p>
+                )}
+            </div>
         </div>
     </div>
 );
@@ -46,6 +85,7 @@ const LoadingState = () => (
 
 export default function Home() {
     const [activeTab, setActiveTab] = useState('roster');
+    const teamSnapAuth = useTeamSnapAuth();
 
     const {
         groupCodeInput,
@@ -179,7 +219,10 @@ export default function Home() {
                     {loading ? (
                         <LoadingState />
                     ) : !activeGroup ? (
-                         <WelcomeScreen onCreateGroup={() => setDialogState(prev => ({ ...prev, createGroup: true }))} />
+                         <WelcomeScreen 
+                            onCreateGroup={() => setDialogState(prev => ({ ...prev, createGroup: true }))} 
+                            teamSnapAuth={teamSnapAuth}
+                         />
                     ) : (
                         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                             <TabsList className="grid w-full grid-cols-2 h-auto border-b-2 border-gray-200 mt-2 mb-2">
