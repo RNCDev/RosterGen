@@ -56,8 +56,9 @@ Stores the top-level grouping for rosters. Each group has a unique, user-defined
 | `id` | integer | Primary Key | Unique identifier for the group. |
 | `code` | character varying(255) | Not Null, Unique | The user-facing unique code for the group. |
 | `created_at` | timestamp with time zone | Default: `CURRENT_TIMESTAMP` | Timestamp of when the group was created. |
-| `team_alias_1` | character varying(125) | Not Null, Default: `'Red'` | Custom name for Team 1. |
-| `team_alias_2` | character varying(125) | Not Null, Default: `'White'` | Custom name for Team 2. |
+| `team-alias-1` | character varying(125) | Not Null, Default: `'Red'` | Custom name for Team 1. |
+| `team-alias-2` | character varying(125) | Not Null, Default: `'White'` | Custom name for Team 2. |
+| `teamsnap_team_id` | character varying(125) | Not Null | link to Teamsnap team |
 
 ### `players` Table
 Contains the roster of players for each group.
@@ -92,6 +93,7 @@ Stores information about scheduled games or practices.
 | `created_at`| timestamp with time zone | Default: `CURRENT_TIMESTAMP` | Timestamp of when the event was created. |
 | `updated_at`| timestamp with time zone | Default: `CURRENT_TIMESTAMP` | Timestamp of the last update. |
 | `saved_teams_data`| text | | JSON string of saved team rosters for the event. |
+| `teamsnap_event_id` | character varying(255) | | optinal link to a teamsnap event. |
 
 ### `attendance` Table
 Tracks player attendance for each event. A record is created for each player when a new event is made.

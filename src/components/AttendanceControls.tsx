@@ -1,11 +1,12 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ArrowRightLeft, RefreshCw } from 'lucide-react';
+import { ArrowRightLeft, RefreshCw, Eye } from 'lucide-react';
 import { type EventWithStats } from '@/types/PlayerTypes';
 import { Button } from '@/components/ui/Button';
 import { Toast, useToast } from '@/components/ui/toast';
 import { useTeamSnapAuth } from '@/hooks/useTeamSnapAuth';
+import { TeamSnapEventInfoDialog } from '@/components/dialogs/TeamSnapEventInfoDialog';
 
 interface AttendanceControlsProps {
     selectedEvent: EventWithStats;
@@ -23,6 +24,7 @@ export default function AttendanceControls({
     teamSnapTeamId,
 }: AttendanceControlsProps) {
     const [isSyncingAttendance, setIsSyncingAttendance] = useState(false);
+    const [showTeamSnapInfo, setShowTeamSnapInfo] = useState(false);
     const { isAuthenticated } = useTeamSnapAuth();
     const toastState = useToast();
 
@@ -49,13 +51,22 @@ export default function AttendanceControls({
                         {isGeneratingTeams ? 'Generating...' : 'Generate Teams'}
                     </Button>
                     {isAuthenticated && selectedEvent?.teamsnap_event_id && (
-                        <Button
-                            onClick={handleTeamSnapUpdate}
-                            disabled={isSyncingAttendance}
-                        >
-                            <RefreshCw className={`w-4 h-4 mr-2 ${isSyncingAttendance ? 'animate-spin' : ''}`} />
-                            {isSyncingAttendance ? 'Syncing...' : 'Update from TeamSnap'}
-                        </Button>
+                        <>
+                            <Button
+                                onClick={() => setShowTeamSnapInfo(true)}
+                                variant="outline"
+                            >
+                                <Eye className="w-4 h-4 mr-2" />
+                                View TeamSnap Info
+                            </Button>
+                            <Button
+                                onClick={handleTeamSnapUpdate}
+                                disabled={isSyncingAttendance}
+                            >
+                                <RefreshCw className={`w-4 h-4 mr-2 ${isSyncingAttendance ? 'animate-spin' : ''}`} />
+                                {isSyncingAttendance ? 'Syncing...' : 'Update from TeamSnap'}
+                            </Button>
+                        </>
                     )}
                 </div>
             </div>
@@ -67,6 +78,15 @@ export default function AttendanceControls({
                 duration={toastState.duration}
                 onClose={toastState.dismiss}
             />
+            
+            {/* TeamSnap Event Info Dialog */}
+            {selectedEvent?.teamsnap_event_id && (
+                <TeamSnapEventInfoDialog
+                    open={showTeamSnapInfo}
+                    onOpenChange={setShowTeamSnapInfo}
+                    eventId={selectedEvent.teamsnap_event_id}
+                />
+            )}
         </>
     );
 }
