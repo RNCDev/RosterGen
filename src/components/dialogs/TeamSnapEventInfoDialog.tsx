@@ -171,7 +171,8 @@ export function TeamSnapEventInfoDialog({
           </div>
         );
       
-      case 'success' && eventDetails:
+      case 'success':
+        if (!eventDetails) return null;
         return (
           <div className="space-y-6">
             {/* Event Header */}
