@@ -24,6 +24,12 @@ interface SyncRequest {
   teamSnapEventId?: string;
 }
 
+interface RosterPlayer {
+  id: number;
+  first_name: string;
+  last_name: string;
+}
+
 /**
  * POST /api/teamsnap/sync
  * Sync attendance data from TeamSnap for a specific event
@@ -88,7 +94,7 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
     const teamSnapAvailability = await teamSnapClient.getEventAvailability(tsEventId, accessToken.value);
     
     // Get players from our database
-    const playersResult = await sql`
+    const playersResult = await sql<RosterPlayer>`
       SELECT id, first_name, last_name 
       FROM players 
       WHERE group_id = ${event.group_id} 
