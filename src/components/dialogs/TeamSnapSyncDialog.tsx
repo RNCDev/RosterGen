@@ -73,11 +73,15 @@ export function TeamSnapSyncDialog({
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ eventId })
+        body: JSON.stringify({ 
+          eventId,
+          teamSnapEventId: teamSnapEventId || undefined
+        })
       });
 
       if (!response.ok) {
-        throw new Error('Failed to sync attendance data');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to sync attendance data');
       }
 
       const data = await response.json();
