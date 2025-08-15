@@ -37,37 +37,22 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { teamId, eventId } = body;
+    const { eventId } = body;
 
-    if (!teamId || !eventId) {
+    if (!eventId) {
       return NextResponse.json(
-        { error: 'Missing required parameters: teamId and eventId' },
+        { error: 'Missing required parameter: eventId' },
         { status: 400 }
       );
     }
 
     const teamSnapClient = getTeamSnapClient();
 
-    // Fetch team members
-    const membersResponse = await teamSnapClient.getTeamMembers(
-      teamId,
-      accessToken.value
-    );
-
     // Fetch event availability
     const availabilityResponse = await teamSnapClient.getEventAvailability(
       eventId,
       accessToken.value
     );
-
-    // Extract members from the collection
-    const members: TeamSnapMember[] = membersResponse.collection
-      .filter((item: any) => item.type === 'member')
-      .map((member: any) => ({
-        id: member.id,
-        first_name: member.data.first_name || '',
-        last_name: member.data.last_name || ''
-      }));
 
     // Extract availability data
     const availabilities: TeamSnapAvailability[] = availabilityResponse.collection
@@ -77,6 +62,24 @@ export async function POST(request: NextRequest) {
         status: avail.data.status,
         status_code: avail.data.status_code
       }));
+
+    // Fetch member details for each availability entry
+    const memberPromises = availabilities.map(avail =>
+      teamSnapClient.getMemberDetails(avail.member_id, accessToken.value)
+    );
+    const memberResponses = await Promise.all(memberPromises);
+
+    const members: TeamSnapMember[] = memberResponses.map((res: any, index: number) => {
+      const memberItem = res.collection[0];
+      const memberData = memberItem.data;
+      const memberId = availabilities[index].member_id;
+
+      return {
+        id: memberId,
+        first_name: memberData.first_name || '',
+        last_name: memberData.last_name || ''
+      };
+    });
 
     // Create a map for quick lookup
     const availabilityMap = new Map(

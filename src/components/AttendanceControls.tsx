@@ -34,7 +34,7 @@ export default function AttendanceControls({
         setShowTeamSnapDialog(true);
     };
 
-    const handleSyncFromDialog = async (teamId: string, eventId: string) => {
+    const handleSyncFromDialog = async (eventId: string) => {
         setIsSyncingAttendance(true);
         
         try {
@@ -43,7 +43,7 @@ export default function AttendanceControls({
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ teamId, eventId })
+                body: JSON.stringify({ eventId })
             });
 
             if (!response.ok) {
