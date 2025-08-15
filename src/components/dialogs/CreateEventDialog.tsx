@@ -22,7 +22,8 @@ export default function CreateEventDialog({
         description: '',
         date: '',
         time: '',
-        location: ''
+        location: '',
+        teamsnap_event_id: ''
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -48,7 +49,8 @@ export default function CreateEventDialog({
                 description: '',
                 date: '',
                 time: '',
-                location: ''
+                location: '',
+                teamsnap_event_id: ''
             });
             onClose();
         } catch (err) {
@@ -152,7 +154,7 @@ export default function CreateEventDialog({
                             />
                         </div>
                     </div>
-
+                    
                     {/* Location */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -164,6 +166,21 @@ export default function CreateEventDialog({
                             value={eventForm.location}
                             onChange={(e) => handleInputChange('location', e.target.value)}
                             placeholder="e.g., Main Rink"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            disabled={isSubmitting}
+                        />
+                    </div>
+                    
+                    {/* TeamSnap Event ID */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            TeamSnap Event ID (Optional)
+                        </label>
+                        <input
+                            type="text"
+                            value={eventForm.teamsnap_event_id}
+                            onChange={(e) => handleInputChange('teamsnap_event_id', e.target.value)}
+                            placeholder="e.g., 1234567"
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             disabled={isSubmitting}
                         />

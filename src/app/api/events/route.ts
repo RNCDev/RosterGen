@@ -112,7 +112,7 @@ export const PUT = withErrorHandler(async (request: NextRequest) => {
     if (body.name !== undefined) updateData.name = body.name.trim();
     if (body.description !== undefined) updateData.description = body.description;
     if (body.event_date !== undefined) {
-        updateData.event_date = typeof body.event_date === 'string' ? new Date(body.event_date) : body.event_date;
+        updateData.event_date = body.event_date;
     }
     if (body.event_time !== undefined) updateData.event_time = body.event_time;
     if (body.location !== undefined) updateData.location = body.location;
@@ -167,7 +167,7 @@ export const PATCH = withErrorHandler(async (request: NextRequest) => {
     // Create the duplicated event
     const duplicatedEvent = await duplicateEvent(eventId, {
         name: newName,
-        event_date: new Date(newDate),
+        event_date: newDate,
         event_time: newTime || originalEvent.event_time,
         location: newLocation || originalEvent.location,
         description: originalEvent.description,

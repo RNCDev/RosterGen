@@ -63,11 +63,13 @@ export interface EventDB {
 export interface EventInput {
     name: string;
     description?: string;
-    event_date: string | Date; // Allow string for direct pass-through
+    event_date: string;
     event_time?: string;
     location?: string;
     group_id: number;
     is_active?: boolean;
+    saved_teams_data?: string;
+    teamsnap_event_id?: string;
 }
 
 export interface EventForm {
@@ -76,6 +78,7 @@ export interface EventForm {
     date: string; // YYYY-MM-DD format
     time: string; // HH:MM format
     location: string;
+    teamsnap_event_id?: string;
 }
 
 // Attendance types
@@ -109,6 +112,7 @@ export interface EventWithStats extends EventDB {
     attendance_rate: number;
     forwards_count: number;
     defensemen_count: number;
+    teamsnap_event_id?: string | null;
 }
 
 // Type aliases for clarity
@@ -161,6 +165,7 @@ export const formToEventInput = (formData: EventForm, groupId: number): EventInp
         event_date: formData.date, // Pass the YYYY-MM-DD string directly
         event_time: formData.time || undefined,
         location: formData.location || undefined,
+        teamsnap_event_id: formData.teamsnap_event_id || undefined,
         group_id: groupId,
         is_active: true
     };

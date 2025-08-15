@@ -104,16 +104,6 @@ export default function AttendanceControls({
 
                 <div className="flex items-center gap-2">
                     <Button
-                        onClick={handleTeamSnapUpdate}
-                        disabled={isSyncingAttendance}
-                        variant="outline"
-                        className="btn-secondary"
-                    >
-                        <RefreshCw className={`w-4 h-4 mr-2 ${isSyncingAttendance ? 'animate-spin' : ''}`} />
-                        {isSyncingAttendance ? 'Syncing...' : 'Update from TeamSnap'}
-                    </Button>
-                    
-                    <Button
                         onClick={onGenerateTeams}
                         disabled={isGeneratingTeams}
                         className="btn-primary"
@@ -121,6 +111,15 @@ export default function AttendanceControls({
                         <ArrowRightLeft className={`w-4 h-4 mr-2 ${isGeneratingTeams ? 'animate-spin' : ''}`} />
                         {isGeneratingTeams ? 'Generating...' : 'Generate Teams'}
                     </Button>
+                    {isAuthenticated && selectedEvent?.teamsnap_event_id && (
+                        <Button
+                            onClick={handleTeamSnapUpdate}
+                            disabled={isSyncingAttendance}
+                        >
+                            <RefreshCw className={`w-4 h-4 mr-2 ${isSyncingAttendance ? 'animate-spin' : ''}`} />
+                            {isSyncingAttendance ? 'Syncing...' : 'Update from TeamSnap'}
+                        </Button>
+                    )}
                 </div>
             </div>
 
