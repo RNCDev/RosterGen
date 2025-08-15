@@ -261,6 +261,40 @@ This project uses Vercel Postgres. You will need to create a Postgres database o
     ```bash
     vercel env pull .env.development.local
     ```
+
+### TeamSnap Integration Setup
+
+This project includes optional TeamSnap integration for syncing attendance data from TeamSnap events.
+
+1.  **TeamSnap API Credentials** (Already configured):
+    The TeamSnap OAuth application has been registered. The following environment variables are required in your `.env.local` file:
+    ```bash
+    # TeamSnap OAuth Configuration
+    TEAMSNAP_CLIENT_ID=your_client_id_here
+    TEAMSNAP_CLIENT_SECRET=your_client_secret_here
+    # For local development
+    TEAMSNAP_REDIRECT_URI=http://127.0.0.1:3000/api/teamsnap/callback
+    ```
+
+2.  **Authorized Redirect URIs**:
+    - Development: `http://127.0.0.1:3000/api/teamsnap/callback`
+    - Production: The app automatically uses your Vercel deployment URL
+    
+    **Note**: You must add your production redirect URI to your TeamSnap application settings:
+    `https://your-app-domain.vercel.app/api/teamsnap/callback`
+
+3.  **OAuth Flow Implementation**:
+    The application includes complete OAuth routes:
+    - `/api/teamsnap/auth` - Initiates OAuth flow
+    - `/api/teamsnap/callback` - Handles OAuth callback
+    - `/api/teamsnap/status` - Checks authentication status
+    - `/api/teamsnap/logout` - Clears authentication
+
+4.  **Important Notes**:
+    - Keep the `TEAMSNAP_CLIENT_SECRET` secure and never commit it to version control
+    - For local development, use `127.0.0.1` instead of `localhost` due to TeamSnap OAuth restrictions
+    - The app automatically handles redirect URIs based on environment
+
 ### Installation
 
 1.  **Clone the repository**:
