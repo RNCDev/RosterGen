@@ -46,7 +46,7 @@ export function TeamSnapSyncDialog({
   const [syncState, setSyncState] = useState<SyncState>('idle');
   const [error, setError] = useState<string | null>(null);
   const [syncDetails, setSyncDetails] = useState<SyncDetails | null>(null);
-  const { isAuthenticated, authUrl, loading: authLoading } = useTeamSnapAuth();
+  const { isAuthenticated, login, loading: authLoading } = useTeamSnapAuth();
 
   useEffect(() => {
     // Reset state when dialog is opened/closed
@@ -143,7 +143,7 @@ export function TeamSnapSyncDialog({
           <p>
             You need to connect your TeamSnap account to sync attendance data.
           </p>
-          <Button onClick={() => window.location.href = authUrl}>
+          <Button onClick={() => login()}>
             <ExternalLink className="mr-2 h-4 w-4" />
             Connect to TeamSnap
           </Button>
