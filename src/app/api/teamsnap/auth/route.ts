@@ -9,6 +9,15 @@ export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const redirectUrl = searchParams.get('redirect_url') || '/';
 
+  // --- Start Debug Logging ---
+  console.log("--- TeamSnap Auth Debug ---");
+  console.log("NODE_ENV:", process.env.NODE_ENV);
+  console.log("Vercel URL:", process.env.VERCEL_URL);
+  console.log("Has Client ID:", !!process.env.TEAMSNAP_CLIENT_ID);
+  console.log("Has Client Secret:", !!process.env.TEAMSNAP_CLIENT_SECRET);
+  console.log("Redirect URI from env:", process.env.TEAMSNAP_REDIRECT_URI);
+  // --- End Debug Logging ---
+
   try {
     const teamSnapClient = getTeamSnapClient();
     
