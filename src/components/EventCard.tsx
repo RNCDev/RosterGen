@@ -83,7 +83,8 @@ const EventCard = React.memo(function EventCard({
                             {new Date(event.event_date).toLocaleDateString('en-US', {
                                 year: 'numeric',
                                 month: 'short',
-                                day: 'numeric'
+                                day: 'numeric',
+                                timeZone: 'UTC'
                             })}
                             {event.event_time && ` @ ${formatTime12Hour(event.event_time)}`}
                         </p>

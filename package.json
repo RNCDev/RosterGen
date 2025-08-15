@@ -1,6 +1,6 @@
 {
   "name": "roster-generator",
-  "version": "3.0.6",
+  "version": "3.0.7",
   "description": "Webapp for managing hockey rosters and events",
   "private": true,
   "scripts": {

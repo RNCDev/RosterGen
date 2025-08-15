@@ -237,7 +237,8 @@ const TeamsView = React.memo(function TeamsView({ teams, teamNames, setTeams, se
                 weekday: 'long', 
                 year: 'numeric', 
                 month: 'long', 
-                day: 'numeric' 
+                day: 'numeric',
+                timeZone: 'UTC'
             });
         };
         
