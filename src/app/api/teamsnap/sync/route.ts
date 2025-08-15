@@ -41,7 +41,10 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
   const accessToken = cookieStore.get('teamsnap_access_token');
   
   if (!accessToken) {
-    return ApiResponse.unauthorized('TeamSnap authentication required');
+    return NextResponse.json(
+      { error: 'TeamSnap authentication required' },
+      { status: 401 }
+    );
   }
 
   try {
@@ -191,9 +194,12 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
     console.error('TeamSnap sync error:', error);
     
     if (error instanceof Error && error.message.includes('401')) {
-      return ApiResponse.unauthorized('TeamSnap authentication expired. Please reconnect.');
+      return NextResponse.json(
+        { error: 'TeamSnap authentication expired. Please reconnect.' },
+        { status: 401 }
+      );
     }
     
-    return ApiResponse.error('Failed to sync with TeamSnap', error);
+    return ApiResponse.internalError('Failed to sync with TeamSnap');
   }
 });
