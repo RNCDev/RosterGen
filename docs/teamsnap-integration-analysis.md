@@ -24,7 +24,20 @@ The ideal solution is a non-blocking UI that presents the TeamSnap attendance li
 
 ---
 
-## Option 1: Collapsible Sidebar/Drawer ⭐️ **RECOMMENDED**
+## Post-Implementation Analysis: Why the Sidebar Failed
+
+An attempt was made to implement the Collapsible Sidebar/Drawer using `shadcn/ui`'s `Sheet` component. However, this approach failed to deliver the desired user experience due to fundamental architectural limitations of the component.
+
+-   **Inherently Modal Behavior**: The `Sheet` component is an extension of the `Dialog` primitive from Radix UI. As such, it is architecturally modal. It is designed to capture user focus and prevent interaction with the underlying page content.
+-   **Failed Workarounds**: Attempts to disable the modal behavior were unsuccessful:
+    -   Removing the visual overlay (`<SheetOverlay />`) made the UI *appear* non-blocking, but the component still prevented interaction with the main page.
+    -   Overriding the `onInteractOutside` event handler completely disabled all interactions outside the sheet, trapping the user.
+
+This experiment proved that forcing a component to behave in a way that contradicts its core design is not a viable solution. The `Sheet` component is the wrong tool for this specific "do while looking" task.
+
+---
+
+## Option 1: Collapsible Sidebar/Drawer ❌ REJECTED
 
 ### Overview
 This approach involves a panel that slides in from the side of the screen (typically the right) when the user clicks the "TeamSnap Attendance" button. It would display the list of confirmed players and could be dismissed by the user.
@@ -38,6 +51,7 @@ This approach involves a panel that slides in from the side of the screen (typic
 
 ### Disadvantages
 -   ⚠️ **Layout Shift**: On smaller screens, it will temporarily cover a portion of the main content, which is a minor trade-off for the improved workflow.
+-   ❌ **Technical Failure**: As detailed in the post-implementation analysis, this component is inherently modal and cannot be used for a non-blocking workflow.
 
 ### Implementation Plan
 -   **Component**: Create a new `TeamSnapAttendanceSidebar` component.
@@ -69,19 +83,19 @@ This option implements a small, draggable window that floats above the main UI. 
 
 ---
 
-## Option 3: Inline View
+## Option 3: Inline View ⭐️ **NEW RECOMMENDATION**
 
 ### Overview
 This approach displays the TeamSnap attendance data directly within the main page layout, either as a split-screen view or as a new section that appears above or next to the RosterGen attendance table.
 
 ### Advantages
+-   ✅ **Guaranteed Non-Blocking**: Because the view is part of the standard document flow, it is impossible for it to block interaction with the adjacent attendance table. This directly solves the core UX problem.
 -   ✅ **Simplest Implementation**: Requires the least amount of new code, mainly involving conditional rendering within the existing `EventsView` component.
--   ✅ **Stable Layout**: No floating or overlapping elements.
+-   ✅ **Stable Layout**: No floating or overlapping elements, which provides a predictable and clean user experience.
 
 ### Disadvantages
--   ❌ **Rigid Layout**: The user has no control over the position of the information.
--   ❌ **Disruptive Flow**: Can significantly alter the page layout, pushing existing content down or squishing it, which might be jarring.
--   ❌ **Inefficient Use of Space**: A split-screen view might not be effective if the list of TeamSnap players is short, leaving a lot of empty space.
+-   ⚠️ **Rigid Layout**: The user has no control over the position of the information.
+-   ⚠️ **Layout Considerations**: Care must be taken to ensure the layout is responsive and doesn't feel cramped on smaller screens. A side-by-side view on desktop could transition to a stacked view on mobile.
 
 ### Implementation Plan
 -   **Component Logic**: Modify the `EventsView.tsx` component.
@@ -92,6 +106,6 @@ This approach displays the TeamSnap attendance data directly within the main pag
 
 ## Final Recommendation
 
-The **Collapsible Sidebar/Drawer** is the clear winner. It provides a superior and more flexible user experience than the Inline View, while avoiding the complexity and potential clutter of the Draggable Floating Window.
+The **Collapsible Sidebar/Drawer** approach failed because the underlying component library is architecturally modal and cannot provide the required non-blocking experience.
 
-It aligns perfectly with RosterGen's clean and modern aesthetic and can be implemented efficiently using existing component libraries. This approach will deliver the desired workflow improvement in a professional, maintainable, and user-friendly package.
+The **Inline View is now the clear winner**. It provides a superior and more flexible user experience than the Draggable Floating Window and, most importantly, it is guaranteed to be non-blocking. It avoids the technical pitfalls of the sidebar and offers the most direct path to solving the user's workflow problem in a clean, maintainable, and user-friendly manner.
