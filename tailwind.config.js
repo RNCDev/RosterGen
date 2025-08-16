@@ -77,28 +77,7 @@ module.exports = {
                     from: { transform: "translateX(20px)", opacity: "0" },
                     to: { transform: "translateX(0)", opacity: "1" },
                 },
-                "swing-in-and-settle": {
-                    '0%': {
-                        transform: 'translateY(-100%) rotateX(-90deg)',
-                        opacity: '0'
-                    },
-                    '20%': {
-                        transform: 'translateY(0) rotateX(0deg)',
-                        opacity: '1'
-                    },
-                    '40%': {
-                        transform: 'translateY(-10px) rotateX(5deg) scale(1.05)',
-                    },
-                    '60%': {
-                        transform: 'translateY(5px) rotateX(-2.5deg)',
-                    },
-                    '80%': {
-                        transform: 'translateY(-2.5px) rotateX(1.25deg)',
-                    },
-                    '100%': {
-                        transform: 'translateY(0) rotateX(0deg) scale(1)',
-                    }
-                }
+
             },
             animation: {
                 "accordion-down": "accordion-down 0.2s ease-out",
@@ -106,7 +85,7 @@ module.exports = {
                 "fade-in": "fade-in 0.5s ease-out",
                 "slide-in-from-left": "slide-in-from-left 0.5s ease-out",
                 "slide-in-from-right": "slide-in-from-right 0.5s ease-out",
-                "swing-in-and-settle": "swing-in-and-settle 1.5s ease-out forwards"
+
             },
         },
     },

@@ -42,7 +42,7 @@ export default function EventsList({
                 <Plus size={16} className="mr-2" /> Create Event
             </Button>
 
-            <div className="space-y-3">
+            <div className="space-y-4">
                 {eventsLoading ? (
                     <div className="text-center py-8">
                         <div className="w-6 h-6 mx-auto mb-2 border-2 border-blue-200 border-t-blue-500 rounded-full animate-spin"></div>

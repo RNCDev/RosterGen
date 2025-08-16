@@ -25,7 +25,6 @@ const WelcomeScreen = ({ onCreateGroup, teamSnapAuth }: { onCreateGroup: () => v
             </h2>
             <p className="text-base sm:text-lg lg:text-xl text-gray-700 max-w-lg mx-auto mb-6 sm:mb-8">
                 To get started, load an existing group using the code above, or create a new one.
-                <span className="text-xsm text-gray-300 opacity-60 sm:mb-0">  v{packageJson.version}</span>
             </p>
             <Button
                 onClick={onCreateGroup}
@@ -34,41 +33,41 @@ const WelcomeScreen = ({ onCreateGroup, teamSnapAuth }: { onCreateGroup: () => v
                 Create New Group
             </Button>
             
-            {/* TeamSnap Test Section */}
-            <div className="mt-12 pt-8 border-t border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-700 mb-4">TeamSnap Integration</h3>
+            {/* TeamSnap Integration Section */}
+            <div className="mt-8 pt-6 border-t border-gray-200">
+                <h3 className="text-sm font-semibold text-gray-600 mb-3">TeamSnap Integration</h3>
                 {teamSnapAuth.isLoading ? (
                     <div className="flex items-center justify-center gap-2">
-                        <Loader2 className="animate-spin h-5 w-5" />
-                        <span>Checking TeamSnap status...</span>
+                        <Loader2 className="animate-spin h-4 w-4" />
+                        <span className="text-sm">Checking status...</span>
                     </div>
                 ) : teamSnapAuth.isAuthenticated ? (
-                    <div className="space-y-3">
+                    <div className="space-y-2">
                         <div className="flex items-center justify-center gap-2 text-green-600">
-                            <CheckCircle className="h-5 w-5" />
-                            <span className="font-medium">Connected to TeamSnap</span>
+                            <CheckCircle className="h-4 w-4" />
+                            <span className="text-sm font-medium">Connected to TeamSnap</span>
                         </div>
                         <Button
                             onClick={() => teamSnapAuth.logout()}
                             variant="outline"
-                            className="text-sm"
+                            className="text-xs px-3 py-1"
                         >
-                            Disconnect TeamSnap
+                            Disconnect
                         </Button>
                     </div>
                 ) : (
-                    <div className="space-y-3">
-                        <p className="text-sm text-gray-600">Connect to TeamSnap to sync attendance data</p>
+                    <div className="space-y-2">
+                        <p className="text-xs text-gray-600">Sync attendance data</p>
                         <Button
                             onClick={() => teamSnapAuth.login()}
-                            className="bg-blue-600 hover:bg-blue-700 text-white"
+                            className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1"
                         >
                             Connect TeamSnap
                         </Button>
                     </div>
                 )}
                 {teamSnapAuth.error && (
-                    <p className="mt-2 text-sm text-red-600">{teamSnapAuth.error}</p>
+                    <p className="mt-2 text-xs text-red-600">{teamSnapAuth.error}</p>
                 )}
             </div>
         </div>

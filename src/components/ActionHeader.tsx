@@ -77,7 +77,7 @@ export default function ActionHeader({
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-start gap-3 sm:gap-4 w-full">
                         {/* Group Code Input with Label, styled as pill */}
                         <div className="flex flex-col items-start gap-2 w-full sm:w-auto">
-                            <div className="flex flex-row items-center gap-2 w-full sm:w-auto">
+                            <div className="flex flex-row items-center gap-3 w-full sm:w-auto">
                                 <div className="flex items-center gap-2 px-6 py-2 rounded-full bg-blue-50 border border-blue-200 shadow-sm min-w-[140px]" suppressHydrationWarning={true}>
                                     <span className="text-xs font-semibold text-gray-500 uppercase mr-2">GROUP</span>
                                     <input
@@ -100,6 +100,9 @@ export default function ActionHeader({
                                         <Search size={18} className="text-blue-600" />
                                     </button>
                                 </div>
+                                <span className="text-xs text-gray-400 font-medium" suppressHydrationWarning={true}>
+                                    v{packageJson.version}
+                                </span>
                             </div>
                         </div>
                         {/* Action Buttons (more prominent) */}
