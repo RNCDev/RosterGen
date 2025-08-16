@@ -3,6 +3,13 @@ import { cookies } from 'next/headers';
 import { getTeamSnapClient } from '@/lib/teamsnap-api';
 import { sql } from '@vercel/postgres';
 
+// Helper function to extract a value from TeamSnap's data array format
+function getTeamSnapValue(data: Array<{ name: string; value: any }>, key: string): any {
+  if (!Array.isArray(data)) return null;
+  const item = data.find(d => d.name === key);
+  return item ? item.value : null;
+}
+
 interface TeamSnapEventDetails {
   id: string;
   name: string;
@@ -108,15 +115,15 @@ export async function GET(request: NextRequest) {
     console.log('Extracted event data:', JSON.stringify(eventData, null, 2));
     
     // Also log the team ID from the event data for comparison
-    if (eventData && eventData.team_id) {
-      console.log(`Event data contains team_id: ${eventData.team_id}`);
+    if (eventData && getTeamSnapValue(eventData, 'team_id')) {
+      console.log(`Event data contains team_id: ${getTeamSnapValue(eventData, 'team_id')}`);
     }
     
     // Log timezone information for debugging
-    if (eventData && eventData.time_zone) {
-      console.log(`Event timezone: ${eventData.time_zone}`);
-      console.log(`Event timezone IANA: ${eventData.time_zone_iana_name}`);
-      console.log(`Event timezone offset: ${eventData.time_zone_offset}`);
+    if (eventData && getTeamSnapValue(eventData, 'time_zone')) {
+      console.log(`Event timezone: ${getTeamSnapValue(eventData, 'time_zone')}`);
+      console.log(`Event timezone IANA: ${getTeamSnapValue(eventData, 'time_zone_iana_name')}`);
+      console.log(`Event timezone offset: ${getTeamSnapValue(eventData, 'time_zone_offset')}`);
     }
 
     // Try to fetch event availability, but don't fail if it doesn't work
@@ -130,7 +137,7 @@ export async function GET(request: NextRequest) {
     // Helper function to fetch team members
     const fetchTeamMembers = async () => {
       try {
-        const teamId = teamSnapTeamId || eventData.team_id;
+        const teamId = teamSnapTeamId || getTeamSnapValue(eventData, 'team_id');
         if (!teamId) {
           console.warn('No TeamSnap team ID available, skipping team members fetch');
           return;
@@ -140,15 +147,19 @@ export async function GET(request: NextRequest) {
         const teamMembersResponse = await teamSnapClient.getTeamMembersDirect(teamId, accessToken!.value);
         console.log('Team members response:', JSON.stringify(teamMembersResponse, null, 2));
         
-        if (teamMembersResponse.collection && teamMembersResponse.collection.length > 0) {
-          players = teamMembersResponse.collection
-            .filter((item: { type: string }) => item.type === 'member')
-            .map((member: { data: { first_name?: string; last_name?: string; id: string } }) => ({
-              id: member.data.id,
-              name: `${member.data.first_name || ''} ${member.data.last_name || ''}`.trim(),
-              availability: null, // No availability data available
-              availability_code: 0
-            }))
+        if (teamMembersResponse.collection && teamMembersResponse.collection.items && teamMembersResponse.collection.items.length > 0) {
+          players = teamMembersResponse.collection.items
+            .map((member: any) => {
+              const memberData = member.data;
+              const firstName = getTeamSnapValue(memberData, 'first_name') || '';
+              const lastName = getTeamSnapValue(memberData, 'last_name') || '';
+              return {
+                id: getTeamSnapValue(memberData, 'id'),
+                name: `${firstName} ${lastName}`.trim(),
+                availability: null, // No availability data available
+                availability_code: 0
+              };
+            })
             .filter((player: { name: string }) => player.name.length > 0);
           
           console.log(`Successfully mapped ${players.length} team members`);
@@ -186,13 +197,12 @@ export async function GET(request: NextRequest) {
       console.log('Availability response:', JSON.stringify(availabilityResponse, null, 2));
 
       // Check if this is actually an event response with availability data
-      if (availabilityResponse.collection && availabilityResponse.collection.length > 0) {
-        const availabilities = availabilityResponse.collection
-          .filter((item: { type: string }) => item.type === 'availability')
-          .map((avail: { data: { member_id: string; status: string; status_code: number } }) => ({
-            member_id: avail.data.member_id,
-            status: avail.data.status,
-            status_code: avail.data.status_code
+      if (availabilityResponse.collection && availabilityResponse.collection.items && availabilityResponse.collection.items.length > 0) {
+        const availabilities = availabilityResponse.collection.items
+          .map((avail: any) => ({
+            member_id: getTeamSnapValue(avail.data, 'member_id'),
+            status: getTeamSnapValue(avail.data, 'status'),
+            status_code: getTeamSnapValue(avail.data, 'status_code')
           }));
 
         if (availabilities.length > 0) {
@@ -204,19 +214,25 @@ export async function GET(request: NextRequest) {
           );
           const memberResponses = await Promise.all(memberPromises);
 
-          players = memberResponses.map((res: { collection: Array<{ data: { first_name?: string; last_name?: string } }> }, index: number) => {
-            const memberItem = res.collection[0];
+          players = memberResponses.map((res: any, index: number) => {
+            if (!res.collection || !res.collection.items || res.collection.items.length === 0) {
+              return null;
+            }
+            const memberItem = res.collection.items[0];
             const memberData = memberItem.data;
             const memberId = availabilities[index].member_id;
             const availability = availabilities[index];
 
+            const firstName = getTeamSnapValue(memberData, 'first_name') || '';
+            const lastName = getTeamSnapValue(memberData, 'last_name') || '';
+
             return {
               id: memberId,
-              name: `${memberData.first_name || ''} ${memberData.last_name || ''}`.trim(),
+              name: `${firstName} ${lastName}`.trim(),
               availability: availability.status,
               availability_code: availability.status_code
             };
-          }).filter(player => player.name.length > 0);
+          }).filter((player): player is NonNullable<typeof player> => player !== null && player.name.length > 0);
           
           console.log(`Successfully mapped ${players.length} players with availability`);
         } else {
@@ -236,17 +252,17 @@ export async function GET(request: NextRequest) {
     // Build event details object - map from TeamSnap API structure
     const eventDetails: TeamSnapEventDetails = {
       id: eventId,
-      name: eventData.name || 'Unnamed Event',
-      description: eventData.notes || null,
-      start_date: eventData.start_date,
-      end_date: eventData.end_date,
-      location: eventData.location_name,
-      location_details: eventData.additional_location_details,
+      name: getTeamSnapValue(eventData, 'name') || 'Unnamed Event',
+      description: getTeamSnapValue(eventData, 'notes') || null,
+      start_date: getTeamSnapValue(eventData, 'start_date'),
+      end_date: getTeamSnapValue(eventData, 'end_date'),
+      location: getTeamSnapValue(eventData, 'location_name'),
+      location_details: getTeamSnapValue(eventData, 'additional_location_details'),
       address: undefined, // TeamSnap doesn't provide address in this endpoint
-      notes: eventData.notes,
+      notes: getTeamSnapValue(eventData, 'notes'),
       link: undefined, // TeamSnap doesn't provide external links in this endpoint
-      time_zone: eventData.time_zone,
-      time_zone_iana_name: eventData.time_zone_iana_name,
+      time_zone: getTeamSnapValue(eventData, 'time_zone'),
+      time_zone_iana_name: getTeamSnapValue(eventData, 'time_zone_iana_name'),
       players
     };
 
