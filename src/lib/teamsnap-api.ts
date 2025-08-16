@@ -113,8 +113,22 @@ export class TeamSnapAPI {
     });
 
     if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`API request failed: ${error}`);
+      let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      
+      try {
+        const errorData = await response.json();
+        if (errorData.collection?.error) {
+          errorMessage = `API Error: ${errorData.collection.error.message}`;
+        } else {
+          errorMessage = `API request failed: ${JSON.stringify(errorData)}`;
+        }
+      } catch {
+        // If we can't parse JSON, use the text response
+        const errorText = await response.text();
+        errorMessage = `API request failed: ${errorText}`;
+      }
+      
+      throw new Error(errorMessage);
     }
 
     return response.json();
@@ -136,9 +150,25 @@ export class TeamSnapAPI {
 
   /**
    * Get availability/attendance for a specific event
+   * Try multiple possible endpoint structures
    */
   async getEventAvailability(eventId: string, accessToken: string): Promise<any> {
-    return this.makeApiRequest(`/events/${eventId}/availabilities`, accessToken);
+    // Try the standard endpoint first
+    try {
+      return await this.makeApiRequest(`/events/${eventId}/availabilities`, accessToken);
+    } catch (error) {
+      console.log(`Standard availability endpoint failed, trying alternatives...`);
+      
+      // Try alternative endpoint structures
+      try {
+        return await this.makeApiRequest(`/events/${eventId}/availability`, accessToken);
+      } catch (error2) {
+        console.log(`Alternative endpoint failed, trying event details with availability...`);
+        
+        // Try to get event details which might include availability
+        return await this.makeApiRequest(`/events/${eventId}`, accessToken);
+      }
+    }
   }
 
   /**
@@ -146,6 +176,13 @@ export class TeamSnapAPI {
    */
   async getTeamMembers(teamId: string, accessToken: string): Promise<any> {
     return this.makeApiRequest(`/members/search?team_id=${teamId}`, accessToken);
+  }
+
+  /**
+   * Get team members for a specific team (alternative endpoint)
+   */
+  async getTeamMembersDirect(teamId: string, accessToken: string): Promise<any> {
+    return this.makeApiRequest(`/teams/${teamId}/members`, accessToken);
   }
 
   /**
