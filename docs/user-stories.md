@@ -34,6 +34,13 @@ This document outlines the user stories for the RosterGen application, covering 
 -   [x] **EV08: New Player Future Attendance:** As a user, when I add a new player to the roster, I want that player to automatically be added to the attendance records for all future events in the group, so I don't have to manually add them to each upcoming event.
 -   [x] **EV09: Attendance Pagination:** As a user viewing attendance for events with many players, I want to navigate through pages of players so I can efficiently view all attendance information.
 
+## TeamSnap Integration
+
+-   [x] **TS01: Connect Account:** As a user, I want to connect my TeamSnap account using a secure OAuth2 flow so that RosterGen can access my team data.
+-   [x] **TS02: Link RosterGen Group:** As a user, I want to link my RosterGen group to a specific TeamSnap team ID so the application knows which team to fetch data for.
+-   [x] **TS03: View TeamSnap Attendance:** As a user, I want to view a categorized list of players from TeamSnap (Confirmed, Maybe, Declined) for a specific event so I can see who has responded.
+-   [ ] **TS04: Sync Attendance:** As a user, I want to click a "Sync" button that updates the RosterGen attendance list based on the "Confirmed" players from TeamSnap, so I don't have to manually check off each player.
+
 ## Feedback & State Management
 
 -   [x] **UI01: Visual Feedback on Actions:** As a user, I want to see clear visual feedback (e.g., loading spinners, success messages, error alerts) after performing actions like saving, loading, or deleting, so that I understand the system's status.

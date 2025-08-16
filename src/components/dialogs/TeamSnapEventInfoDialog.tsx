@@ -182,30 +182,50 @@ export function TeamSnapEventInfoDialog({
         if (!eventDetails) return null;
 
         const confirmedPlayers = eventDetails.players.filter(p => p.availability === 'yes');
+        const maybePlayers = eventDetails.players.filter(p => p.availability === 'maybe');
+        const declinedPlayers = eventDetails.players.filter(p => p.availability === 'no');
+        const totalResponses = confirmedPlayers.length + maybePlayers.length + declinedPlayers.length;
 
         return (
-          <div className="space-y-6">
-            {/* Players List */}
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <Users className="h-5 w-5 text-purple-500" />
-                <h4 className="font-medium text-gray-900">Players Confirmed ({confirmedPlayers.length})</h4>
+          <div className="space-y-4">
+            {totalResponses === 0 ? (
+              <div className="text-center text-gray-500 py-4">
+                No players have responded to the event yet.
               </div>
-              
-              <div className="space-y-2 max-h-60 overflow-y-auto">
-                {confirmedPlayers.length > 0 ? (
-                  confirmedPlayers.map((player) => (
-                    <div key={player.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                      <span className="text-sm font-medium text-gray-900">{player.name}</span>
+            ) : (
+              <>
+                {confirmedPlayers.length > 0 && (
+                  <div>
+                    <h4 className="text-base font-semibold text-gray-800 mb-2">✅ Confirmed ({confirmedPlayers.length})</h4>
+                    <div className="space-y-1 max-h-32 overflow-y-auto rounded-md border bg-gray-50 p-2">
+                      {confirmedPlayers.map((player) => (
+                        <p key={player.id} className="text-sm text-gray-700">{player.name}</p>
+                      ))}
                     </div>
-                  ))
-                ) : (
-                  <div className="text-center text-gray-500 py-4">
-                    No players have confirmed their attendance yet.
                   </div>
                 )}
-              </div>
-            </div>
+                {maybePlayers.length > 0 && (
+                   <div>
+                    <h4 className="text-base font-semibold text-gray-800 mb-2">❓ Maybe ({maybePlayers.length})</h4>
+                    <div className="space-y-1 max-h-32 overflow-y-auto rounded-md border bg-gray-50 p-2">
+                      {maybePlayers.map((player) => (
+                        <p key={player.id} className="text-sm text-gray-700">{player.name}</p>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {declinedPlayers.length > 0 && (
+                   <div>
+                    <h4 className="text-base font-semibold text-gray-800 mb-2">❌ Declined ({declinedPlayers.length})</h4>
+                    <div className="space-y-1 max-h-32 overflow-y-auto rounded-md border bg-gray-50 p-2">
+                      {declinedPlayers.map((player) => (
+                        <p key={player.id} className="text-sm text-gray-700">{player.name}</p>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         );
       
@@ -219,7 +239,7 @@ export function TeamSnapEventInfoDialog({
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            TeamSnap Event Details
+            TeamSnap Attendance
           </DialogTitle>
         </DialogHeader>
         

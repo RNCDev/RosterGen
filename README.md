@@ -34,7 +34,8 @@ This is a Next.js application designed to help organize hockey games and manage 
 -   **New! TeamSnap Integration (In Progress)**:
     -   Connect your TeamSnap account directly to RosterGen via a secure OAuth2 flow.
     -   Link your RosterGen group to a specific TeamSnap team using the TeamSnap Team ID.
-    -   Fetch event attendance data directly from TeamSnap to quickly populate your roster for an event.
+    -   View detailed attendance status (Confirmed, Maybe, Declined) for a linked event directly from TeamSnap.
+    -   *Next Step:* Use the fetched TeamSnap data to automatically update attendance in RosterGen with a single click.
 
 ## Tech Stack
 
