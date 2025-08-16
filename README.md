@@ -277,6 +277,17 @@ A brief overview of the key directories and files in RosterGen.
 
 Follow these instructions to get a copy of the project up and running on your local machine for development and testing purposes.
 
+### 🤖 Note for AI Assistants
+
+This project is developed in a **Windows PowerShell environment**. When providing assistance:
+
+- **Do NOT run terminal commands directly** - instead, provide the commands for the user to run
+- Use **PowerShell syntax** for commands (e.g., `Remove-Item`, `Get-Content`, `Test-Path`)
+- Remember that file paths use backslashes (`\`) in Windows
+- Use PowerShell-compatible commands like `dir` instead of `ls`, `findstr` instead of `grep`
+- When debugging environment issues, prioritize using `vercel env pull` over manual file creation
+- The most common local development issue is environment variable loading - refer to the "Troubleshooting Local Development" section below
+
 ### Prerequisites
 
 -   [Node.js](https://nodejs.org/) (version 20.x or later)
@@ -311,8 +322,39 @@ This project uses Vercel Postgres. You will need to create a Postgres database o
 5.  **Pull environment variables**:
     Once the database is created and linked, pull the environment variables to your local machine. This will create a `.env.development.local` file with the necessary database connection strings.
     ```bash
-    vercel env pull .env.development.local
+    vercel env pull .env.development.local --yes
     ```
+
+### Troubleshooting Local Development
+
+If you encounter "missing_connection_string" errors when running `npm run dev`, this indicates that Next.js is not loading your environment variables properly. Here's how to fix it:
+
+**Problem**: The Vercel Postgres package requires a `POSTGRES_URL` environment variable, but Next.js isn't loading it from your `.env` files.
+
+**Solution**: Use the Vercel CLI to pull environment variables directly from your Vercel project:
+
+1.  **Stop your development server** (Ctrl+C in your terminal)
+2.  **Pull fresh environment variables**:
+    ```powershell
+    vercel env pull .env.development.local --yes
+    ```
+3.  **Clear Next.js cache** (optional but recommended):
+    ```powershell
+    Remove-Item -Path ".next" -Recurse -Force -ErrorAction SilentlyContinue
+    ```
+4.  **Restart your development server**:
+    ```powershell
+    npm run dev
+    ```
+
+**Why this happens**: Manually created `.env` files may have encoding issues or formatting problems that prevent Next.js from loading them. Using `vercel env pull` ensures the environment variables are in the exact format that Next.js expects.
+
+**Verification**: After following these steps, you should see your environment files listed in the Next.js startup message:
+```
+- Environments: .env.development.local, .env.local
+```
+
+And your API calls (like loading groups) should work without "missing_connection_string" errors.
 
 ### TeamSnap Integration Setup
 
