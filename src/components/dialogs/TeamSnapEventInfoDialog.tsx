@@ -184,13 +184,13 @@ export function TeamSnapEventInfoDialog({
         const confirmedPlayers = eventDetails.players.filter(p => p.availability === 'yes');
         const maybePlayers = eventDetails.players.filter(p => p.availability === 'maybe');
         const declinedPlayers = eventDetails.players.filter(p => p.availability === 'no');
-        const totalResponses = confirmedPlayers.length + maybePlayers.length + declinedPlayers.length;
+        const noResponsePlayers = eventDetails.players.filter(p => !['yes', 'no', 'maybe'].includes(p.availability!));
 
         return (
           <div className="space-y-4">
-            {totalResponses === 0 ? (
+            {eventDetails.players.length === 0 ? (
               <div className="text-center text-gray-500 py-4">
-                No players have responded to the event yet.
+                No players found for this event.
               </div>
             ) : (
               <>
@@ -224,6 +224,16 @@ export function TeamSnapEventInfoDialog({
                     </div>
                   </div>
                 )}
+                 {noResponsePlayers.length > 0 && (
+                   <div>
+                    <h4 className="text-base font-semibold text-gray-800 mb-2">⚪️ No Response ({noResponsePlayers.length})</h4>
+                    <div className="space-y-1 max-h-32 overflow-y-auto rounded-md border bg-gray-50 p-2">
+                      {noResponsePlayers.map((player) => (
+                        <p key={player.id} className="text-sm text-gray-700">{player.name}</p>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </>
             )}
           </div>
@@ -239,7 +249,7 @@ export function TeamSnapEventInfoDialog({
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            TeamSnap Attendance
+            TeamSnap Event Details
           </DialogTitle>
         </DialogHeader>
         
