@@ -178,7 +178,12 @@ export function TeamSnapAttendanceSidebar({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[350px] sm:w-[400px] overflow-y-auto">
+      <SheetContent
+        onInteractOutside={(e) => {
+          e.preventDefault();
+        }}
+        className="w-[350px] sm:w-[400px] overflow-y-auto"
+      >
         <SheetHeader>
           <SheetTitle>TeamSnap Attendance</SheetTitle>
           <SheetDescription>
