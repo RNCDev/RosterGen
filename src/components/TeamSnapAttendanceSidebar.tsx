@@ -3,16 +3,16 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/Button';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog';
-import { Loader2, CheckCircle, AlertCircle, ExternalLink, MapPin, Calendar, Clock, Users, Info } from 'lucide-react';
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from '@/components/ui/sheet';
+import { Loader2, CheckCircle, AlertCircle, ExternalLink, Info } from 'lucide-react';
 import { useTeamSnapAuth } from '@/hooks/useTeamSnapAuth';
 
-interface TeamSnapEventInfoDialogProps {
+interface TeamSnapAttendanceSidebarProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   eventId: string;
@@ -22,32 +22,21 @@ interface TeamSnapEventInfoDialogProps {
 interface TeamSnapEventDetails {
   id: string;
   name: string;
-  description?: string;
-  start_date?: string;
-  end_date?: string;
-  location?: string;
-  location_details?: string;
-  address?: string;
-  notes?: string;
-  link?: string;
-  time_zone?: string;
-  time_zone_iana_name?: string;
   players: Array<{
     id: string;
     name: string;
     availability: 'yes' | 'no' | 'maybe' | null;
-    availability_code: number;
   }>;
 }
 
 type LoadingState = 'idle' | 'loading' | 'success' | 'error';
 
-export function TeamSnapEventInfoDialog({
+export function TeamSnapAttendanceSidebar({
   open,
   onOpenChange,
   eventId,
   groupId,
-}: TeamSnapEventInfoDialogProps) {
+}: TeamSnapAttendanceSidebarProps) {
   const [loadingState, setLoadingState] = useState<LoadingState>('idle');
   const [eventDetails, setEventDetails] = useState<TeamSnapEventDetails | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -82,69 +71,12 @@ export function TeamSnapEventInfoDialog({
     }
   };
 
-  const formatDateTime = (dateString?: string) => {
-    if (!dateString) return 'Not specified';
-    
-    try {
-      const date = new Date(dateString);
-      
-      // Format the date in the user's local timezone
-      const formattedDate = date.toLocaleDateString('en-US', {
-        weekday: 'short',
-        month: 'short',
-        day: '2-digit',
-        year: 'numeric'
-      });
-      
-      // Check if the date string includes time
-      if (dateString.includes('T') && dateString.includes(':')) {
-        const formattedTime = date.toLocaleTimeString('en-US', {
-          hour: 'numeric',
-          minute: '2-digit',
-          hour12: true,
-          timeZoneName: 'short'
-        });
-        return `${formattedDate} - ${formattedTime}`;
-      }
-      
-      return formattedDate;
-    } catch {
-      return dateString;
-    }
-  };
-
-  const getAvailabilityIcon = (availability: string | null) => {
-    switch (availability) {
-      case 'yes':
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case 'no':
-        return <AlertCircle className="h-4 w-4 text-red-500" />;
-      case 'maybe':
-        return <Info className="h-4 w-4 text-yellow-500" />;
-      default:
-        return <Info className="h-4 w-4 text-gray-400" />;
-    }
-  };
-
-  const getAvailabilityText = (availability: string | null) => {
-    switch (availability) {
-      case 'yes':
-        return 'Attending';
-      case 'no':
-        return 'Not Attending';
-      case 'maybe':
-        return 'Maybe';
-      default:
-        return 'No Response';
-    }
-  };
-
   const renderContent = () => {
     if (!isAuthenticated) {
       return (
-        <div className="text-center space-y-4">
+        <div className="text-center space-y-4 flex flex-col items-center justify-center h-full">
           <p className="text-gray-600">
-            You need to connect your TeamSnap account to view event details.
+            Connect your TeamSnap account to view event attendance.
           </p>
           <Button onClick={() => login()}>
             <ExternalLink className="mr-2 h-4 w-4" />
@@ -157,19 +89,19 @@ export function TeamSnapEventInfoDialog({
     switch (loadingState) {
       case 'loading':
         return (
-          <div className="flex flex-col items-center justify-center h-40 space-y-2">
+          <div className="flex flex-col items-center justify-center h-full space-y-2">
             <Loader2 className="h-10 w-10 animate-spin text-blue-500" />
-            <p className="text-lg font-medium">Loading Event Details...</p>
-            <p className="text-sm text-gray-500">Fetching data from TeamSnap, please wait.</p>
+            <p className="text-lg font-medium">Loading Attendance...</p>
+            <p className="text-sm text-gray-500">Fetching data from TeamSnap.</p>
           </div>
         );
       
       case 'error':
         return (
-          <div className="flex flex-col items-center justify-center h-40 space-y-2">
+          <div className="flex flex-col items-center justify-center h-full space-y-2 text-center">
             <AlertCircle className="h-10 w-10 text-red-500" />
             <p className="text-lg font-medium">Failed to Load Event</p>
-            <p className="text-sm text-red-600 bg-red-100 p-2 rounded-md text-center max-w-xs">
+            <p className="text-sm text-red-600 bg-red-100 p-2 rounded-md">
               {error}
             </p>
             <Button onClick={fetchEventDetails} variant="outline">
@@ -187,17 +119,17 @@ export function TeamSnapEventInfoDialog({
         const noResponsePlayers = eventDetails.players.filter(p => !['yes', 'no', 'maybe'].includes(p.availability!));
 
         return (
-          <div className="space-y-4">
+          <div className="space-y-4 pt-4">
             {eventDetails.players.length === 0 ? (
               <div className="text-center text-gray-500 py-4">
-                No players found for this event.
+                No players found for this event in TeamSnap.
               </div>
             ) : (
               <>
                 {confirmedPlayers.length > 0 && (
                   <div>
                     <h4 className="text-base font-semibold text-gray-800 mb-2">✅ Confirmed ({confirmedPlayers.length})</h4>
-                    <div className="space-y-1 max-h-32 overflow-y-auto rounded-md border bg-gray-50 p-2">
+                    <div className="space-y-1 max-h-48 overflow-y-auto rounded-md border bg-gray-50 p-2">
                       {confirmedPlayers.map((player) => (
                         <p key={player.id} className="text-sm text-gray-700">{player.name}</p>
                       ))}
@@ -245,18 +177,18 @@ export function TeamSnapEventInfoDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            TeamSnap Event Details
-          </DialogTitle>
-        </DialogHeader>
-        
-        <div className="py-4">
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent className="w-[350px] sm:w-[400px] overflow-y-auto">
+        <SheetHeader>
+          <SheetTitle>TeamSnap Attendance</SheetTitle>
+          <SheetDescription>
+            Live attendance data from TeamSnap for &quot;{eventDetails?.name || 'the selected event'}&quot;.
+          </SheetDescription>
+        </SheetHeader>
+        <div className="py-4 h-[calc(100%-100px)]">
           {renderContent()}
         </div>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 }

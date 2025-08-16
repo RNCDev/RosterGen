@@ -20,6 +20,7 @@ import PlayerPagination from './PlayerPagination';
 import { useEventManagement } from '@/hooks/useEventManagement';
 import { useAttendanceManagement } from '@/hooks/useAttendanceManagement';
 import { usePlayerPagination } from '@/hooks/usePlayerPagination';
+import { TeamSnapAttendanceSidebar } from './TeamSnapAttendanceSidebar';
 
 interface EventsViewProps {
     events: EventWithStats[];
@@ -62,6 +63,8 @@ export default function EventsView({
     const eventManagement = useEventManagement(selectedEvent?.id);
     const { handleUpdateSingleAttendance } = useAttendanceManagement();
     const paginationState = usePlayerPagination(attendanceData, 20);
+
+    const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
 
     const handleAttendanceToggle = async (playerId: number) => {
         if (!selectedEvent) return;
@@ -150,6 +153,7 @@ export default function EventsView({
                                     onGenerateTeams={() => group && eventManagement.handleGenerateTeams(selectedEvent, group, eventManagement.teamNames)}
                                     teamSnapTeamId={group?.teamsnap_team_id}
                                     groupId={group.id}
+                                    onShowTeamSnapAttendance={() => setIsSidebarOpen(true)}
                                 />
 
                                 <AttendanceTable
@@ -204,6 +208,15 @@ export default function EventsView({
                 onDuplicate={handleDuplicateSubmit}
                 event={eventManagement.eventToDuplicate}
             />
+
+            {selectedEvent && group && (
+                <TeamSnapAttendanceSidebar
+                    open={isSidebarOpen}
+                    onOpenChange={setIsSidebarOpen}
+                    eventId={selectedEvent.teamsnap_event_id || ''}
+                    groupId={group.id}
+                />
+            )}
         </div>
     );
 }
