@@ -1,6 +1,6 @@
 {
   "name": "roster-generator",
-  "version": "3.5.0",
+  "version": "3.5.1",
   "description": "Webapp for managing hockey rosters and events",
   "private": true,
   "scripts": {
@@ -12,10 +12,11 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@radix-ui/react-dialog": "^1.1.14",
+    "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-tabs": "^1.1.12",
     "@radix-ui/react-tooltip": "^1.2.7",
     "@vercel/postgres": "latest",
+    "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "dotenv": "^16.5.0",
     "lodash": "^4.17.21",
