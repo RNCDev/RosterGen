@@ -311,20 +311,27 @@ export async function getEventById(eventId: number): Promise<EventDB | null> {
 }
 
 export async function updateEvent(eventId: number, event: Partial<EventInput>): Promise<EventDB> {
-    // Dynamically build the SET clause
-    const fields = Object.keys(event) as (keyof typeof event)[];
-    const values = Object.values(event);
-    
+    const fields = Object.entries(event).filter(([, value]) => value !== undefined);
+    if (fields.length === 0) {
+        // Nothing to update, just return the event data
+        const currentEvent = await getEventById(eventId);
+        if (!currentEvent) throw new Error('Event not found');
+        return currentEvent;
+    }
+
     const setClause = fields
-        .map((field, i) => `${field} = $${i + 2}`)
+        .map(([key], i) => `"${key}" = $${i + 2}`)
         .join(', ');
 
-    const { rows } = await sql<EventDB>`
-        UPDATE events 
-        SET ${sql.raw(setClause)}, updated_at = CURRENT_TIMESTAMP
-        WHERE id = $1 AND is_active = true
-        RETURNING *;
-    `.execute([eventId, ...values]);
+    const values = fields.map(([, value]) => value);
+
+    const { rows } = await sql.query(
+        `UPDATE events
+         SET ${setClause}, updated_at = CURRENT_TIMESTAMP
+         WHERE id = $1 AND is_active = true
+         RETURNING *;`,
+        [eventId, ...values]
+    );
 
     return rows[0];
 }
