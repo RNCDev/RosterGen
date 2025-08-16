@@ -180,101 +180,30 @@ export function TeamSnapEventInfoDialog({
       
       case 'success':
         if (!eventDetails) return null;
+
+        const confirmedPlayers = eventDetails.players.filter(p => p.availability === 'yes');
+
         return (
           <div className="space-y-6">
-            {/* Event Header */}
-            <div className="text-center">
-              <h3 className="text-xl font-semibold text-gray-900">{eventDetails.name}</h3>
-              {eventDetails.description && (
-                <p className="text-gray-600 mt-1">{eventDetails.description}</p>
-              )}
-            </div>
-
-            {/* Event Details Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                             {/* Date & Time */}
-               <div className="flex items-start gap-3">
-                 <Calendar className="h-5 w-5 text-blue-500 mt-0.5" />
-                 <div>
-                   <p className="font-medium text-gray-900">Date & Time</p>
-                   <p className="text-sm text-gray-600">
-                     {formatDateTime(eventDetails.start_date)}
-                   </p>
-                   {eventDetails.end_date && eventDetails.end_date !== eventDetails.start_date && (
-                     <p className="text-sm text-gray-600">
-                       to {formatDateTime(eventDetails.end_date)}
-                     </p>
-                   )}
-                   {eventDetails.time_zone && (
-                     <p className="text-xs text-gray-500 mt-1">
-                       Time shown in your local timezone
-                       {eventDetails.time_zone !== 'Eastern Time (US & Canada)' && (
-                         <span> (TeamSnap: {eventDetails.time_zone})</span>
-                       )}
-                     </p>
-                   )}
-                 </div>
-               </div>
-
-              {/* Location */}
-              <div className="flex items-start gap-3">
-                <MapPin className="h-5 w-5 text-green-500 mt-0.5" />
-                <div>
-                  <p className="font-medium text-gray-900">Location</p>
-                  {eventDetails.location && (
-                    <p className="text-sm text-gray-600">{eventDetails.location}</p>
-                  )}
-                  {eventDetails.address && (
-                    <p className="text-sm text-gray-600">{eventDetails.address}</p>
-                  )}
-                  {eventDetails.location_details && (
-                    <p className="text-sm text-gray-500 italic">{eventDetails.location_details}</p>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Notes */}
-            {eventDetails.notes && (
-              <div className="bg-gray-50 p-3 rounded-lg">
-                <p className="text-sm text-gray-700">{eventDetails.notes}</p>
-              </div>
-            )}
-
-            {/* External Link */}
-            {eventDetails.link && (
-              <div className="text-center">
-                <a
-                  href={eventDetails.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 text-sm"
-                >
-                  <ExternalLink className="h-4 w-4" />
-                  View Venue Website
-                </a>
-              </div>
-            )}
-
             {/* Players List */}
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <Users className="h-5 w-5 text-purple-500" />
-                <h4 className="font-medium text-gray-900">Players ({eventDetails.players.length})</h4>
+                <h4 className="font-medium text-gray-900">Players Confirmed ({confirmedPlayers.length})</h4>
               </div>
               
-              <div className="space-y-2 max-h-40 overflow-y-auto">
-                {eventDetails.players.map((player) => (
-                  <div key={player.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                    <span className="text-sm font-medium text-gray-900">{player.name}</span>
-                    <div className="flex items-center gap-2">
-                      {getAvailabilityIcon(player.availability)}
-                      <span className="text-xs text-gray-600">
-                        {getAvailabilityText(player.availability)}
-                      </span>
+              <div className="space-y-2 max-h-60 overflow-y-auto">
+                {confirmedPlayers.length > 0 ? (
+                  confirmedPlayers.map((player) => (
+                    <div key={player.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                      <span className="text-sm font-medium text-gray-900">{player.name}</span>
                     </div>
+                  ))
+                ) : (
+                  <div className="text-center text-gray-500 py-4">
+                    No players have confirmed their attendance yet.
                   </div>
-                ))}
+                )}
               </div>
             </div>
           </div>
@@ -287,15 +216,11 @@ export function TeamSnapEventInfoDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <ExternalLink className="h-5 w-5 text-blue-500" />
             TeamSnap Event Details
           </DialogTitle>
-          <DialogDescription>
-            View detailed event information from TeamSnap
-          </DialogDescription>
         </DialogHeader>
         
         <div className="py-4">

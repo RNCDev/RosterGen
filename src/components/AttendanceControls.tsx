@@ -59,14 +59,7 @@ export default function AttendanceControls({
                                 variant="outline"
                             >
                                 <Eye className="w-4 h-4 mr-2" />
-                                View TeamSnap Info
-                            </Button>
-                            <Button
-                                onClick={handleTeamSnapUpdate}
-                                disabled={isSyncingAttendance}
-                            >
-                                <RefreshCw className={`w-4 h-4 mr-2 ${isSyncingAttendance ? 'animate-spin' : ''}`} />
-                                {isSyncingAttendance ? 'Syncing...' : 'Update from TeamSnap'}
+                                TeamSnap Attendance
                             </Button>
                         </>
                     )}
