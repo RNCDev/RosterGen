@@ -3,6 +3,8 @@ import { cookies } from 'next/headers';
 import { getTeamSnapClient } from '@/lib/teamsnap-api';
 import { sql } from '@vercel/postgres';
 
+export const dynamic = 'force-dynamic';
+
 // Helper function to extract a value from TeamSnap's data array format
 function getTeamSnapValue(data: Array<{ name: string; value: any }>, key: string): any {
   if (!Array.isArray(data)) return null;
@@ -37,7 +39,7 @@ interface TeamSnapEventDetails {
  */
 export async function GET(request: NextRequest) {
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const accessToken = cookieStore.get('teamsnap_access_token');
     
     if (!accessToken) {

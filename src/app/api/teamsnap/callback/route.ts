@@ -36,39 +36,6 @@ export async function GET(request: NextRequest) {
     const teamSnapClient = getTeamSnapClient();
     const tokenResponse = await teamSnapClient.exchangeCodeForToken(code);
 
-    // Store tokens securely in HTTP-only cookies
-    const cookieStore = cookies();
-    
-    // Access token cookie (expires based on token expiry)
-    cookieStore.set('teamsnap_access_token', tokenResponse.access_token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: tokenResponse.expires_in || 7200, // Default 2 hours
-      path: '/'
-    });
-
-    // Refresh token cookie (longer expiry)
-    if (tokenResponse.refresh_token) {
-      cookieStore.set('teamsnap_refresh_token', tokenResponse.refresh_token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 30 * 24 * 60 * 60, // 30 days
-        path: '/'
-      });
-    }
-
-    // Store token metadata
-    cookieStore.set('teamsnap_token_expires_at', 
-      String(Date.now() + (tokenResponse.expires_in * 1000)), {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: tokenResponse.expires_in || 7200,
-      path: '/'
-    });
-
     // Determine redirect URL based on state or default to home
     let redirectUrl = '/';
     if (state) {
@@ -85,8 +52,40 @@ export async function GET(request: NextRequest) {
     // Add success flag to URL
     const finalRedirectUrl = new URL(redirectUrl, request.url);
     finalRedirectUrl.searchParams.set('teamsnap_auth', 'success');
+    
+    const response = NextResponse.redirect(finalRedirectUrl);
 
-    return NextResponse.redirect(finalRedirectUrl);
+    // Store tokens securely in HTTP-only cookies
+    response.cookies.set('teamsnap_access_token', tokenResponse.access_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: tokenResponse.expires_in || 7200, // Default 2 hours
+      path: '/'
+    });
+
+    // Refresh token cookie (longer expiry)
+    if (tokenResponse.refresh_token) {
+      response.cookies.set('teamsnap_refresh_token', tokenResponse.refresh_token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 30 * 24 * 60 * 60, // 30 days
+        path: '/'
+      });
+    }
+
+    // Store token metadata
+    response.cookies.set('teamsnap_token_expires_at', 
+      String(Date.now() + (tokenResponse.expires_in * 1000)), {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: tokenResponse.expires_in || 7200,
+      path: '/'
+    });
+
+    return response;
 
   } catch (error) {
     console.error('Failed to exchange TeamSnap authorization code:', error);

@@ -4,6 +4,9 @@ import {
     withErrorHandler
 } from '@/lib/api-utils';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 /**
  * GET /api/stats
  * Fetches application statistics including group and player counts.

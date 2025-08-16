@@ -6,7 +6,7 @@ import { cookies } from 'next/headers';
  * Check TeamSnap authentication status
  */
 export async function GET(request: NextRequest) {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   
   const accessToken = cookieStore.get('teamsnap_access_token');
   const expiresAt = cookieStore.get('teamsnap_token_expires_at');

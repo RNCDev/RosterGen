@@ -5,7 +5,7 @@ import { type Teams, type Player, type Team, type EventWithStats } from '@/types
 import { Clipboard, Users, BarChart2, Hash, Trophy, Zap, Shield, Target, RefreshCw, Save, CheckCircle, Loader2, ArrowRightLeft, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { round, meanBy, sumBy, cloneDeep, remove } from '@/lib/utils';
-import { Toast, useToast } from '@/components/ui/toast';
+import { useToast } from '@/hooks/use-toast';
 
 interface TeamsViewProps {
     teams: Teams;
@@ -188,7 +188,7 @@ const TeamsView = React.memo(function TeamsView({ teams, teamNames, setTeams, se
     const [isSavingTeams, setIsSavingTeams] = useState(false);
     const [showSaveSuccess, setShowSaveSuccess] = useState(false);
     const [showSkillLevels, setShowSkillLevels] = useState(false);
-    const { toast, dismiss, open, message, type } = useToast();
+    const { toast } = useToast();
 
     const formatTeamsAsText = useCallback(() => {
         const team1Data = teams[teamNames.team1.toLowerCase()];
@@ -258,14 +258,14 @@ const TeamsView = React.memo(function TeamsView({ teams, teamNames, setTeams, se
             const textContent = formatTeamsAsText();
             
             if (!textContent) {
-                toast({ message: 'No team data to copy.', type: 'error' });
+                toast({ title: 'Error', description: 'No team data to copy.', variant: 'destructive' });
                 return;
             }
 
             // Modern clipboard API (preferred)
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 await navigator.clipboard.writeText(textContent);
-                toast({ message: 'Team rosters copied to clipboard!', type: 'success' });
+                toast({ title: 'Success', description: 'Team rosters copied to clipboard!' });
             } 
             // Fallback for older browsers
             else {
@@ -282,20 +282,20 @@ const TeamsView = React.memo(function TeamsView({ teams, teamNames, setTeams, se
                 try {
                     const successful = document.execCommand('copy');
                     if (successful) {
-                        toast({ message: 'Team rosters copied to clipboard!', type: 'success' });
+                        toast({ title: 'Success', description: 'Team rosters copied to clipboard!' });
                     } else {
                         throw new Error('Copy command failed');
                     }
                 } catch (err) {
                     console.error('Fallback copy failed:', err);
-                    toast({ message: 'Failed to copy to clipboard.', type: 'error' });
+                    toast({ title: 'Error', description: 'Failed to copy to clipboard.', variant: 'destructive' });
                 } finally {
                     document.body.removeChild(textArea);
                 }
             }
         } catch (error) {
             console.error('Copy to clipboard failed:', error);
-            toast({ message: 'Failed to copy to clipboard.', type: 'error' });
+            toast({ title: 'Error', description: 'Failed to copy to clipboard.', variant: 'destructive' });
         }
     }, [formatTeamsAsText, toast]);
 
@@ -465,13 +465,6 @@ const TeamsView = React.memo(function TeamsView({ teams, teamNames, setTeams, se
                 </div>
             </div>
             
-            {/* Toast notification - moved outside main container */}
-            <Toast 
-                open={open} 
-                message={message} 
-                type={type} 
-                onClose={dismiss} 
-            />
         </>
     );
 });

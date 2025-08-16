@@ -6,12 +6,12 @@ import { cookies } from 'next/headers';
  * Clear TeamSnap authentication
  */
 export async function POST(request: NextRequest) {
-  const cookieStore = cookies();
+  const response = NextResponse.json({ success: true });
   
   // Clear all TeamSnap-related cookies
-  cookieStore.delete('teamsnap_access_token');
-  cookieStore.delete('teamsnap_refresh_token');
-  cookieStore.delete('teamsnap_token_expires_at');
+  response.cookies.delete('teamsnap_access_token');
+  response.cookies.delete('teamsnap_refresh_token');
+  response.cookies.delete('teamsnap_token_expires_at');
   
-  return NextResponse.json({ success: true });
+  return response;
 }

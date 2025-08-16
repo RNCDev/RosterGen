@@ -15,7 +15,7 @@ import {
 
 const saveTeamsSchema = z.object({
     eventId: z.number().int().positive(),
-    teams: z.record(z.object({
+    teams: z.record(z.string(), z.object({
         forwards: z.array(z.any()),
         defensemen: z.array(z.any()),
         group_code: z.string().optional()

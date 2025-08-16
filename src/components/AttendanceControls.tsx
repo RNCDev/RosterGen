@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { ArrowRightLeft, RefreshCw, Eye } from 'lucide-react';
 import { type EventWithStats } from '@/types/PlayerTypes';
 import { Button } from '@/components/ui/Button';
-import { Toast, useToast } from '@/components/ui/toast';
+import { useToast } from '@/hooks/use-toast';
 import { useTeamSnapAuth } from '@/hooks/useTeamSnapAuth';
 import { TeamSnapEventInfoDialog } from '@/components/dialogs/TeamSnapEventInfoDialog';
 
@@ -28,12 +28,12 @@ export default function AttendanceControls({
     const [isSyncingAttendance, setIsSyncingAttendance] = useState(false);
     const [showTeamSnapInfo, setShowTeamSnapInfo] = useState(false);
     const { isAuthenticated } = useTeamSnapAuth();
-    const toastState = useToast();
+    const { toast } = useToast();
 
     const handleTeamSnapUpdate = () => {
-        toastState.toast({
-            message: 'Sync test - button clicked!',
-            type: 'success'
+        toast({
+            title: 'Sync test',
+            description: 'Button clicked!',
         });
     };
 
@@ -65,14 +65,6 @@ export default function AttendanceControls({
                     )}
                 </div>
             </div>
-
-            <Toast
-                open={toastState.open}
-                message={toastState.message}
-                type={toastState.type}
-                duration={toastState.duration}
-                onClose={toastState.dismiss}
-            />
             
             {/* TeamSnap Event Info Dialog */}
             {selectedEvent?.teamsnap_event_id && (
