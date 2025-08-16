@@ -116,12 +116,16 @@ A brief overview of the key directories and files in RosterGen.
 /
 ├── components.json          # shadcn/ui component configuration
 ├── docs/                    # Documentation files
-│   ├── future-features.md   # Planned features and enhancements
-│   └── user-stories.md      # User stories and requirements
+│   ├── teamsnap-integration-analysis.md
+│   └── user-stories.md
 ├── jest.config.js           # Jest testing configuration
 ├── jest.setup.js            # Jest setup and test environment configuration
-├── lib/                     # Root-level database utilities
-│   └── db.ts                # Database connection setup
+├── next-env.d.ts            # Next.js environment variables declaration
+├── next.config.js           # Next.js configuration file
+├── package.json             # Project dependencies and scripts
+├── package-lock.json        # Locked dependency versions
+├── postcss.config.js        # PostCSS configuration for Tailwind
+├── README.md                # This file
 ├── src/
 │   ├── app/                 # Next.js App Router directory
 │   │   ├── api/             # API routes for backend functionality
@@ -129,13 +133,28 @@ A brief overview of the key directories and files in RosterGen.
 │   │   │   │   └── api-utils.test.ts
 │   │   │   ├── attendance/  # API for managing player attendance
 │   │   │   │   └── route.ts
-│   │   │   ├── events/      # API for event creation and management
-│   │   │   │   └── teams/   # API for saving/loading teams to/from events
+│   │   │   ├── auth/
+│   │   │   │   └── teamsnap/
+│   │   │   │       └── callback/
+│   │   │   ├── db/
+│   │   │   │   ├── add-teamsnap-column/
+│   │   │   │   │   └── route.ts
+│   │   │   │   ├── add-teamsnap-event-column/
+│   │   │   │   └── migrate-teamsnap/
 │   │   │   │       └── route.ts
+│   │   │   ├── events/      # API for event creation and management
+│   │   │   │   ├── teams/   # API for saving/loading teams to/from events
+│   │   │   │   │   └── route.ts
+│   │   │   │   └── route.ts
 │   │   │   ├── groups/      # API for group and roster management
 │   │   │   │   ├── aliases/ # API for updating team alias names
 │   │   │   │   │   └── route.ts
+│   │   │   │   ├── update-teamsnap/
+│   │   │   │   │   └── route.ts
 │   │   │   │   └── route.ts
+│   │   │   ├── init-db/
+│   │   │   ├── migrations/
+│   │   │   │   └── teamsnap/
 │   │   │   ├── players/     # API for player CRUD operations
 │   │   │   │   ├── bulk/    # API for bulk player operations
 │   │   │   │   │   └── route.ts
@@ -144,6 +163,31 @@ A brief overview of the key directories and files in RosterGen.
 │   │   │   │   └── route.ts
 │   │   │   ├── teams/       # API for team generation
 │   │   │   │   └── route.ts
+│   │   │   ├── teamsnap/
+│   │   │   │   ├── auth/
+│   │   │   │   │   └── route.ts
+│   │   │   │   ├── callback/
+│   │   │   │   │   └── route.ts
+│   │   │   │   ├── connect/
+│   │   │   │   ├── events/
+│   │   │   │   │   └── details/
+│   │   │   │   │       └── route.ts
+│   │   │   │   ├── logout/
+│   │   │   │   │   └── route.ts
+│   │   │   │   ├── save-integration/
+│   │   │   │   ├── status/
+│   │   │   │   │   └── route.ts
+│   │   │   │   ├── sync/
+│   │   │   │   │   └── route.ts
+│   │   │   │   ├── sync-attendance/
+│   │   │   │   │   └── route.ts
+│   │   │   │   └── teams/
+│   │   │   ├── test/
+│   │   │   │   └── setup/
+│   │   │   │       └── route.ts
+│   │   │   ├── test-db/
+│   │   │   ├── test-direct-db/
+│   │   │   └── test-teamsnap/
 │   │   ├── teams/           # Team management pages
 │   │   │   └── [eventId]/
 │   │   ├── globals.css      # Global stylesheets
@@ -164,12 +208,13 @@ A brief overview of the key directories and files in RosterGen.
 │   │   │   ├── CreateGroupDialog.tsx
 │   │   │   ├── DuplicateEventDialog.tsx
 │   │   │   ├── PlayerRankTourneyDialog.tsx
+│   │   │   ├── TeamSnapEventInfoDialog.tsx
+│   │   │   ├── TeamSnapSyncDialog.tsx
 │   │   │   └── UploadCsvDialog.tsx
 │   │   ├── ui/              # Core UI components from shadcn/ui
 │   │   │   ├── Button.tsx
 │   │   │   ├── dialog.tsx
-│   │   │   ├── tabs.tsx
-│   │   │   └── toast.tsx
+│   │   │   └── Input.tsx
 │   │   ├── ActionHeader.tsx       # Header component with primary action buttons
 │   │   ├── AttendanceControls.tsx # Controls for attendance management
 │   │   ├── AttendanceTable.tsx    # Table component for attendance display
@@ -202,6 +247,7 @@ A brief overview of the key directories and files in RosterGen.
 │   │   ├── usePlayerFilters.ts      # Hook for player filtering and sorting
 │   │   ├── usePlayerManagement.ts   # Hook for player management operations
 │   │   ├── usePlayerPagination.ts   # Hook for player pagination
+│   │   ├── useTeamSnapAuth.ts       # Hook for TeamSnap authentication
 │   │   └── useTournament.ts         # Hook for tournament functionality
 │   │
 │   ├── lib/                 # Utility functions and core logic
@@ -211,8 +257,12 @@ A brief overview of the key directories and files in RosterGen.
 │   │   │   ├── teamGenerator.test.ts
 │   │   │   └── utils.test.ts
 │   │   ├── api-utils.ts     # API utility functions and error handling
+│   │   ├── db/
+│   │   │   └── database-operations.ts
 │   │   ├── db.ts            # Database connection and query functions
 │   │   ├── teamGenerator.ts # Core logic for balancing and generating teams
+│   │   ├── teamsnap-api.ts  # TeamSnap API wrapper
+│   │   ├── teamsnap-config.ts # TeamSnap configuration
 │   │   ├── tournamentEngine.ts # Tournament system for player ranking
 │   │   └── utils.ts         # General utility functions
 │   │
@@ -220,10 +270,6 @@ A brief overview of the key directories and files in RosterGen.
 │       ├── declarations.d.ts # Ambient module declarations
 │       └── PlayerTypes.ts    # Core types for Players, Events, etc.
 │
-├── next.config.js           # Next.js configuration file
-├── package.json             # Project dependencies and scripts
-├── package-lock.json        # Locked dependency versions
-├── postcss.config.js        # PostCSS configuration for Tailwind
 ├── tailwind.config.js       # Tailwind CSS configuration file
 └── tsconfig.json            # TypeScript configuration file
 
