@@ -16,6 +16,7 @@ interface TeamSnapEventInfoDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   eventId: string;
+  groupId: number;
 }
 
 interface TeamSnapEventDetails {
@@ -43,6 +44,7 @@ export function TeamSnapEventInfoDialog({
   open,
   onOpenChange,
   eventId,
+  groupId,
 }: TeamSnapEventInfoDialogProps) {
   const [loadingState, setLoadingState] = useState<LoadingState>('idle');
   const [eventDetails, setEventDetails] = useState<TeamSnapEventDetails | null>(null);
@@ -62,7 +64,7 @@ export function TeamSnapEventInfoDialog({
     setError(null);
     
     try {
-      const response = await fetch(`/api/teamsnap/events/details?eventId=${eventId}`);
+      const response = await fetch(`/api/teamsnap/events/details?eventId=${eventId}&groupId=${groupId}`);
       const data = await response.json();
       
       if (data.success) {

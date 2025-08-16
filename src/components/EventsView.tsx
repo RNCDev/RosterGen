@@ -149,6 +149,7 @@ export default function EventsView({
                                     isGeneratingTeams={eventManagement.isGeneratingTeams}
                                     onGenerateTeams={() => group && eventManagement.handleGenerateTeams(selectedEvent, group, eventManagement.teamNames)}
                                     teamSnapTeamId={group?.teamsnap_team_id}
+                                    groupId={group.id}
                                 />
 
                                 <AttendanceTable

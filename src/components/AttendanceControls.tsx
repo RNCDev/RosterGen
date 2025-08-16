@@ -14,6 +14,7 @@ interface AttendanceControlsProps {
     onGenerateTeams: () => void;
     onAttendanceUpdate?: () => void;
     teamSnapTeamId?: string | null;
+    groupId: number;
 }
 
 export default function AttendanceControls({
@@ -22,6 +23,7 @@ export default function AttendanceControls({
     onGenerateTeams,
     onAttendanceUpdate,
     teamSnapTeamId,
+    groupId,
 }: AttendanceControlsProps) {
     const [isSyncingAttendance, setIsSyncingAttendance] = useState(false);
     const [showTeamSnapInfo, setShowTeamSnapInfo] = useState(false);
@@ -85,6 +87,7 @@ export default function AttendanceControls({
                     open={showTeamSnapInfo}
                     onOpenChange={setShowTeamSnapInfo}
                     eventId={selectedEvent.teamsnap_event_id}
+                    groupId={groupId}
                 />
             )}
         </>
