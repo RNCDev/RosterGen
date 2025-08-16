@@ -30,6 +30,8 @@ interface TeamSnapEventDetails {
   address?: string;
   notes?: string;
   link?: string;
+  time_zone?: string;
+  time_zone_iana_name?: string;
   players: Array<{
     id: string;
     name: string;
@@ -85,6 +87,8 @@ export function TeamSnapEventInfoDialog({
     
     try {
       const date = new Date(dateString);
+      
+      // Format the date in the user's local timezone
       const formattedDate = date.toLocaleDateString('en-US', {
         weekday: 'short',
         month: 'short',
@@ -97,7 +101,8 @@ export function TeamSnapEventInfoDialog({
         const formattedTime = date.toLocaleTimeString('en-US', {
           hour: 'numeric',
           minute: '2-digit',
-          hour12: true
+          hour12: true,
+          timeZoneName: 'short'
         });
         return `${formattedDate} - ${formattedTime}`;
       }
@@ -187,21 +192,29 @@ export function TeamSnapEventInfoDialog({
 
             {/* Event Details Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Date & Time */}
-              <div className="flex items-start gap-3">
-                <Calendar className="h-5 w-5 text-blue-500 mt-0.5" />
-                <div>
-                  <p className="font-medium text-gray-900">Date & Time</p>
-                  <p className="text-sm text-gray-600">
-                    {formatDateTime(eventDetails.start_date)}
-                  </p>
-                  {eventDetails.end_date && eventDetails.end_date !== eventDetails.start_date && (
-                    <p className="text-sm text-gray-600">
-                      to {formatDateTime(eventDetails.end_date)}
-                    </p>
-                  )}
-                </div>
-              </div>
+                             {/* Date & Time */}
+               <div className="flex items-start gap-3">
+                 <Calendar className="h-5 w-5 text-blue-500 mt-0.5" />
+                 <div>
+                   <p className="font-medium text-gray-900">Date & Time</p>
+                   <p className="text-sm text-gray-600">
+                     {formatDateTime(eventDetails.start_date)}
+                   </p>
+                   {eventDetails.end_date && eventDetails.end_date !== eventDetails.start_date && (
+                     <p className="text-sm text-gray-600">
+                       to {formatDateTime(eventDetails.end_date)}
+                     </p>
+                   )}
+                   {eventDetails.time_zone && (
+                     <p className="text-xs text-gray-500 mt-1">
+                       Time shown in your local timezone
+                       {eventDetails.time_zone !== 'Eastern Time (US & Canada)' && (
+                         <span> (TeamSnap: {eventDetails.time_zone})</span>
+                       )}
+                     </p>
+                   )}
+                 </div>
+               </div>
 
               {/* Location */}
               <div className="flex items-start gap-3">

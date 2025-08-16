@@ -14,6 +14,8 @@ interface TeamSnapEventDetails {
   address?: string;
   notes?: string;
   link?: string;
+  time_zone?: string;
+  time_zone_iana_name?: string;
   players: Array<{
     id: string;
     name: string;
@@ -40,7 +42,7 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const eventId = searchParams.get('eventId');
-    const groupId = searchParams.get('groupId'); // Add groupId parameter
+    const groupId = searchParams.get('groupId');
 
     if (!eventId) {
       return NextResponse.json(
@@ -109,6 +111,13 @@ export async function GET(request: NextRequest) {
     if (eventData && eventData.team_id) {
       console.log(`Event data contains team_id: ${eventData.team_id}`);
     }
+    
+    // Log timezone information for debugging
+    if (eventData && eventData.time_zone) {
+      console.log(`Event timezone: ${eventData.time_zone}`);
+      console.log(`Event timezone IANA: ${eventData.time_zone_iana_name}`);
+      console.log(`Event timezone offset: ${eventData.time_zone_offset}`);
+    }
 
     // Try to fetch event availability, but don't fail if it doesn't work
     let players: Array<{
@@ -118,12 +127,62 @@ export async function GET(request: NextRequest) {
       availability_code: number;
     }> = [];
     
+    // Helper function to fetch team members
+    const fetchTeamMembers = async () => {
+      try {
+        const teamId = teamSnapTeamId || eventData.team_id;
+        if (!teamId) {
+          console.warn('No TeamSnap team ID available, skipping team members fetch');
+          return;
+        }
+        
+        console.log(`Fetching team members for team ID: ${teamId}`);
+        const teamMembersResponse = await teamSnapClient.getTeamMembersDirect(teamId, accessToken!.value);
+        console.log('Team members response:', JSON.stringify(teamMembersResponse, null, 2));
+        
+        if (teamMembersResponse.collection && teamMembersResponse.collection.length > 0) {
+          players = teamMembersResponse.collection
+            .filter((item: { type: string }) => item.type === 'member')
+            .map((member: { data: { first_name?: string; last_name?: string; id: string } }) => ({
+              id: member.data.id,
+              name: `${member.data.first_name || ''} ${member.data.last_name || ''}`.trim(),
+              availability: null, // No availability data available
+              availability_code: 0
+            }))
+            .filter((player: { name: string }) => player.name.length > 0);
+          
+          console.log(`Successfully mapped ${players.length} team members`);
+        } else {
+          console.log('No team members found in response');
+        }
+      } catch (teamMembersError) {
+        console.warn('Failed to fetch team members:', teamMembersError);
+        // Continue without player data - the event details will still be shown
+      }
+    };
+    
     try {
       console.log(`Fetching availability for event ID: ${eventId}`);
-      const availabilityResponse = await teamSnapClient.getEventAvailability(
-        eventId,
-        accessToken.value
-      );
+      
+      // Use the availabilities link from the event response if available
+      let availabilityResponse;
+      if (eventItem.links) {
+        const availabilitiesLink = eventItem.links.find((link: { rel: string; href: string }) => link.rel === 'availabilities');
+        if (availabilitiesLink && availabilitiesLink.href) {
+          console.log(`Using availabilities link: ${availabilitiesLink.href}`);
+          // Extract the endpoint from the full URL
+          const url = new URL(availabilitiesLink.href);
+          const endpoint = url.pathname + url.search;
+          availabilityResponse = await teamSnapClient.makeApiRequest(endpoint, accessToken.value);
+        } else {
+          console.log('No availabilities link found, using fallback method');
+          availabilityResponse = await teamSnapClient.getEventAvailability(eventId, accessToken.value);
+        }
+      } else {
+        console.log('No links found, using fallback method');
+        availabilityResponse = await teamSnapClient.getEventAvailability(eventId, accessToken.value);
+      }
+      
       console.log('Availability response:', JSON.stringify(availabilityResponse, null, 2));
 
       // Check if this is actually an event response with availability data
@@ -136,82 +195,42 @@ export async function GET(request: NextRequest) {
             status_code: avail.data.status_code
           }));
 
-        // Fetch member details for each availability entry
-        const memberPromises = availabilities.map((avail: { member_id: string }) =>
-          teamSnapClient.getMemberDetails(avail.member_id, accessToken.value)
-        );
-        const memberResponses = await Promise.all(memberPromises);
+        if (availabilities.length > 0) {
+          console.log(`Found ${availabilities.length} availability entries`);
+          
+          // Fetch member details for each availability entry
+          const memberPromises = availabilities.map((avail: { member_id: string }) =>
+            teamSnapClient.getMemberDetails(avail.member_id, accessToken!.value)
+          );
+          const memberResponses = await Promise.all(memberPromises);
 
-        players = memberResponses.map((res: { collection: Array<{ data: { first_name?: string; last_name?: string } }> }, index: number) => {
-          const memberItem = res.collection[0];
-          const memberData = memberItem.data;
-          const memberId = availabilities[index].member_id;
-          const availability = availabilities[index];
+          players = memberResponses.map((res: { collection: Array<{ data: { first_name?: string; last_name?: string } }> }, index: number) => {
+            const memberItem = res.collection[0];
+            const memberData = memberItem.data;
+            const memberId = availabilities[index].member_id;
+            const availability = availabilities[index];
 
-          return {
-            id: memberId,
-            name: `${memberData.first_name || ''} ${memberData.last_name || ''}`.trim(),
-            availability: availability.status,
-            availability_code: availability.status_code
-          };
-        }).filter(player => player.name.length > 0);
+            return {
+              id: memberId,
+              name: `${memberData.first_name || ''} ${memberData.last_name || ''}`.trim(),
+              availability: availability.status,
+              availability_code: availability.status_code
+            };
+          }).filter(player => player.name.length > 0);
+          
+          console.log(`Successfully mapped ${players.length} players with availability`);
+        } else {
+          console.log('No availability entries found, trying to get team members instead...');
+          await fetchTeamMembers();
+        }
       } else {
         console.log('No availability data found in response, trying to get team members instead...');
-        
-                 // Try to get team members if availability data isn't available
-         try {
-           const teamId = teamSnapTeamId || eventData.team_id;
-           if (!teamId) {
-             console.warn('No TeamSnap team ID available, skipping team members fetch');
-             return;
-           }
-           const teamMembersResponse = await teamSnapClient.getTeamMembersDirect(teamId, accessToken.value);
-          console.log('Team members response:', JSON.stringify(teamMembersResponse, null, 2));
-          
-          if (teamMembersResponse.collection && teamMembersResponse.collection.length > 0) {
-            players = teamMembersResponse.collection
-              .filter((item: { type: string }) => item.type === 'member')
-              .map((member: { data: { first_name?: string; last_name?: string; id: string } }) => ({
-                id: member.data.id,
-                name: `${member.data.first_name || ''} ${member.data.last_name || ''}`.trim(),
-                availability: null, // No availability data available
-                availability_code: 0
-              }))
-              .filter((player: { name: string }) => player.name.length > 0);
-          }
-        } catch (teamMembersError) {
-          console.warn('Failed to fetch team members:', teamMembersError);
-        }
+        await fetchTeamMembers();
       }
       
     } catch (availabilityError) {
       console.warn('Failed to fetch availability data, trying team members instead:', availabilityError);
-      
-             // Try to get team members as a fallback
-       try {
-         const teamId = teamSnapTeamId || eventData.team_id;
-         if (!teamId) {
-           console.warn('No TeamSnap team ID available, skipping team members fetch');
-           return;
-         }
-         const teamMembersResponse = await teamSnapClient.getTeamMembersDirect(teamId, accessToken.value);
-        console.log('Team members fallback response:', JSON.stringify(teamMembersResponse, null, 2));
-        
-        if (teamMembersResponse.collection && teamMembersResponse.collection.length > 0) {
-          players = teamMembersResponse.collection
-            .filter((item: { type: string }) => item.type === 'member')
-            .map((member: { data: { first_name?: string; last_name?: string; id: string } }) => ({
-              id: member.data.id,
-              name: `${member.data.first_name || ''} ${member.data.last_name || ''}`.trim(),
-              availability: null, // No availability data available
-              availability_code: 0
-            }))
-                          .filter((player: { name: string }) => player.name.length > 0);
-        }
-      } catch (teamMembersError) {
-        console.warn('Failed to fetch team members as fallback:', teamMembersError);
-        // Continue without player data - the event details will still be shown
-      }
+      await fetchTeamMembers();
     }
 
     // Build event details object - map from TeamSnap API structure
@@ -226,6 +245,8 @@ export async function GET(request: NextRequest) {
       address: undefined, // TeamSnap doesn't provide address in this endpoint
       notes: eventData.notes,
       link: undefined, // TeamSnap doesn't provide external links in this endpoint
+      time_zone: eventData.time_zone,
+      time_zone_iana_name: eventData.time_zone_iana_name,
       players
     };
 
