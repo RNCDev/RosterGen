@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Copy, Trash2, ShieldCheck, Trash } from 'lucide-react';
+import { Copy, Trash2, ShieldCheck, Trash, Pencil } from 'lucide-react';
 import { type EventWithStats } from '@/types/PlayerTypes';
 import { useConfirmDialog } from '@/hooks/useConfirmDialog';
 
@@ -19,6 +19,7 @@ interface EventCardProps {
     onClick: () => void;
     onDelete: () => void;
     onDuplicate: () => void;
+    onEdit: () => void;
     onLoadSavedTeams: () => void;
     onDeleteSavedTeams: () => void;
 }
@@ -29,6 +30,7 @@ const EventCard = React.memo(function EventCard({
     onClick,
     onDelete,
     onDuplicate,
+    onEdit,
     onLoadSavedTeams,
     onDeleteSavedTeams
 }: EventCardProps) {
@@ -48,6 +50,11 @@ const EventCard = React.memo(function EventCard({
         onDuplicate();
     };
     
+    const handleEdit = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        onEdit();
+    };
+
     const handleLoadTeams = (e: React.MouseEvent) => {
         e.stopPropagation();
         onLoadSavedTeams();
@@ -90,6 +97,16 @@ const EventCard = React.memo(function EventCard({
                         </p>
                     </div>
                     <div className="flex items-center gap-1">
+                        <button
+                            onClick={handleEdit}
+                            className={`p-1.5 rounded-full transition-colors ${isSelected
+                                    ? 'text-blue-300 hover:bg-blue-800/50'
+                                    : 'text-gray-400 hover:bg-gray-200/80'
+                                }`}
+                            title="Edit Event"
+                        >
+                            <Pencil size={16} />
+                        </button>
                         <button
                             onClick={handleDuplicate}
                             className={`p-1.5 rounded-full transition-colors ${isSelected

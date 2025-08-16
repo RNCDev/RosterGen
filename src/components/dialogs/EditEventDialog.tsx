@@ -1,58 +1,57 @@
 'use client';
 
-import React, { useState } from 'react';
-import { X, Copy } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, Pencil } from 'lucide-react';
 import { Button } from '../ui/Button';
-import { type EventWithStats } from '@/types/PlayerTypes';
+import { type EventWithStats, type EventInput } from '@/types/PlayerTypes';
 
-interface DuplicateEventDialogProps {
+interface EditEventDialogProps {
     isOpen: boolean;
     onClose: () => void;
-    onDuplicate: (eventId: number, newName: string, newDate: string, newTime?: string, newLocation?: string, newTeamSnapEventId?: string) => Promise<void>;
+    onEditEvent: (eventId: number, eventData: Partial<Omit<EventInput, 'group_id'>>) => Promise<void>;
     event: EventWithStats | null;
 }
 
-export default function DuplicateEventDialog({
+export default function EditEventDialog({
     isOpen,
     onClose,
-    onDuplicate,
+    onEditEvent,
     event
-}: DuplicateEventDialogProps) {
-    const [newName, setNewName] = useState('');
-    const [newDate, setNewDate] = useState('');
-    const [newTime, setNewTime] = useState('');
-    const [newLocation, setNewLocation] = useState('');
-    const [newTeamSnapEventId, setNewTeamSnapEventId] = useState('');
+}: EditEventDialogProps) {
+    const [name, setName] = useState('');
+    const [date, setDate] = useState('');
+    const [time, setTime] = useState('');
+    const [location, setLocation] = useState('');
+    const [teamsnapEventId, setTeamsnapEventId] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Reset form when dialog opens/closes or event changes
-    React.useEffect(() => {
+    useEffect(() => {
         if (isOpen && event) {
-            setNewName(`${event.name} (Copy)`);
-            setNewDate('');
-            setNewTime(event.event_time || '');
-            setNewLocation(event.location || '');
-            setNewTeamSnapEventId('');
+            setName(event.name);
+            setDate(new Date(event.event_date).toISOString().split('T')[0]);
+            setTime(event.event_time || '');
+            setLocation(event.location || '');
+            setTeamsnapEventId(event.teamsnap_event_id || '');
         }
     }, [isOpen, event]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!event || !newName.trim() || !newDate) return;
+        if (!event || !name.trim() || !date) return;
 
         setIsSubmitting(true);
         try {
-            await onDuplicate(
-                event.id,
-                newName.trim(),
-                newDate,
-                newTime || undefined,
-                newLocation || undefined,
-                newTeamSnapEventId || undefined
-            );
+            const eventData: Partial<Omit<EventInput, 'group_id'>> = {
+                name: name.trim(),
+                event_date: date,
+                event_time: time || undefined,
+                location: location || undefined,
+                teamsnap_event_id: teamsnapEventId || undefined,
+            };
+            await onEditEvent(event.id, eventData);
             onClose();
         } catch (error) {
-            console.error('Failed to duplicate event:', error);
+            console.error('Failed to edit event:', error);
         } finally {
             setIsSubmitting(false);
         }
@@ -65,8 +64,8 @@ export default function DuplicateEventDialog({
             <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
                 <div className="flex items-center justify-between p-6 border-b">
                     <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-                        <Copy className="w-5 h-5" />
-                        Duplicate Event
+                        <Pencil className="w-5 h-5" />
+                        Edit Event
                     </h2>
                     <button
                         onClick={onClose}
@@ -78,88 +77,70 @@ export default function DuplicateEventDialog({
 
                 <form onSubmit={handleSubmit} className="p-6 space-y-4">
                     <div>
-                        <label htmlFor="newName" className="block text-sm font-medium text-gray-700 mb-1">
+                        <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
                             Event Name *
                         </label>
                         <input
                             type="text"
-                            id="newName"
-                            value={newName}
-                            onChange={(e) => setNewName(e.target.value)}
+                            id="name"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            placeholder="Enter event name"
                             required
                         />
                     </div>
 
                     <div>
-                        <label htmlFor="newDate" className="block text-sm font-medium text-gray-700 mb-1">
+                        <label htmlFor="date" className="block text-sm font-medium text-gray-700 mb-1">
                             Event Date *
                         </label>
                         <input
                             type="date"
-                            id="newDate"
-                            value={newDate}
-                            onChange={(e) => setNewDate(e.target.value)}
+                            id="date"
+                            value={date}
+                            onChange={(e) => setDate(e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             required
                         />
                     </div>
 
                     <div>
-                        <label htmlFor="newTime" className="block text-sm font-medium text-gray-700 mb-1">
+                        <label htmlFor="time" className="block text-sm font-medium text-gray-700 mb-1">
                             Event Time
                         </label>
                         <input
                             type="time"
-                            id="newTime"
-                            value={newTime}
-                            onChange={(e) => setNewTime(e.target.value)}
+                            id="time"
+                            value={time}
+                            onChange={(e) => setTime(e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         />
                     </div>
 
                     <div>
-                        <label htmlFor="newLocation" className="block text-sm font-medium text-gray-700 mb-1">
+                        <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-1">
                             Location
                         </label>
                         <input
                             type="text"
-                            id="newLocation"
-                            value={newLocation}
-                            onChange={(e) => setNewLocation(e.target.value)}
+                            id="location"
+                            value={location}
+                            onChange={(e) => setLocation(e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            placeholder="Enter location"
                         />
                     </div>
 
                     <div>
-                        <label htmlFor="newTeamSnapEventId" className="block text-sm font-medium text-gray-700 mb-1">
+                        <label htmlFor="teamsnapEventId" className="block text-sm font-medium text-gray-700 mb-1">
                             TeamSnap Event ID (Optional)
                         </label>
                         <input
                             type="text"
-                            id="newTeamSnapEventId"
-                            value={newTeamSnapEventId}
-                            onChange={(e) => setNewTeamSnapEventId(e.target.value)}
+                            id="teamsnapEventId"
+                            value={teamsnapEventId}
+                            onChange={(e) => setTeamsnapEventId(e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            placeholder="Enter TeamSnap Event ID"
                         />
-                    </div>
-
-                    <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
-                        <p className="text-sm text-blue-800">
-                            <strong>Original Event:</strong> {event.name}
-                        </p>
-                        <p className="text-sm text-blue-700">
-                            {new Date(event.event_date).toLocaleDateString('en-US', { 
-                                weekday: 'long', 
-                                year: 'numeric', 
-                                month: 'long', 
-                                day: 'numeric',
-                                timeZone: 'UTC'
-                            })}
-                        </p>
                     </div>
 
                     <div className="flex gap-3 pt-4">
@@ -175,13 +156,13 @@ export default function DuplicateEventDialog({
                         <Button
                             type="submit"
                             className="flex-1"
-                            disabled={isSubmitting || !newName.trim() || !newDate}
+                            disabled={isSubmitting || !name.trim() || !date}
                         >
-                            {isSubmitting ? 'Duplicating...' : 'Duplicate Event'}
+                            {isSubmitting ? 'Saving...' : 'Save Changes'}
                         </Button>
                     </div>
                 </form>
             </div>
         </div>
     );
-} 
+}

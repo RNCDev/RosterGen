@@ -474,8 +474,8 @@ export async function duplicateEvent(eventId: number, newEventData: EventInput):
         
         // Create the new event
         const { rows: eventRows } = await client.query(
-            `INSERT INTO events (name, description, event_date, event_time, location, group_id, is_active)
-             VALUES ($1, $2, $3, $4, $5, $6, $7)
+            `INSERT INTO events (name, description, event_date, event_time, location, group_id, is_active, teamsnap_event_id)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
              RETURNING *`,
             [
                 newEventData.name,
@@ -484,7 +484,8 @@ export async function duplicateEvent(eventId: number, newEventData: EventInput):
                 newEventData.event_time,
                 newEventData.location,
                 newEventData.group_id,
-                true
+                true,
+                newEventData.teamsnap_event_id
             ]
         );
         

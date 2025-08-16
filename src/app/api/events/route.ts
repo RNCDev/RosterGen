@@ -25,6 +25,7 @@ const duplicateEventSchema = z.object({
     newDate: z.string().min(1),
     newTime: z.string().optional(),
     newLocation: z.string().optional(),
+    newTeamSnapEventId: z.string().optional(),
 });
 
 // =============================================================================
@@ -118,6 +119,7 @@ export const PUT = withErrorHandler(async (request: NextRequest) => {
     if (body.event_time !== undefined) updateData.event_time = body.event_time;
     if (body.location !== undefined) updateData.location = body.location;
     if (body.is_active !== undefined) updateData.is_active = body.is_active;
+    if (body.teamsnap_event_id !== undefined) updateData.teamsnap_event_id = body.teamsnap_event_id;
     
     const updatedEvent = await updateEvent(eventId, updateData);
     return ApiResponse.success(updatedEvent);
@@ -157,7 +159,7 @@ export const PATCH = withErrorHandler(async (request: NextRequest) => {
         return ApiResponse.badRequest('Invalid data', validation.error.flatten());
     }
 
-    const { eventId, newName, newDate, newTime, newLocation } = validation.data;
+    const { eventId, newName, newDate, newTime, newLocation, newTeamSnapEventId } = validation.data;
     
     // Get the original event to copy its details
     const originalEvent = await getEventById(eventId);
@@ -172,7 +174,8 @@ export const PATCH = withErrorHandler(async (request: NextRequest) => {
         event_time: newTime || originalEvent.event_time,
         location: newLocation || originalEvent.location,
         description: originalEvent.description,
-        group_id: originalEvent.group_id
+        group_id: originalEvent.group_id,
+        teamsnap_event_id: newTeamSnapEventId || undefined
     });
 
     return ApiResponse.created(duplicatedEvent);

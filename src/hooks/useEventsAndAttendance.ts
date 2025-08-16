@@ -25,7 +25,8 @@ export interface EventsAndAttendanceState {
   deleteEvent: (eventId: number, groupId: number) => Promise<void>;
   updateAttendance: (eventId: number, updates: AttendanceInput[], groupId: number) => Promise<void>;
   toggleAttendance: (playerId: number, eventId: number, groupId: number) => Promise<void>;
-  duplicateEvent: (eventId: number, newName: string, newDate: string, newTime?: string, newLocation?: string, groupId?: number) => Promise<void>;
+  duplicateEvent: (eventId: number, newName: string, newDate: string, newTime?: string, newLocation?: string, newTeamSnapEventId?: string, groupId?: number) => Promise<void>;
+  editEvent: (eventId: number, eventData: Partial<Omit<EventInput, 'group_id'>>, groupId: number) => Promise<void>;
   handleSaveTeamsForEvent: (eventId: number, teams: Teams, teamNames: { team1: string, team2: string }, groupId: number, onTeamDataChangeSuccess?: () => void) => Promise<void>;
   handleLoadTeamsForEvent: (eventId: number) => Promise<{ teams: Teams, teamNames: { team1: string, team2: string } | null }>;
   handleDeleteSavedTeams: (eventId: number, groupId: number, onTeamDataChangeSuccess?: () => void) => Promise<void>;
@@ -159,7 +160,7 @@ export function useEventsAndAttendance(setError: (error: string | null) => void)
     await updateAttendance(eventId, updates, groupId);
   }, [attendanceData, updateAttendance]);
 
-  const duplicateEvent = useCallback(async (eventId: number, newName: string, newDate: string, newTime?: string, newLocation?: string, groupId?: number) => {
+  const duplicateEvent = useCallback(async (eventId: number, newName: string, newDate: string, newTime?: string, newLocation?: string, newTeamSnapEventId?: string, groupId?: number) => {
     try {
       const response = await fetch('/api/events', {
         method: 'PATCH',
@@ -169,7 +170,8 @@ export function useEventsAndAttendance(setError: (error: string | null) => void)
           newName,
           newDate,
           newTime,
-          newLocation
+          newLocation,
+          newTeamSnapEventId
         })
       });
 
@@ -183,6 +185,25 @@ export function useEventsAndAttendance(setError: (error: string | null) => void)
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to duplicate event');
+    }
+  }, [loadEvents, setError]);
+
+  const editEvent = useCallback(async (eventId: number, eventData: Partial<Omit<EventInput, 'group_id'>>, groupId: number) => {
+    try {
+      const response = await fetch(`/api/events?eventId=${eventId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(eventData)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update event');
+      }
+
+      await loadEvents(groupId);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update event');
     }
   }, [loadEvents, setError]);
 
@@ -273,6 +294,7 @@ export function useEventsAndAttendance(setError: (error: string | null) => void)
     updateAttendance,
     toggleAttendance,
     duplicateEvent,
+    editEvent,
     handleSaveTeamsForEvent,
     handleLoadTeamsForEvent,
     handleDeleteSavedTeams,

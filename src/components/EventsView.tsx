@@ -12,6 +12,7 @@ import {
 } from '@/types/PlayerTypes';
 import CreateEventDialog from './dialogs/CreateEventDialog';
 import DuplicateEventDialog from './dialogs/DuplicateEventDialog';
+import EditEventDialog from './dialogs/EditEventDialog';
 import TeamsView from './TeamsView';
 import EventsList from './EventsList';
 import AttendanceTable from './AttendanceTable';
@@ -30,7 +31,8 @@ interface EventsViewProps {
     onDeleteEvent: (eventId: number) => Promise<void>;
     onUpdateAttendance: (eventId: number, updates: AttendanceInput[]) => Promise<void>;
     onToggleAttendance: (playerId: number, eventId: number) => Promise<void>;
-    onDuplicateEvent: (eventId: number, newName: string, newDate: string, newTime?: string, newLocation?: string) => Promise<void>;
+    onDuplicateEvent: (eventId: number, newName: string, newDate: string, newTime?: string, newLocation?: string, newTeamSnapEventId?: string) => Promise<void>;
+    onEditEvent: (eventId: number, eventData: Partial<Omit<EventInput, 'group_id'>>) => Promise<void>;
     group: Group | null;
     eventsLoading: boolean;
     attendanceLoading: boolean;
@@ -50,6 +52,7 @@ export default function EventsView({
     onUpdateAttendance,
     onToggleAttendance,
     onDuplicateEvent,
+    onEditEvent,
     group,
     eventsLoading,
     attendanceLoading,
@@ -97,10 +100,15 @@ export default function EventsView({
         await handleLoadTeamsForEvent(selectedEvent.id);
     };
 
-    const handleDuplicateSubmit = async (eventId: number, newName: string, newDate: string, newTime?: string, newLocation?: string) => {
-        await onDuplicateEvent(eventId, newName, newDate, newTime, newLocation);
+    const handleDuplicateSubmit = async (eventId: number, newName: string, newDate: string, newTime?: string, newLocation?: string, newTeamSnapEventId?: string) => {
+        await onDuplicateEvent(eventId, newName, newDate, newTime, newLocation, newTeamSnapEventId);
         eventManagement.setDuplicateEventOpen(false);
         eventManagement.setEventToDuplicate(null);
+    };
+
+    const handleEditEvent = (event: EventWithStats) => {
+        eventManagement.setEventToEdit(event);
+        eventManagement.setEditEventOpen(true);
     };
     
     const handleDeleteSavedTeams = async (eventId: number) => {
@@ -134,6 +142,7 @@ export default function EventsView({
                 onCreateEvent={() => eventManagement.setCreateEventOpen(true)}
                 onDeleteEvent={onDeleteEvent}
                 onDuplicateEvent={eventManagement.handleDuplicateEvent}
+                onEditEvent={handleEditEvent}
                 onLoadSavedTeams={handleLoadTeamsForEvent}
                 onDeleteSavedTeams={handleDeleteSavedTeams}
             />
@@ -203,6 +212,13 @@ export default function EventsView({
                 onClose={() => eventManagement.setDuplicateEventOpen(false)}
                 onDuplicate={handleDuplicateSubmit}
                 event={eventManagement.eventToDuplicate}
+            />
+
+            <EditEventDialog
+                isOpen={eventManagement.isEditEventOpen}
+                onClose={() => eventManagement.setEditEventOpen(false)}
+                onEditEvent={onEditEvent}
+                event={eventManagement.eventToEdit}
             />
         </div>
     );

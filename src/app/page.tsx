@@ -116,6 +116,7 @@ export default function Home() {
         selectEvent,
         handleSaveChanges,
         duplicateEvent,
+        editEvent,
         teamAlias1,
         teamAlias2,
         teamSnapTeamId,
@@ -354,6 +355,7 @@ export default function Home() {
                                     onUpdateAttendance={updateAttendance}
                                     onToggleAttendance={toggleAttendance}
                                     onDuplicateEvent={duplicateEvent}
+                                    onEditEvent={editEvent}
                                     group={activeGroup}
                                     eventsLoading={eventsLoading}
                                     attendanceLoading={attendanceLoading}

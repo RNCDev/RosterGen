@@ -257,8 +257,6 @@ A brief overview of the key directories and files in RosterGen.
 │   │   │   ├── teamGenerator.test.ts
 │   │   │   └── utils.test.ts
 │   │   ├── api-utils.ts     # API utility functions and error handling
-│   │   ├── db/
-│   │   │   └── database-operations.ts
 │   │   ├── db.ts            # Database connection and query functions
 │   │   ├── teamGenerator.ts # Core logic for balancing and generating teams
 │   │   ├── teamsnap-api.ts  # TeamSnap API wrapper

@@ -4,7 +4,7 @@ import { useEffect, useCallback } from 'react';
 import { useGroupState } from './useGroupState';
 import { usePlayerManagement } from './usePlayerManagement';
 import { useEventsAndAttendance } from './useEventsAndAttendance';
-import { type Player, type PlayerInput } from '@/types/PlayerTypes';
+import { type Player, type PlayerInput, type EventInput } from '@/types/PlayerTypes';
 
 export function useGroupManager(onTeamDataChangeSuccess?: () => void) {
     const groupState = useGroupState();
@@ -115,9 +115,9 @@ export function useGroupManager(onTeamDataChangeSuccess?: () => void) {
         await eventsState.toggleAttendance(playerId, eventId, groupState.activeGroup.id);
     };
 
-    const duplicateEvent = async (eventId: number, newName: string, newDate: string, newTime?: string, newLocation?: string) => {
+    const duplicateEvent = async (eventId: number, newName: string, newDate: string, newTime?: string, newLocation?: string, newTeamSnapEventId?: string) => {
         if (!groupState.activeGroup) return;
-        await eventsState.duplicateEvent(eventId, newName, newDate, newTime, newLocation, groupState.activeGroup.id);
+        await eventsState.duplicateEvent(eventId, newName, newDate, newTime, newLocation, newTeamSnapEventId, groupState.activeGroup.id);
     };
 
     const handleSaveTeamsForEvent = async (eventId: number, teams: any, teamNames: any) => {
@@ -138,6 +138,11 @@ export function useGroupManager(onTeamDataChangeSuccess?: () => void) {
             groupState.activeGroup.id,
             onTeamDataChangeSuccess
         );
+    };
+
+    const editEvent = async (eventId: number, eventData: Partial<Omit<EventInput, 'group_id'>>) => {
+        if (!groupState.activeGroup) return;
+        await eventsState.editEvent(eventId, eventData, groupState.activeGroup.id);
     };
 
     return {
@@ -183,6 +188,7 @@ export function useGroupManager(onTeamDataChangeSuccess?: () => void) {
         updateAttendance,
         toggleAttendance,
         duplicateEvent,
+        editEvent,
         handleSaveTeamsForEvent,
         handleLoadTeamsForEvent: eventsState.handleLoadTeamsForEvent,
         handleDeleteSavedTeams,

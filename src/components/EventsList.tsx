@@ -14,6 +14,7 @@ interface EventsListProps {
     onCreateEvent: () => void;
     onDeleteEvent: (eventId: number) => void;
     onDuplicateEvent: (event: EventWithStats) => void;
+    onEditEvent: (event: EventWithStats) => void;
     onLoadSavedTeams: (eventId: number) => void;
     onDeleteSavedTeams: (eventId: number) => void;
 }
@@ -26,6 +27,7 @@ export default function EventsList({
     onCreateEvent,
     onDeleteEvent,
     onDuplicateEvent,
+    onEditEvent,
     onLoadSavedTeams,
     onDeleteSavedTeams
 }: EventsListProps) {
@@ -61,6 +63,7 @@ export default function EventsList({
                             onClick={() => onEventSelect(event)}
                             onDelete={() => onDeleteEvent(event.id)}
                             onDuplicate={() => onDuplicateEvent(event)}
+                            onEdit={() => onEditEvent(event)}
                             onLoadSavedTeams={() => onLoadSavedTeams(event.id)}
                             onDeleteSavedTeams={() => onDeleteSavedTeams(event.id)}
                         />

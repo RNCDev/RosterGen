@@ -4,14 +4,18 @@ import { type EventWithStats, type Teams, type Group } from '@/types/PlayerTypes
 export interface EventManagementState {
     isCreateEventOpen: boolean;
     isDuplicateEventOpen: boolean;
+    isEditEventOpen: boolean;
     eventToDuplicate: EventWithStats | null;
+    eventToEdit: EventWithStats | null;
     showTeams: boolean;
     teams: Teams;
     isGeneratingTeams: boolean;
     teamNames: { team1: string, team2: string };
     setCreateEventOpen: (open: boolean) => void;
     setDuplicateEventOpen: (open: boolean) => void;
+    setEditEventOpen: (open: boolean) => void;
     setEventToDuplicate: (event: EventWithStats | null) => void;
+    setEventToEdit: (event: EventWithStats | null) => void;
     setShowTeams: (show: boolean) => void;
     setTeams: (teams: Teams) => void;
     setTeamNames: (names: { team1: string, team2: string }) => void;
@@ -26,7 +30,9 @@ export function useEventManagement(
 ): EventManagementState {
     const [isCreateEventOpen, setCreateEventOpen] = useState(false);
     const [isDuplicateEventOpen, setDuplicateEventOpen] = useState(false);
+    const [isEditEventOpen, setEditEventOpen] = useState(false);
     const [eventToDuplicate, setEventToDuplicate] = useState<EventWithStats | null>(null);
+    const [eventToEdit, setEventToEdit] = useState<EventWithStats | null>(null);
     const [showTeams, setShowTeams] = useState(false);
     const [teams, setTeams] = useState<Teams>({});
     const [isGeneratingTeams, setIsGeneratingTeams] = useState(false);
@@ -100,14 +106,18 @@ export function useEventManagement(
     return {
         isCreateEventOpen,
         isDuplicateEventOpen,
+        isEditEventOpen,
         eventToDuplicate,
+        eventToEdit,
         showTeams,
         teams,
         isGeneratingTeams,
         teamNames,
         setCreateEventOpen,
         setDuplicateEventOpen,
+        setEditEventOpen,
         setEventToDuplicate,
+        setEventToEdit,
         setShowTeams,
         setTeams,
         setTeamNames,
