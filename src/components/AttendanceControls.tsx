@@ -6,7 +6,7 @@ import { type EventWithStats } from '@/types/PlayerTypes';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/hooks/use-toast';
 import { useTeamSnapAuth } from '@/hooks/useTeamSnapAuth';
-import { TeamSnapEventInfoDialog } from '@/components/dialogs/TeamSnapEventInfoDialog';
+
 
 interface AttendanceControlsProps {
     selectedEvent: EventWithStats;
@@ -15,6 +15,8 @@ interface AttendanceControlsProps {
     onAttendanceUpdate?: () => void;
     teamSnapTeamId?: string | null;
     groupId: number;
+    showTeamSnapInline?: boolean;
+    onToggleTeamSnapInline?: () => void;
 }
 
 export default function AttendanceControls({
@@ -24,9 +26,10 @@ export default function AttendanceControls({
     onAttendanceUpdate,
     teamSnapTeamId,
     groupId,
+    showTeamSnapInline = false,
+    onToggleTeamSnapInline,
 }: AttendanceControlsProps) {
     const [isSyncingAttendance, setIsSyncingAttendance] = useState(false);
-    const [showTeamSnapInfo, setShowTeamSnapInfo] = useState(false);
     const { isAuthenticated } = useTeamSnapAuth();
     const { toast } = useToast();
 
@@ -52,29 +55,17 @@ export default function AttendanceControls({
                         <ArrowRightLeft className={`w-4 h-4 mr-2 ${isGeneratingTeams ? 'animate-spin' : ''}`} />
                         {isGeneratingTeams ? 'Generating...' : 'Generate Teams'}
                     </Button>
-                    {isAuthenticated && selectedEvent?.teamsnap_event_id && (
-                        <>
-                            <Button
-                                onClick={() => setShowTeamSnapInfo(true)}
-                                variant="outline"
-                            >
-                                <Eye className="w-4 h-4 mr-2" />
-                                TeamSnap Attendance
-                            </Button>
-                        </>
+                    {isAuthenticated && selectedEvent?.teamsnap_event_id && onToggleTeamSnapInline && (
+                        <Button
+                            onClick={onToggleTeamSnapInline}
+                            variant={showTeamSnapInline ? "default" : "outline"}
+                        >
+                            <Eye className="w-4 h-4 mr-2" />
+                            {showTeamSnapInline ? 'Hide' : 'Show'} TeamSnap Attendance
+                        </Button>
                     )}
                 </div>
             </div>
-            
-            {/* TeamSnap Event Info Dialog */}
-            {selectedEvent?.teamsnap_event_id && (
-                <TeamSnapEventInfoDialog
-                    open={showTeamSnapInfo}
-                    onOpenChange={setShowTeamSnapInfo}
-                    eventId={selectedEvent.teamsnap_event_id}
-                    groupId={groupId}
-                />
-            )}
         </>
     );
 }

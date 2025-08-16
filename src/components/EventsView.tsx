@@ -18,6 +18,7 @@ import EventsList from './EventsList';
 import AttendanceTable from './AttendanceTable';
 import AttendanceControls from './AttendanceControls';
 import PlayerPagination from './PlayerPagination';
+import { TeamSnapInlineView } from './TeamSnapInlineView';
 import { useEventManagement } from '@/hooks/useEventManagement';
 import { useAttendanceManagement } from '@/hooks/useAttendanceManagement';
 import { usePlayerPagination } from '@/hooks/usePlayerPagination';
@@ -65,6 +66,9 @@ export default function EventsView({
     const eventManagement = useEventManagement(selectedEvent?.id);
     const { handleUpdateSingleAttendance } = useAttendanceManagement();
     const paginationState = usePlayerPagination(attendanceData, 20);
+    
+    // TeamSnap inline view state
+    const [showTeamSnapInline, setShowTeamSnapInline] = React.useState(false);
 
     const handleAttendanceToggle = async (playerId: number) => {
         if (!selectedEvent) return;
@@ -159,21 +163,40 @@ export default function EventsView({
                                     onGenerateTeams={() => group && eventManagement.handleGenerateTeams(selectedEvent, group, eventManagement.teamNames)}
                                     teamSnapTeamId={group?.teamsnap_team_id}
                                     groupId={group.id}
+                                    showTeamSnapInline={showTeamSnapInline}
+                                    onToggleTeamSnapInline={() => setShowTeamSnapInline(!showTeamSnapInline)}
                                 />
 
-                                <AttendanceTable
-                                    players={paginationState.paginatedItems}
-                                    onAttendanceToggle={handleAttendanceToggle}
-                                />
+                                {/* Main attendance management layout */}
+                                <div className={`${showTeamSnapInline && selectedEvent?.teamsnap_event_id ? 'lg:grid lg:grid-cols-2 lg:gap-6' : ''} space-y-4 lg:space-y-0`}>
+                                    {/* RosterGen Attendance Section */}
+                                    <div className="space-y-4">
+                                        <AttendanceTable
+                                            players={paginationState.paginatedItems}
+                                            onAttendanceToggle={handleAttendanceToggle}
+                                        />
 
-                                <PlayerPagination
-                                    currentPage={paginationState.currentPage}
-                                    totalPages={paginationState.totalPages}
-                                    totalItems={attendanceData.length}
-                                    itemsPerPage={paginationState.rowsPerPage}
-                                    onPageChange={paginationState.handlePageChange}
-                                    itemName="players"
-                                />
+                                        <PlayerPagination
+                                            currentPage={paginationState.currentPage}
+                                            totalPages={paginationState.totalPages}
+                                            totalItems={attendanceData.length}
+                                            itemsPerPage={paginationState.rowsPerPage}
+                                            onPageChange={paginationState.handlePageChange}
+                                            itemName="players"
+                                        />
+                                    </div>
+
+                                    {/* TeamSnap Inline View */}
+                                    {showTeamSnapInline && selectedEvent?.teamsnap_event_id && (
+                                        <div>
+                                            <TeamSnapInlineView
+                                                eventId={selectedEvent.teamsnap_event_id}
+                                                groupId={group.id}
+                                                onClose={() => setShowTeamSnapInline(false)}
+                                            />
+                                        </div>
+                                    )}
+                                </div>
                             </>
                         ) : (
                             <TeamsView
