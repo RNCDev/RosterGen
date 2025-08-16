@@ -226,10 +226,24 @@ export async function GET(request: NextRequest) {
             const firstName = getTeamSnapValue(memberData, 'first_name') || '';
             const lastName = getTeamSnapValue(memberData, 'last_name') || '';
 
+            // Map status_code to a simplified availability string
+            let availabilityStatus: 'yes' | 'no' | 'maybe' | null = null;
+            switch (availability.status_code) {
+              case 1:
+                availabilityStatus = 'yes';
+                break;
+              case 0:
+                availabilityStatus = 'no';
+                break;
+              case 2:
+                availabilityStatus = 'maybe';
+                break;
+            }
+
             return {
               id: memberId,
               name: `${firstName} ${lastName}`.trim(),
-              availability: availability.status,
+              availability: availabilityStatus,
               availability_code: availability.status_code
             };
           }).filter((player): player is NonNullable<typeof player> => player !== null && player.name.length > 0);
