@@ -31,11 +31,12 @@ This is a Next.js application designed to help organize hockey games and manage 
 -   Create and manage events with specific dates, times, and locations.
 -   **New! Duplicate Events**: Quickly duplicate existing events with a new name and date using the copy icon on event cards, perfect for recurring events.
 
--   **New! TeamSnap Integration (In Progress)**:
-    -   Connect your TeamSnap account directly to RosterGen via a secure OAuth2 flow.
-    -   Link your RosterGen group to a specific TeamSnap team using the TeamSnap Team ID.
-    -   View detailed attendance status (Confirmed, Maybe, Declined) for a linked event directly from TeamSnap.
-    -   *Next Step:* Use the fetched TeamSnap data to automatically update attendance in RosterGen with a single click.
+-   **TeamSnap Integration**:
+    -   **Secure OAuth2 Authentication**: Connect your TeamSnap account directly to RosterGen with industry-standard security.
+    -   **Team Linking**: Link your RosterGen group to a specific TeamSnap team using the TeamSnap Team ID.
+    -   **Non-Blocking Attendance View**: View detailed attendance status (Confirmed, Maybe, Declined, No Response) in a side-by-side layout that allows simultaneous viewing and editing.
+    -   **Responsive Design**: TeamSnap attendance data displays alongside your RosterGen attendance table on desktop, or stacked below on mobile devices.
+    -   **Real-Time Workflow**: No more switching between dialogs - see TeamSnap data while updating RosterGen attendance in real-time.
 
 ## Tech Stack
 
@@ -116,7 +117,6 @@ A brief overview of the key directories and files in RosterGen.
 /
 ├── components.json          # shadcn/ui component configuration
 ├── docs/                    # Documentation files
-│   ├── teamsnap-integration-analysis.md
 │   └── user-stories.md
 ├── jest.config.js           # Jest testing configuration
 ├── jest.setup.js            # Jest setup and test environment configuration
@@ -229,6 +229,7 @@ A brief overview of the key directories and files in RosterGen.
 │   │   ├── PlayerPagination.tsx   # Pagination component for player list
 │   │   ├── PlayersView.tsx        # Main view for player roster management
 │   │   ├── PlayerTable.tsx        # Table component for player display
+│   │   ├── TeamSnapInlineView.tsx # Inline TeamSnap attendance display component
 │   │   └── TeamsView.tsx          # Component to display generated teams
 │   │
 │   ├── hooks/               # Custom React hooks for shared logic
